@@ -1,0 +1,53 @@
+<div class="contenedor-login">
+  <div class="tarjeta-login shadow">
+    <h2 class="titulo">Iniciar Sesión</h2>
+
+    <!-- 🔹 Muestra error del backend -->
+    <div *ngIf="error" class="error" aria-live="assertive">
+      {{ error }}
+    </div>
+
+    <form [formGroup]="formularioLogin" (ngSubmit)="ingresar()">
+      <div class="campo">
+        <label>Correo electrónico</label>
+        <input type="email" formControlName="correo" placeholder="ejemplo@gmail.com" />
+        <div
+          class="error"
+          *ngIf="formularioLogin.get('correo')?.invalid && formularioLogin.get('correo')?.touched"
+        >
+          <small *ngIf="formularioLogin.get('correo')?.hasError('required')"
+            >El correo es obligatorio</small
+          >
+          <small *ngIf="formularioLogin.get('correo')?.hasError('email')">Correo no válido</small>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label>Contraseña</label>
+        <input type="password" formControlName="contrasena" placeholder="********" />
+        <div
+          class="error"
+          *ngIf="
+            formularioLogin.get('contrasena')?.invalid && formularioLogin.get('contrasena')?.touched
+          "
+        >
+          <small *ngIf="formularioLogin.get('contrasena')?.hasError('required')"
+            >La contraseña es obligatoria</small
+          >
+          <small *ngIf="formularioLogin.get('contrasena')?.hasError('minlength')"
+            >Mínimo 6 caracteres</small
+          >
+        </div>
+      </div>
+
+      <!-- 🔹 Deshabilita mientras envía -->
+      <button class="btn-ingresar" type="submit" [disabled]="enviando">Ingresar</button>
+    </form>
+
+    <p class="mt-2 text-center">
+      <a routerLink="/recuperar-password">¿Olvidaste tu contraseña?</a>
+    </p>
+
+    <p class="registro">¿No tienes cuenta? <a routerLink="/registro-cliente">Regístrate aquí</a></p>
+  </div>
+</div>

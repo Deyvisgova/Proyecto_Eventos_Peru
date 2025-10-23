@@ -1,0 +1,75 @@
+.registro-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 25px;
+  background: #e9e6e6;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(4, 138, 216, 0.1);
+}
+
+h2 {
+  color: #044b85;
+  margin-bottom: 5px;
+}
+
+.subtitulo {
+  font-size: 14px;
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  transition: 0.2s ease;
+}
+
+input:focus {
+  border-color: #0bc743;
+  outline: none;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background-color: #0a19e4;
+}
+
+/* Errores */
+.alerta {
+  background: #ffe8e8;
+  color: #d8000c;
+  border: 1px solid #d8000c;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* EXITOSO */
+.alerta_ok {
+  background: #ffffff;
+  color: #05631d;
+  border: 1px solid #108006;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 15px;
+  text-align: left;
+}

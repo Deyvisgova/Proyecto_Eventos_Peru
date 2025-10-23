@@ -1,0 +1,36 @@
+# ==== ARCHIVOS DEL BACKEND (Spring Boot) ====
+target/
+**/target/
+*.log
+*.iml
+.idea/
+.vscode/
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# No subir configuraciones privadas
+**/application-*.yml
+**/application-*.yaml
+**/application-*.properties
+*.env
+.env*
+
+# ==== ARCHIVOS DEL FRONTEND (Angular) ====
+**/node_modules/
+**/dist/
+**/.angular/
+npm-debug.log*
+yarn.lock
+package-lock.json
+
+# ==== ARCHIVOS TEMPORALES DEL SISTEMA ====
+.DS_Store
+Thumbs.db
+
+# Evitar nombres reservados de Windows
+NUL
+PRN
+AUX
+CON

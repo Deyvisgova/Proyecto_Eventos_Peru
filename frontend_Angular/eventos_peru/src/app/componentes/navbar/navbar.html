@@ -1,0 +1,66 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-3" *ngIf="showNavbar">
+  <div class="container">
+    <!-- Logo y título -->
+    <a class="navbar-brand fw-bold d-flex align-items-center" routerLink="/">
+      <span class="fs-4 ms-2">🎉 Eventos Perú</span>
+    </a>
+
+    <!-- Botón responsive -->
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#menu"
+      aria-controls="menu"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Contenido del menú -->
+    <div class="collapse navbar-collapse" id="menu">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" routerLink="/">🏠 Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/eventos">📅 Eventos</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/contacto">📞 Contáctanos</a>
+        </li>
+      </ul>
+
+      <!-- Botones de acción -->
+      <!-- Acciones del Navbar -->
+      <div class="d-flex align-items-center gap-2">
+        <!-- 🔹 Sin sesión: mostrar Registro y Login -->
+        <ng-container *ngIf="!isLoggedIn">
+          <button class="btn btn-outline-light" routerLink="/registro-cliente">Regístrate</button>
+          <button class="btn btn-primary" routerLink="/login">Iniciar sesión</button>
+        </ng-container>
+
+        <!-- 🔹 Cliente logueado -->
+        <ng-container *ngIf="isLoggedIn && rol === 'CLIENTE'">
+          <span class="text-light me-2">Hola, {{ nombre }}</span>
+          <button class="btn btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
+        </ng-container>
+
+        <!-- 🔹 Proveedor logueado -->
+        <ng-container *ngIf="isLoggedIn && rol === 'PROVEEDOR'">
+          <button class="btn btn-outline-info" (click)="goPanel()">Ir al panel</button>
+          <span class="text-light mx-2">Proveedor: {{ nombre }}</span>
+          <button class="btn btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
+        </ng-container>
+
+        <!-- 🔹 Administrador logueado -->
+        <ng-container *ngIf="isLoggedIn && rol === 'ADMIN'">
+          <button class="btn btn-outline-warning" (click)="goPanel()">Ir al panel</button>
+          <span class="text-light mx-2">Admin: {{ nombre }}</span>
+          <button class="btn btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</nav>

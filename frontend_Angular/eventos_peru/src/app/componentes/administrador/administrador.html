@@ -1,0 +1,54 @@
+<!-- src/app/componentes/administrador/administrador.html -->
+<div class="panel-admin">
+  <!-- Barra superior -->
+  <header class="barra-superior">
+    <h1>📊 Panel de Administración</h1>
+
+    <!-- 🔹 Barra superior solo del ADMIN -->
+    <div
+      class="w-100 bg-dark text-white d-flex justify-content-between align-items-center px-3 py-2 shadow-sm"
+    >
+      <div class="fw-bold">
+        Administrador: <span class="text-info">{{ nombre }}</span>
+      </div>
+      <button class="btn btn-sm btn-danger" (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+      </button>
+    </div>
+  </header>
+
+  <div class="contenido">
+    <!-- Menú lateral (sidebar) -->
+    <aside class="menu-lateral">
+      <nav>
+        <a
+          routerLink="inicio"
+          routerLinkActive="activo"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <i class="bi bi-house-door"></i> Inicio
+        </a>
+        <a routerLink="usuarios" routerLinkActive="activo">
+          <i class="bi bi-people"></i> Usuarios registrados
+        </a>
+        <a routerLink="proveedores" routerLinkActive="activo">
+          <i class="bi bi-building"></i> Proveedores
+        </a>
+        <a routerLink="eventos" routerLinkActive="activo">
+          <i class="bi bi-calendar-event"></i> Eventos
+        </a>
+        <a routerLink="reservas" routerLinkActive="activo">
+          <i class="bi bi-bookmark-check"></i> Reservas
+        </a>
+        <a routerLink="configuracion" routerLinkActive="activo">
+          <i class="bi bi-gear"></i> Configuración
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Aquí se pintan las vistas hijas -->
+    <section class="vista">
+      <router-outlet></router-outlet>
+    </section>
+  </div>
+</div>

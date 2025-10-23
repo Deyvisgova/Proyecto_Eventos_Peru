@@ -1,0 +1,30 @@
+/* Fondo oscuro y tipografía clara */
+.pie-pagina {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Enlaces del footer */
+.enlace-footer {
+  color: #bdbdbd;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.enlace-footer:hover {
+  color: #0dcaf0;
+}
+
+/* Botón destacado para proveedores */
+.btn-proveedor {
+  background-color: #ff4081 !important;
+  color: white !important;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.btn-proveedor:hover {
+  background-color: #e91e63 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 64, 129, 0.4);
+}

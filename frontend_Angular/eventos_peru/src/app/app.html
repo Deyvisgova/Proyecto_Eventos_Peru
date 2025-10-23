@@ -1,0 +1,11 @@
+<!-- Navbar siempre visible -->
+<app-navbar></app-navbar>
+
+<!-- Mostrar el slider solo en la página principal -->
+<app-slider *ngIf="rutaActual === ''"></app-slider>
+
+<!-- Aquí se mostrarán las vistas dinámicas (login, registro, etc.) -->
+<router-outlet></router-outlet>
+
+<!-- Footer siempre visible -->
+<app-pie-pagina></app-pie-pagina>

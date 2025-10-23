@@ -1,0 +1,42 @@
+/* ==== NAVBAR PERSONALIZADO ==== */
+.navbar {
+  height: 70px;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Aumenta el tamaño del texto del título */
+.navbar-brand span {
+  font-size: 1.5rem;
+}
+
+/* Espaciado entre enlaces */
+.nav-link {
+  margin-right: 15px;
+  font-weight: 500;
+}
+
+/* Hover de los enlaces */
+.nav-link:hover {
+  color: #ffc107 !important; /* Amarillo suave */
+}
+
+/* ==== BOTONES ==== */
+.btn-outline-light {
+  border-color: #ffc107;
+  color: #ffc107;
+}
+
+.btn-outline-light:hover {
+  background-color: #ffc107;
+  color: #000000;
+}
+
+.btn-primary {
+  background-color: #5e392e;
+  border-color: #ff5722;
+}
+
+.btn-primary:hover {
+  background-color: #e64a19;
+  border-color: #e64a19;
+}

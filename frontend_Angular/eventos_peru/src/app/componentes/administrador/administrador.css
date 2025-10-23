@@ -1,0 +1,143 @@
+/* src/app/componentes/administrador/administrador.css */
+
+/* Contenedor general */
+.panel-admin {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: 'Segoe UI', Roboto, system-ui, -apple-system, Arial, sans-serif;
+}
+
+/* Header */
+.barra-superior {
+  background: linear-gradient(90deg, #007bff, #00aaff);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 22px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+.barra-superior h1 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+.btn-cerrar {
+  background: #ff4b4b;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s;
+}
+.btn-cerrar:hover {
+  background: #e23c3c;
+}
+
+/* Cuerpo (sidebar + contenido) */
+.contenido {
+  display: flex;
+  min-height: 0; /* evita overflow */
+  flex: 1;
+}
+
+/* Sidebar */
+.menu-lateral {
+  width: 240px;
+  background: #0d1b2a;
+  color: #e5e9f0;
+  padding: 12px 0;
+  overflow-y: auto;
+}
+.menu-lateral nav {
+  display: flex;
+  flex-direction: column;
+}
+.menu-lateral a {
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 4px solid transparent;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.menu-lateral a:hover {
+  background: #132238;
+  color: #fff;
+  border-left-color: #4aa3ff;
+}
+.menu-lateral a.activo {
+  background: #132238;
+  color: #fff;
+  border-left-color: #1e90ff;
+}
+
+/* Zona de vistas hijas */
+.vista {
+  flex: 1;
+  background: #f7f9fc;
+  padding: 24px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* Utilidades */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+  padding: 18px;
+}
+.titulo {
+  margin: 0 0 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.subtle {
+  color: #475569;
+}
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid.cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .grid.cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .grid.cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+.kpi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.kpi .icono {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.icono.azul {
+  background: #3b82f6;
+}
+.icono.verde {
+  background: #22c55e;
+}
+.icono.amarillo {
+  background: #f59e0b;
+}
+.icono.rojo {
+  background: #ef4444;
+}

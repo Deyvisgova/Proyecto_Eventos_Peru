@@ -1,0 +1,217 @@
+<div class="contenedor-usuarios">
+  <h2 class="titulo">👥 Lista de Usuarios Registrados</h2>
+  <div class="acciones-superiores">
+    <button class="btn-agregar" (click)="abrirModalAgregar()">➕ Agregar usuario</button>
+  </div>
+
+  <!-- Tabla de usuarios (NO MODIFICADA) -->
+  <table class="tabla-usuarios">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Rol</th>
+        <th>Fecha de Registro</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let usuario of usuarios">
+        <td>{{ usuario.idUsuario }}</td>
+        <td>{{ usuario.nombre }}</td>
+        <td>{{ usuario.email }}</td>
+        <td>{{ usuario.rol }}</td>
+        <td>{{ usuario.fechaRegistro | date : 'dd/MM/yyyy' }}</td>
+        <td>
+          <button class="btn-editar" (click)="abrirModalEditar(usuario)">✏️ Editar</button>
+          <button class="btn-eliminar" (click)="abrirModalEliminar(usuario)">🗑️ Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================= -->
+<!-- MODAL: AGREGAR USUARIO -->
+<!-- ============================= -->
+<div class="modal fade" id="modalAgregar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">➕ Agregar Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form #formAgregar="ngForm">
+          <div class="mb-3">
+            <label>Nombre</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="nuevo.nombre"
+              name="nombre"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label>Email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="nuevo.email"
+              name="email"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label>Contraseña</label>
+            <input
+              type="password"
+              class="form-control"
+              [(ngModel)]="nuevo.password"
+              name="password"
+              required
+              minlength="6"
+              placeholder="Ingrese una contraseña segura"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label>Rol</label>
+            <select class="form-select" [(ngModel)]="nuevo.rol" name="rol" required>
+              <!-- Solo puede agregar administradores -->
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label>Fecha de Registro</label>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="nuevo.fechaRegistro"
+              name="fechaRegistro"
+              required
+            />
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-success" (click)="guardarUsuario()" [disabled]="!formAgregar.valid">
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- MODAL: EDITAR USUARIO -->
+<!-- ============================= -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">✏️ Editar Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form #formEditar="ngForm">
+          <div class="mb-3">
+            <label>ID Usuario</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="usuarioSeleccionado.idUsuario"
+              name="idUsuario"
+              readonly
+            />
+          </div>
+          <div class="mb-3">
+            <label>Nombre</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="usuarioSeleccionado.nombre"
+              name="nombre"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label>Email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="usuarioSeleccionado.email"
+              name="email"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label>Rol</label>
+            <select class="form-select" [(ngModel)]="usuarioSeleccionado.rol" name="rol" required>
+              <!-- Puede cambiar entre ADMIN y CLIENTE -->
+              <option value="ADMIN">ADMIN</option>
+              <option value="CLIENTE">CLIENTE</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label>Fecha de Registro</label>
+            <input
+              type="date"
+              class="form-control"
+              [(ngModel)]="usuarioSeleccionado.fechaRegistro"
+              name="fechaRegistro"
+              required
+            />
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button
+          class="btn btn-warning"
+          (click)="actualizarUsuario()"
+          [disabled]="!formEditar.valid"
+        >
+          Actualizar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ============================= -->
+<!-- MODAL: CONFIRMAR ELIMINACIÓN -->
+<!-- ============================= -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">⚠️ Confirmar eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          ¿Estás seguro que deseas eliminar al usuario
+          <strong>{{ usuarioAEliminar?.nombre }}</strong
+          >?
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" (click)="confirmarEliminacion()">
+          Sí, eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

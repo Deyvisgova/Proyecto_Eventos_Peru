@@ -1,0 +1,54 @@
+<div class="registro-proveedor-container">
+  <h2 class="titulo">🧾 Registro de Proveedor</h2>
+
+  <form (ngSubmit)="registrarProveedor()" #formProveedor="ngForm" novalidate>
+    <!-- Campo RUC -->
+    <div class="form-group">
+      <label for="ruc">RUC:</label>
+      <input
+        type="text"
+        id="ruc"
+        name="ruc"
+        [(ngModel)]="ruc"
+        required
+        minlength="11"
+        maxlength="11"
+        placeholder="Ingrese su RUC"
+        (blur)="buscarRuc()"
+      />
+    </div>
+
+    <!-- Nombre de la empresa -->
+    <div class="form-group">
+      <label for="nombre_empresa">Nombre de Empresa:</label>
+      <input
+        type="text"
+        id="nombre_empresa"
+        name="nombre_empresa"
+        [(ngModel)]="nombre_empresa"
+        required
+        placeholder="Razón social"
+        readonly
+      />
+    </div>
+
+    <!-- Dirección -->
+    <div class="form-group">
+      <label for="direccion">Dirección:</label>
+      <input
+        type="text"
+        id="direccion"
+        name="direccion"
+        [(ngModel)]="direccion"
+        placeholder="Dirección fiscal"
+        required
+        readonly
+      />
+    </div>
+
+    <!-- Botón de registro -->
+    <button type="submit" class="btn-registrar" [disabled]="cargando">
+      {{ cargando ? 'Registrando...' : 'Registrar proveedor' }}
+    </button>
+  </form>
+</div>

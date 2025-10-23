@@ -1,0 +1,52 @@
+<div class="container mt-4">
+  <!-- 🟢 Bienvenida -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>
+      Bienvenido, <span class="text-primary">{{ nombre }}</span>
+    </h4>
+  </div>
+
+  <!-- 🟡 Evento actual -->
+  <div class="alert alert-info">
+    Estás viendo los servicios para: <strong>{{ tipoEvento }}</strong>
+  </div>
+
+  <!-- 🟣 Filtros -->
+  <div class="card p-3 mb-4 shadow-sm">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Tipo de evento:</label>
+        <select class="form-select" [(ngModel)]="filtroEvento" (change)="filtrar()">
+          <option *ngFor="let e of eventos" [value]="e">{{ e }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Proveedor:</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar proveedor..."
+          [(ngModel)]="filtroProveedor"
+          (input)="filtrar()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- 🟢 Proveedores filtrados -->
+  <div class="row">
+    <div class="col-md-4 mb-4" *ngFor="let p of proveedoresFiltrados">
+      <div class="card h-100 shadow-sm">
+        <img [src]="p.imagen" class="card-img-top" [alt]="p.nombre" />
+        <div class="card-body">
+          <h5 class="card-title text-primary">{{ p.nombre }}</h5>
+          <p class="card-text small text-muted">{{ p.descripcion }}</p>
+          <button class="btn btn-outline-primary w-100" (click)="verProveedor(p.id)">
+            Ver servicios
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

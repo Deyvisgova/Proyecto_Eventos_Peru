@@ -1,0 +1,58 @@
+<!-- ===================================== -->
+<!-- Sección del pie de página -->
+<!-- ===================================== -->
+<footer class="pie-pagina bg-dark text-light pt-5 pb-3 mt-5" *ngIf="showFooter">
+  <div class="container">
+    <div class="row">
+      <!-- Columna 1: Acerca de -->
+      <div class="col-md-4 mb-4">
+        <h5 class="fw-bold text-uppercase mb-3">Eventos Perú</h5>
+        <p class="small text-secondary">
+          Nos dedicamos a crear experiencias únicas en cada celebración. Cumpleaños, matrimonios y
+          aniversarios hechos con pasión y detalle.
+        </p>
+      </div>
+
+      <!-- Columna 2: Enlaces útiles -->
+      <div class="col-md-4 mb-4">
+        <h6 class="fw-bold text-uppercase mb-3">Enlaces rápidos</h6>
+        <ul class="list-unstyled">
+          <li>
+            <a href="#" class="enlace-footer"><i class="bi bi-house-door me-2"></i>Inicio</a>
+          </li>
+          <li>
+            <a href="#" class="enlace-footer"><i class="bi bi-calendar-event me-2"></i>Eventos</a>
+          </li>
+          <li>
+            <a href="#" class="enlace-footer"><i class="bi bi-people me-2"></i>Clientes</a>
+          </li>
+          <li>
+            <a href="#" class="enlace-footer"><i class="bi bi-telephone me-2"></i>Contáctanos</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Columna 3: Invitación a proveedores -->
+      <div class="col-md-4 mb-4 text-center">
+        <h6 class="fw-bold text-uppercase mb-3">¿Eres proveedor?</h6>
+        <p class="small text-secondary">
+          Únete a nuestra familia y ofrece tus servicios a cientos de clientes.
+        </p>
+
+        <!-- Columna 3: Invitación a proveedores -->
+        <button (click)="irARegistroProveedor()" class="btn-proveedor">
+          <i class="bi bi-briefcase me-1"></i>
+          Formar parte de Eventos Perú
+        </button>
+      </div>
+    </div>
+
+    <!-- Línea divisoria -->
+    <hr class="border-secondary" />
+
+    <!-- Créditos finales -->
+    <div class="text-center small text-secondary">
+      © {{ yearActual }} Eventos Perú — Todos los derechos reservados.
+    </div>
+  </div>
+</footer>

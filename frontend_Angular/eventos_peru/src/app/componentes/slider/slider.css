@@ -1,0 +1,17 @@
+/* Ajusta el tamaño del carrusel */
+.carousel-item img {
+  height: 75vh; /* 75% del alto de la pantalla */
+  object-fit: cover; /* recorta sin deformar la imagen */
+  filter: brightness(0.85); /* oscurece un poco para resaltar el texto */
+}
+
+/* Estilo de los textos sobre las imágenes */
+.carousel-caption h3 {
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+.carousel-caption p {
+  font-size: 1.2rem;
+  color: #f8f9fa;
+}

@@ -1,0 +1,73 @@
+<!-- Sección principal de presentación -->
+<section class="presentacion py-5">
+  <div class="container text-center">
+    <!-- Título principal -->
+    <h2 class="fw-bold mb-3 text-primary">Sobre Nosotros</h2>
+    <p class="lead text-muted mb-5">
+      En <strong>Eventos Perú</strong> hacemos realidad tus celebraciones más importantes. Ofrecemos
+      un servicio integral con decoración, música, catering, fotografía y mucho más.
+    </p>
+
+    <!-- Servicios destacados -->
+    <div class="row justify-content-center">
+      <!-- Cumpleaños -->
+      <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <img
+            src="https://img.freepik.com/foto-gratis/hermosa-fiesta-cumpleanos-decoracion-colorida_23-2149028189.jpg"
+            class="card-img-top"
+            alt="Cumpleaños"
+          />
+          <div class="card-body">
+            <h5 class="card-title text-primary">Cumpleaños</h5>
+            <p class="card-text">
+              Festeja con nosotros con la mejor decoración, animación y catering personalizado.
+            </p>
+            <!-- 🔹 Botón interactivo -->
+            <button class="btn btn-primary w-100" (click)="verEvento('Cumpleaños')">Ver más</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Matrimonios -->
+      <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <img
+            src="https://img.freepik.com/foto-gratis/pareja-novios-romanticos-boda_23-2148180034.jpg"
+            class="card-img-top"
+            alt="Matrimonio"
+          />
+          <div class="card-body">
+            <h5 class="card-title text-primary">Matrimonios</h5>
+            <p class="card-text">
+              Creamos ambientes mágicos y memorables para el día más importante de tu vida.
+            </p>
+            <!-- 🔹 Botón interactivo -->
+            <button class="btn btn-primary w-100" (click)="verEvento('Matrimonio')">Ver más</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aniversarios -->
+      <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <img
+            src="https://img.freepik.com/foto-gratis/pareja-adulta-celebrando-aniversario-romantico_23-2148174107.jpg"
+            class="card-img-top"
+            alt="Aniversario"
+          />
+          <div class="card-body">
+            <h5 class="card-title text-primary">Aniversarios</h5>
+            <p class="card-text">
+              Revive tu amor con una celebración elegante, única y llena de detalles.
+            </p>
+            <!-- 🔹 Botón interactivo -->
+            <button class="btn btn-primary w-100" (click)="verEvento('Aniversario')">
+              Ver más
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
