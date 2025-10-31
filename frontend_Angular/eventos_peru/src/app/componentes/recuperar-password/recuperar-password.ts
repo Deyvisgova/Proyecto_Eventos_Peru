@@ -33,7 +33,7 @@ export class RecuperarPassword {
     // 👇 conexión al backend Spring Boot
     this.http.post('http://localhost:8080/api/auth/recuperar-password', { email }).subscribe({
       next: () => {
-        this.mensaje = 'Si el correo existe, recibirás un enlace de recuperación.';
+        this.mensaje = 'Si te registraste, recibirás un enlace de recuperación.';
         this.enviando = false;
       },
       error: (err) => {

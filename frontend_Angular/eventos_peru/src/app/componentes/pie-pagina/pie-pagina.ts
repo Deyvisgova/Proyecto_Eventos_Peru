@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-
 @Component({
   selector: 'app-pie-pagina',
   standalone: true,
@@ -26,7 +25,6 @@ export class PiePagina {
       return 'ANON';
     }
   }
-
   constructor(private router: Router) {
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
       const url = this.router.url;
@@ -47,7 +45,6 @@ export class PiePagina {
       this.router.navigate(['/login']);
       return;
     }
-
     // bloquear si NO es cliente
     if (rol === 'ADMIN' || rol === 'PROVEEDOR') {
       alert('Esta inscripción es solo para CLIENTES.');

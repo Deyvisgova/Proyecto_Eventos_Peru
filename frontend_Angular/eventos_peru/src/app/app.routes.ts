@@ -52,6 +52,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./componentes/administrador/usuarios/usuarios').then((m) => m.Usuarios),
       },
+      {
+        path: 'proveedores',
+        loadComponent: () =>
+          import('./componentes/administrador/proveedores/proveedores').then((m) => m.Proveedores),
+      },
     ],
   },
 

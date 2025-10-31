@@ -26,11 +26,9 @@ export class Login implements OnInit {
 
   ngOnInit(): void {
     try {
-      const guardado = localStorage.getItem('usuario');
-      if (guardado) {
-        const u = JSON.parse(guardado);
-        if (u?.rol) this.redirigirPorRol(u.rol);
-      }
+      // Limpia cualquier dato viejo para no redirigir con un rol antiguo
+      localStorage.removeItem('usuario');
+      localStorage.removeItem('rol');
     } catch {}
   }
 
@@ -49,11 +47,32 @@ export class Login implements OnInit {
     this.enviando = true;
     this.auth.login({ email: correo, password: contrasena }).subscribe({
       next: (u) => {
-        // u = { idUsuario, nombre, email, rol }
-        localStorage.setItem('usuario', JSON.stringify(u));
+        // 1) Tomar el rol desde la respuesta (distintos formatos soportados)
+        const rolCrudo =
+          (u as any)?.rol ??
+          (u as any)?.usuario?.rol ??
+          (u as any)?.role ??
+          (u as any)?.usuario?.role ??
+          (u as any)?.authorities?.[0]?.authority ??
+          '';
+
+        // 2) Normalizar: ' ROLE_PROVEEDOR ' -> 'PROVEEDOR'
+        let rol = String(rolCrudo).trim().toUpperCase();
+        if (rol.startsWith('ROLE_')) rol = rol.substring(5);
+
+        // 3) Guardar el usuario en localStorage con el ROL CORRECTO
+        const usuarioConRolActualizado = { ...(u as any), rol };
+        localStorage.setItem('usuario', JSON.stringify(usuarioConRolActualizado));
+        localStorage.setItem('rol', rol); // por si algún guard lo lee así
+
+        // (opcional) log para verificar qué llega
+        console.log('[login] rolCrudo:', rolCrudo, ' -> rol:', rol);
+
+        // 4) Redirigir por rol ya normalizado
         this.enviando = false;
-        this.redirigirPorRol(u.rol); // ← redirige según rol
+        this.redirigirPorRol(rol);
       },
+
       error: () => {
         this.error = 'Email o contraseña incorrectos';
         this.enviando = false;
@@ -62,10 +81,20 @@ export class Login implements OnInit {
   }
 
   private redirigirPorRol(rol: string): void {
-    const r = (rol || '').toUpperCase();
-    if (r === 'ADMIN') this.router.navigateByUrl('/administrador'); // tu panel admin ya existe
-    else if (r === 'PROVEEDOR')
-      this.router.navigateByUrl('/proveedor'); // panel que acabamos de crear
-    else this.router.navigateByUrl('/'); // cliente: página principal
+    let r = String(rol ?? '')
+      .trim()
+      .toUpperCase();
+    if (r.startsWith('ROLE_')) r = r.substring(5); // ROLE_PROVEEDOR → PROVEEDOR
+
+    console.log('[login] redirigirPorRol ->', r);
+
+    if (r === 'ADMIN') {
+      this.router.navigateByUrl('/administrador');
+    } else if (r === 'PROVEEDOR') {
+      console.log('[router] navegando a /proveedor');
+      this.router.navigateByUrl('/proveedor');
+    } else {
+      this.router.navigateByUrl('/');
+    }
   }
 }

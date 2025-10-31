@@ -1,0 +1,68 @@
+<div class="container py-3">
+  <h2 class="mb-3">Gestión de Proveedores</h2>
+
+  <div class="d-flex gap-2 mb-3">
+    <input
+      class="form-control"
+      placeholder="Buscar por nombre, RUC o correo"
+      [(ngModel)]="filtro"
+    />
+    <select class="form-select" [(ngModel)]="estado">
+      <option value="">Todos</option>
+      <option value="PENDIENTE">Pendientes</option>
+      <option value="APROBADO">Aprobados</option>
+      <option value="RECHAZADO">Rechazados</option>
+    </select>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Empresa</th>
+          <th>RUC</th>
+          <th>Correo</th>
+          <th>Estado</th>
+          <th style="width: 220px">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of proveedoresFiltrados(); let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>{{ p.razonSocial }}</td>
+          <td>{{ p.ruc }}</td>
+          <td>{{ p.email }}</td>
+          <td>
+            <span
+              class="badge"
+              [ngClass]="{
+                'text-bg-secondary': p.estado === 'PENDIENTE',
+                'text-bg-success': p.estado === 'APROBADO',
+                'text-bg-danger': p.estado === 'RECHAZADO'
+              }"
+            >
+              {{ p.estado }}
+            </span>
+          </td>
+          <td class="d-flex gap-2">
+            <button
+              class="btn btn-success btn-sm"
+              (click)="aprobar(p)"
+              [disabled]="p.estado === 'APROBADO'"
+            >
+              Aprobar
+            </button>
+            <button
+              class="btn btn-outline-danger btn-sm"
+              (click)="rechazar(p)"
+              [disabled]="p.estado === 'RECHAZADO'"
+            >
+              Rechazar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
