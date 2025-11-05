@@ -42,8 +42,14 @@ export class Proveedor implements OnInit {
       }
 
       // ✅ Si pasa todo → guarda datos
-      this.nombre = u.nombre ?? '';
-      this.empresa = u.empresa ?? '';
+      this.nombre = u.nombre ?? u.name ?? '';
+      this.empresa =
+        u.empresa ??
+        u.nombreEmpresa ??
+        u.nombre_empresa ??
+        u.razonSocial ??
+        u.nombre_o_razon_social ??
+        '';
       this.estado = u.estado ?? '';
     } catch {
       this.router.navigate(['/login']);
