@@ -5,7 +5,7 @@
   <div>
     Proveedor: <strong class="text-info">{{ nombre }}</strong>
     <span class="text-secondary ms-2"
-      >| Empresa: <strong>{{ empresa }}</strong></span
+      >| Empresa: <strong>{{ empresa || 'Empresa no registrada' }}</strong></span
     >
   </div>
   <button class="btn btn-sm btn-danger" (click)="cerrarSesion()">

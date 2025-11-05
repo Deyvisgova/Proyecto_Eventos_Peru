@@ -21,6 +21,12 @@ public class ProveedorControlador {
         return proveedorRepositorio.findAll();
     }
 
+    // Buscar proveedor por ID de usuario (para panel del proveedor)
+    @GetMapping("/usuario/{idUsuario}")
+    public Proveedor obtenerProveedorPorIdUsuario(@PathVariable Integer idUsuario) {
+        return proveedorRepositorio.findByUsuario_IdUsuario(idUsuario);
+    }
+
     // Registrar un nuevo proveedor
     @PostMapping
     public Proveedor guardarProveedor(@RequestBody Proveedor proveedor) {
