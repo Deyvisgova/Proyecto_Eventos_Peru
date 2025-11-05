@@ -17,4 +17,9 @@ export class ProveedorService {
   registrar(dto: any): Observable<any> {
     return this.http.post(`${this.API}/proveedores`, dto);
   }
+
+  // 🔹 Obtener proveedor asociado a un usuario específico
+  obtenerPorUsuario(idUsuario: number): Observable<any> {
+    return this.http.get(`${this.API}/proveedores/usuario/${idUsuario}`);
+  }
 }
