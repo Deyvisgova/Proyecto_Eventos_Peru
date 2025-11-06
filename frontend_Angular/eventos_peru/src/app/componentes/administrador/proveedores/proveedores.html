@@ -1,6 +1,15 @@
 <div class="container py-3">
   <h2 class="mb-3">Gestión de Proveedores</h2>
 
+  <div *ngIf="mensaje" class="alert alert-{{ mensaje.tipo }} alert-dismissible fade show" role="alert">
+    {{ mensaje.texto }}
+    <button type="button" class="btn-close" aria-label="Close" (click)="cerrarMensaje()"></button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    {{ error }}
+  </div>
+
   <div class="d-flex gap-2 mb-3">
     <input
       class="form-control"
