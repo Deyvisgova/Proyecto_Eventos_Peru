@@ -63,7 +63,7 @@ export class Navbar {
     if (this.rol === 'PROVEEDOR') {
       this.router.navigate(['/proveedor']);
     } else if (this.rol === 'ADMIN') {
-      this.router.navigate(['/admin']);
+      this.router.navigate(['/administrador']);
     }
   }
 }
