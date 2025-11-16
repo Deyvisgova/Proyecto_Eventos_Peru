@@ -19,7 +19,11 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+
     @Column(length = 20)
+
+    @Column(name = "telefono", length = 20)
+
     private String celular;
 
     @Column(nullable = false, length = 255)
