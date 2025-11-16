@@ -1,4 +1,8 @@
+
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+
 import { Component, OnInit } from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventoService } from '../../../servicios/evento.service';
@@ -22,7 +26,14 @@ export class Eventos implements OnInit {
   eventoSeleccionado: Evento | null = null;
   eventoAEliminar: Evento | null = null;
 
+
+  constructor(
+    private readonly eventoService: EventoService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
+
   constructor(private eventoService: EventoService) {}
+
 
   ngOnInit(): void {
     this.cargarEventos();
@@ -33,22 +44,39 @@ export class Eventos implements OnInit {
     if (!termino) {
       return this.eventos;
     }
+
+    return this.eventos.filter((evento) => {
+      const nombreNormalizado = (evento.nombreEvento ?? '').toLowerCase();
+      return nombreNormalizado.includes(termino);
+    });
+
     return this.eventos.filter((evento) =>
       evento.nombreEvento?.toLowerCase().includes(termino)
     );
+
   }
 
   cargarEventos(): void {
     this.cargando = true;
     this.eventoService.obtenerEventos().subscribe({
       next: (data) => {
+
+        this.eventos = Array.isArray(data) ? [...data] : [];
+        this.cargando = false;
+        this.cdr.detectChanges();
+
         this.eventos = data;
         this.cargando = false;
+
       },
       error: (error) => {
         console.error('Error al cargar eventos', error);
         this.cargando = false;
         alert('No se pudieron cargar los eventos.');
+
+        this.cdr.detectChanges();
+
+
       },
     });
   }
