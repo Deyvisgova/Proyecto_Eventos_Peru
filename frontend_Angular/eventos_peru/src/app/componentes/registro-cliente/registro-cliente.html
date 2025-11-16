@@ -37,6 +37,19 @@
       required
     />
 
+    <label for="celular">Número de celular</label>
+    <input
+      type="tel"
+      id="celular"
+      [(ngModel)]="celular"
+      name="celular"
+      placeholder="9 dígitos"
+      pattern="\d{9}"
+      inputmode="numeric"
+      autocomplete="tel"
+      required
+    />
+
     <label for="password">Contraseña</label>
     <input
       type="password"

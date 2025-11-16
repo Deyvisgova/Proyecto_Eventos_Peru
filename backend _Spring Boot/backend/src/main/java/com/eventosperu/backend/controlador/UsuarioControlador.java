@@ -55,6 +55,10 @@ public class UsuarioControlador {
                 // usuario.setRol("CLIENTE");
             }
         }
+        if (!isBlank(usuario.getCelular())) {
+            usuario.setCelular(normalizarCelular(usuario.getCelular()));
+        }
+
         Usuario guardado = usuarioRepositorio.save(usuario);
         return ResponseEntity.ok(guardado);
     }
@@ -71,6 +75,9 @@ public class UsuarioControlador {
         }
         if (!isBlank(body.getNombre())) u.setNombre(body.getNombre());
         if (!isBlank(body.getEmail())) u.setEmail(body.getEmail());
+        if (body.getCelular() != null) {
+            u.setCelular(isBlank(body.getCelular()) ? null : normalizarCelular(body.getCelular()));
+        }
 
         // Rol (si tu campo es enum o String, ajusta)
         if (body.getRol() != null) {
@@ -100,4 +107,5 @@ public class UsuarioControlador {
     // ------------------- HELPERS -------------------
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
     private boolean isBcrypt(String s) { return s != null && (s.startsWith("$2a$") || s.startsWith("$2b$") || s.startsWith("$2y$")); }
+    private String normalizarCelular(String celular) { return celular == null ? null : celular.replaceAll("\\s+", ""); }
 }
