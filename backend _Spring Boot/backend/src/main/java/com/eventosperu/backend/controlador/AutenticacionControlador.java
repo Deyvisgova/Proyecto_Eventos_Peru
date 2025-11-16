@@ -24,11 +24,16 @@ public class AutenticacionControlador {
     // -------- REGISTRO --------
     @PostMapping("/register")
     public ResponseEntity<?> registrar(@RequestBody SolicitudRegistro req) {
-        if (req == null || blank(req.nombre) || blank(req.email) || blank(req.password)) {
+        if (req == null || blank(req.nombre) || blank(req.email) || blank(req.password) || blank(req.celular)) {
             return ResponseEntity.badRequest().body("Faltan campos");
         }
         if (usuarioRepositorio.existePorEmail(req.email)) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("El email ya está registrado");
+        }
+
+        String celularNormalizado = req.celular == null ? "" : req.celular.replaceAll("\\s+", "");
+        if (!celularNormalizado.matches("^\\d{9}$")) {
+            return ResponseEntity.badRequest().body("El celular debe tener 9 dígitos numéricos");
         }
 
         var bCrypt = new BCryptPasswordEncoder();
@@ -36,6 +41,7 @@ public class AutenticacionControlador {
         Usuario u = new Usuario();
         u.setNombre(req.nombre);
         u.setEmail(req.email);
+        u.setCelular(celularNormalizado);
         u.setPassword(bCrypt.encode(req.password));
         // Ajusta si en tu entidad 'rol' es enum; si es String, esto funciona:
         u.setRol(Usuario.Rol.CLIENTE);  // ✅
@@ -61,7 +67,7 @@ public class AutenticacionControlador {
     }
 
     // -------- DTOs --------
-    public static class SolicitudRegistro { public String nombre; public String email; public String password; }
+    public static class SolicitudRegistro { public String nombre; public String email; public String password; public String celular; }
     public static class SolicitudLogin { public String email; public String password; }
     public static class UsuarioPublico {
         public Integer idUsuario; public String nombre; public String email; public String rol;

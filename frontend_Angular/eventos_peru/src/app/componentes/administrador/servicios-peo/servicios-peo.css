@@ -1,0 +1,95 @@
+.servicios-peo {
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  min-height: 60vh;
+}
+
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.encabezado h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.encabezado p {
+  margin: 0.25rem 0 0;
+  color: #6b7280;
+}
+
+.btn-recargar {
+  border: none;
+  background: #0d6efd;
+  color: #fff;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-recargar:hover {
+  transform: translateY(-1px);
+}
+
+.tabla-servicios {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-servicios th,
+.tabla-servicios td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabla-servicios thead {
+  background: #f8fafc;
+}
+
+.nombre-servicio {
+  display: flex;
+  flex-direction: column;
+}
+
+.nombre-servicio small {
+  color: #6b7280;
+}
+
+.estado {
+  text-align: center;
+  color: #6b7280;
+  margin-top: 2rem;
+}
+
+.alerta {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tabla-servicios th,
+  .tabla-servicios td {
+    font-size: 0.9rem;
+  }
+}
