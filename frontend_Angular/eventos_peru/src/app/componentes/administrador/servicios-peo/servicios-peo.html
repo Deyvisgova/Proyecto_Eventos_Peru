@@ -1,0 +1,45 @@
+<section class="servicios-peo">
+  <header class="encabezado">
+    <div>
+      <h2>🛠️ Servicios PEO</h2>
+      <p>Consulta y gestiona los servicios ofrecidos por los proveedores.</p>
+    </div>
+    <button type="button" (click)="cargarServicios()" class="btn-recargar">
+      <i class="bi bi-arrow-repeat"></i>
+      Actualizar
+    </button>
+  </header>
+
+  <div *ngIf="cargando" class="estado">Cargando servicios...</div>
+  <div *ngIf="!cargando && error" class="alerta">{{ error }}</div>
+
+  <table *ngIf="!cargando && !error && servicios.length" class="tabla-servicios">
+    <thead>
+      <tr>
+        <th>Servicio</th>
+        <th>Proveedor</th>
+        <th>Evento</th>
+        <th>Precio (S/)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let servicio of servicios">
+        <td>
+          <div class="nombre-servicio">
+            <strong>{{ servicio.nombreServicio }}</strong>
+            <small *ngIf="servicio.descripcion">{{ servicio.descripcion }}</small>
+          </div>
+        </td>
+        <td>{{ obtenerNombreProveedor(servicio) }}</td>
+        <td>{{ obtenerNombreEvento(servicio) }}</td>
+        <td>
+          {{ servicio.precio | number: '1.2-2' }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p *ngIf="!cargando && !error && !servicios.length" class="estado">
+    No hay servicios registrados.
+  </p>
+</section>
