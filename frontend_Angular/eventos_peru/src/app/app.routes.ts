@@ -58,6 +58,11 @@ export const routes: Routes = [
           import('./componentes/administrador/proveedores/proveedores').then((m) => m.Proveedores),
       },
       {
+        path: 'eventos',
+        loadComponent: () =>
+          import('./componentes/administrador/eventos/eventos').then((m) => m.Eventos),
+      },
+      {
         path: 'servicios',
         loadComponent: () =>
           import('./componentes/administrador/servicios-peo/servicios-peo').then((m) => m.ServiciosPeo),
