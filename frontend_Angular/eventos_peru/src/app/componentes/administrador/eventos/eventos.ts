@@ -1,4 +1,12 @@
+
 import { Component, OnInit, computed, signal } from '@angular/core';
+
+
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+
+import { Component, OnInit } from '@angular/core';
+
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventoService } from '../../../servicios/evento.service';
@@ -14,6 +22,7 @@ declare const bootstrap: any;
   imports: [CommonModule, FormsModule],
 })
 export class Eventos implements OnInit {
+
   private readonly eventosSignal = signal<Evento[]>([]);
   readonly terminoBusqueda = signal('');
   readonly eventosFiltrados = computed(() => {
@@ -32,28 +41,76 @@ export class Eventos implements OnInit {
 
   cargando = false;
 
+  eventos: Evento[] = [];
+  cargando = false;
+  terminoBusqueda = '';
+
+
   nuevoEvento: Evento = this.crearEventoBase();
   eventoSeleccionado: Evento | null = null;
   eventoAEliminar: Evento | null = null;
 
+
   constructor(private readonly eventoService: EventoService) {}
+
+
+  constructor(
+    private readonly eventoService: EventoService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
+
+  constructor(private eventoService: EventoService) {}
+
+
 
   ngOnInit(): void {
     this.cargarEventos();
   }
 
+
+
+  get eventosFiltrados(): Evento[] {
+    const termino = this.terminoBusqueda.trim().toLowerCase();
+    if (!termino) {
+      return this.eventos;
+    }
+
+    return this.eventos.filter((evento) => {
+      const nombreNormalizado = (evento.nombreEvento ?? '').toLowerCase();
+      return nombreNormalizado.includes(termino);
+    });
+
+    return this.eventos.filter((evento) =>
+      evento.nombreEvento?.toLowerCase().includes(termino)
+    );
+
+  }
+
+
   cargarEventos(): void {
     this.cargando = true;
     this.eventoService.obtenerEventos().subscribe({
       next: (data) => {
+
         const eventos = Array.isArray(data) ? data : [];
         this.eventosSignal.set(eventos);
         this.cargando = false;
+
+
+        this.eventos = Array.isArray(data) ? [...data] : [];
+        this.cargando = false;
+        this.cdr.detectChanges();
+
+        this.eventos = data;
+        this.cargando = false;
+
+
       },
       error: (error) => {
         console.error('Error al cargar eventos', error);
         this.cargando = false;
         alert('No se pudieron cargar los eventos.');
+
       },
     });
   }
@@ -65,6 +122,20 @@ export class Eventos implements OnInit {
   abrirModalNuevo(): void {
     this.nuevoEvento = this.crearEventoBase();
     this.abrirModal('modalNuevoEvento');
+
+
+        this.cdr.detectChanges();
+
+
+      },
+    });
+  }
+
+  abrirModalNuevo(): void {
+    this.nuevoEvento = this.crearEventoBase();
+    const modal = new bootstrap.Modal(document.getElementById('modalNuevoEvento'));
+    modal.show();
+
   }
 
   guardarEvento(): void {
@@ -77,7 +148,11 @@ export class Eventos implements OnInit {
     this.eventoService.crearEvento({ idEvento: null, nombreEvento: nombre }).subscribe({
       next: () => {
         this.cargarEventos();
+
         this.cerrarModal('modalNuevoEvento');
+
+        bootstrap.Modal.getInstance(document.getElementById('modalNuevoEvento'))?.hide();
+
       },
       error: (error) => {
         console.error('Error al registrar el evento', error);
@@ -88,7 +163,12 @@ export class Eventos implements OnInit {
 
   abrirModalEditar(evento: Evento): void {
     this.eventoSeleccionado = { ...evento };
+
     this.abrirModal('modalEditarEvento');
+
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarEvento'));
+    modal.show();
+
   }
 
   actualizarEvento(): void {
@@ -111,7 +191,11 @@ export class Eventos implements OnInit {
       .subscribe({
         next: () => {
           this.cargarEventos();
+
           this.cerrarModal('modalEditarEvento');
+
+          bootstrap.Modal.getInstance(document.getElementById('modalEditarEvento'))?.hide();
+
         },
         error: (error) => {
           console.error('Error al actualizar evento', error);
@@ -122,7 +206,12 @@ export class Eventos implements OnInit {
 
   abrirModalEliminar(evento: Evento): void {
     this.eventoAEliminar = evento;
+
     this.abrirModal('modalEliminarEvento');
+
+    const modal = new bootstrap.Modal(document.getElementById('modalEliminarEvento'));
+    modal.show();
+
   }
 
   eliminarEvento(): void {
@@ -134,7 +223,11 @@ export class Eventos implements OnInit {
     this.eventoService.eliminarEvento(this.eventoAEliminar.idEvento).subscribe({
       next: () => {
         this.cargarEventos();
+
         this.cerrarModal('modalEliminarEvento');
+
+        bootstrap.Modal.getInstance(document.getElementById('modalEliminarEvento'))?.hide();
+
         this.eventoAEliminar = null;
       },
       error: (error) => {
@@ -147,6 +240,7 @@ export class Eventos implements OnInit {
   private crearEventoBase(): Evento {
     return { idEvento: null, nombreEvento: '' };
   }
+
 
   private abrirModal(id: string): void {
     if (typeof document === 'undefined') {
@@ -170,4 +264,5 @@ export class Eventos implements OnInit {
     }
     bootstrap.Modal.getInstance(modalElement)?.hide();
   }
+
 }

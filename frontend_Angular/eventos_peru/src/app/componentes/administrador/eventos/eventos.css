@@ -4,13 +4,19 @@
   gap: 1.5rem;
 }
 
+
+
+
+
 .cabecera {
   width: 100%;
 }
 
+
 .cabecera h2 {
   font-weight: 700;
 }
+
 
 .cabecera-texto {
   flex: 1 1 320px;
@@ -23,6 +29,11 @@
 .acciones input {
   flex: 1 1 220px;
   min-width: 200px;
+
+.acciones input {
+  max-width: 260px;
+
+
 }
 
 .sombra {
@@ -60,7 +71,14 @@
     flex: 1;
   }
 
+
   .acciones {
     width: 100%;
   }
+
+
+  .acciones {
+    width: 100%;
+  }
+
 }
