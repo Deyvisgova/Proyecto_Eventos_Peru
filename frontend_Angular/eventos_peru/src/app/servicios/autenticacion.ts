@@ -6,7 +6,7 @@ export class AutenticacionService {
   private http = inject(HttpClient);
   private api = 'http://localhost:8080/api/auth';
 
-  registrar(body: { nombre: string; email: string; password: string }) {
+  registrar(body: { nombre: string; email: string; password: string; celular: string }) {
     // El backend devuelve texto: "Registro exitoso"
     return this.http.post(`${this.api}/register`, body, { responseType: 'text' });
   }
