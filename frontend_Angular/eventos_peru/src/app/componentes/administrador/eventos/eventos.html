@@ -1,13 +1,10 @@
 <div class="eventos-admin">
   <div class="cabecera d-flex flex-column flex-md-row align-items-md-center gap-3">
-
     <div class="cabecera-texto">
-
-    <div>
-
       <h2 class="m-0">📅 Gestión de eventos</h2>
       <p class="text-muted mb-0">Consulta, crea, edita o elimina los eventos disponibles.</p>
     </div>
+
     <div class="acciones ms-md-auto d-flex gap-2 w-100 w-md-auto">
       <input
         type="text"
@@ -45,7 +42,7 @@
                 No hay eventos para mostrar.
               </td>
             </tr>
-            <tr *ngFor="let evento of eventosFiltrados; index as i">
+            <tr *ngFor="let evento of eventosFiltrados; index as i; trackBy: trackByEventoId">
               <td>{{ i + 1 }}</td>
               <td class="fw-semibold">{{ evento.nombreEvento }}</td>
               <td class="text-end">
