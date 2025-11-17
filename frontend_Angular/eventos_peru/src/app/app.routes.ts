@@ -48,6 +48,12 @@ export const routes: Routes = [
       // Hijas típicas (CAMBIA si tus archivos/clases se llaman distinto)
 
       {
+        path: 'inicio',
+        loadComponent: () =>
+          import('./componentes/administrador/inicio/inicio').then((m) => m.InicioAdmin),
+      },
+
+      {
         path: 'usuarios',
         loadComponent: () =>
           import('./componentes/administrador/usuarios/usuarios').then((m) => m.Usuarios),

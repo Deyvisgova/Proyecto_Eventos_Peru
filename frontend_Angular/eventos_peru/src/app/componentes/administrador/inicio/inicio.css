@@ -1,0 +1,169 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cabecera {
+  background: linear-gradient(135deg, #0f172a, #111827, #0b6bcb);
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+}
+
+.cabecera h2 {
+  margin: 4px 0 6px;
+  color: #fff;
+}
+
+.subtitulo {
+  margin: 0;
+  max-width: 620px;
+  color: #cbd5e1;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  margin: 0;
+  color: #93c5fd;
+}
+
+.acciones {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn.btn-light {
+  background: #f8fafc;
+  color: #0f172a;
+  border: none;
+}
+
+.btn.btn-primary {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: none;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid.cols-4 {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.grid.columnas-2 {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.kpi {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.icono {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.icono.azul {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+.icono.verde {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+
+.icono.amarillo {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: #1f2937;
+}
+
+.icono.morado {
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+}
+
+.info .label {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
+}
+
+.valor {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 2px 0;
+}
+
+.delta {
+  color: #16a34a;
+  margin: 0;
+  font-weight: 600;
+}
+
+.descripcion {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.grafico .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.grafico h3 {
+  margin: 4px 0 0;
+}
+
+.chart-wrapper {
+  height: 320px;
+}
+
+.badge.bg-soft {
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .cabecera {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .acciones {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

@@ -2,17 +2,24 @@
 <div class="panel-admin">
   <!-- Barra superior -->
   <header class="barra-superior">
-    <h1>📊 Panel de Administración</h1>
-
-    <!-- 🔹 Barra superior solo del ADMIN -->
-    <div
-      class="w-100 bg-dark text-white d-flex justify-content-between align-items-center px-3 py-2 shadow-sm"
-    >
-      <div class="fw-bold">
-        Administrador: <span class="text-info">{{ nombre }}</span>
+    <div class="brand">
+      <div class="logo">EP</div>
+      <div>
+        <p class="eyebrow">Panel ejecutivo</p>
+        <h1>Administración</h1>
+        <p class="subtitulo">Controla usuarios, proveedores y reportes en un solo lugar.</p>
       </div>
-      <button class="btn btn-sm btn-danger" (click)="cerrarSesion()">
-        <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+    </div>
+
+    <div class="perfil">
+      <div>
+        <span class="pill">Activo</span>
+        <p class="nombre">{{ nombre || 'Administrador' }}</p>
+        <p class="rol">Rol: Administrador</p>
+      </div>
+      <button class="btn-salida" (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-right"></i>
+        Cerrar sesión
       </button>
     </div>
   </header>
@@ -20,14 +27,25 @@
   <div class="contenido">
     <!-- Menú lateral (sidebar) -->
     <aside class="menu-lateral">
+      <div class="menu-header">
+        <p class="menu-titulo">Reportes</p>
+        <p class="menu-texto">Indicadores y desempeño general.</p>
+      </div>
       <nav>
         <a
           routerLink="inicio"
           routerLinkActive="activo"
           [routerLinkActiveOptions]="{ exact: true }"
         >
-          <i class="bi bi-house-door"></i> Inicio
+          <i class="bi bi-graph-up"></i> Inicio y analítica
         </a>
+      </nav>
+
+      <div class="menu-header">
+        <p class="menu-titulo">Gestión</p>
+        <p class="menu-texto">Administra los módulos principales.</p>
+      </div>
+      <nav>
         <a routerLink="usuarios" routerLinkActive="activo">
           <i class="bi bi-people"></i> Usuarios registrados
         </a>

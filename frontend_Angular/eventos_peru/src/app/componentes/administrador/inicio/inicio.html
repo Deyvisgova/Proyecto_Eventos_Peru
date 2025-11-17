@@ -1,0 +1,74 @@
+<section class="dashboard">
+  <div class="cabecera">
+    <div>
+      <p class="eyebrow">Resumen operativo</p>
+      <h2>Reportes y métricas en tiempo real</h2>
+      <p class="subtitulo">
+        Visualiza el desempeño de reservas, eventos y proveedores para tomar decisiones rápidas.
+      </p>
+    </div>
+    <div class="acciones">
+      <button class="btn btn-light shadow-sm">
+        <i class="bi bi-cloud-arrow-down"></i>
+        Exportar
+      </button>
+      <button class="btn btn-primary shadow-sm">
+        <i class="bi bi-plus-circle"></i>
+        Nueva alerta
+      </button>
+    </div>
+  </div>
+
+  <div class="grid cols-4">
+    <article class="card kpi" *ngFor="let kpi of kpis">
+      <div class="icono" [ngClass]="kpi.color">
+        <i [class]="kpi.icono"></i>
+      </div>
+      <div class="info">
+        <p class="label">{{ kpi.titulo }}</p>
+        <div class="valor">{{ kpi.valor }}</div>
+        <p class="delta">{{ kpi.delta }}</p>
+        <p class="descripcion">{{ kpi.descripcion }}</p>
+      </div>
+    </article>
+  </div>
+
+  <div class="grid columnas-2">
+    <article class="card grafico">
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">Tendencia de reservas</p>
+          <h3>Reservas vs. Cotizaciones</h3>
+        </div>
+        <span class="badge bg-soft">Actualizado hace 5 min</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas
+          baseChart
+          [data]="barChartData"
+          [options]="barChartOptions"
+          chartType="bar"
+        ></canvas>
+      </div>
+    </article>
+
+    <article class="card grafico">
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">Mix de eventos</p>
+          <h3>Distribución por categoría</h3>
+        </div>
+        <span class="badge bg-soft">Últimos 90 días</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas
+          baseChart
+          [data]="pieChartData"
+          [labels]="pieChartLabels"
+          [options]="pieChartOptions"
+          [type]="pieChartType"
+        ></canvas>
+      </div>
+    </article>
+  </div>
+</section>
