@@ -1,13 +1,16 @@
 package com.eventosperu.backend.controlador;
 
+import com.eventosperu.backend.model.EmailNotificacion;
 import com.eventosperu.backend.model.Proveedor;
 import com.eventosperu.backend.model.Usuario;
 import com.eventosperu.backend.repositorio.ProveedorRepositorio;
 import com.eventosperu.backend.repositorio.UsuarioRepositorio;
+import com.eventosperu.backend.servicio.EmailNotificacionServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Locale;
@@ -23,6 +26,9 @@ public class ProveedorControlador {
 
     @Autowired
     private UsuarioRepositorio usuarioRepositorio;
+
+    @Autowired
+    private EmailNotificacionServicio emailNotificacionServicio;
 
     // Obtener todos los proveedores
     @GetMapping
@@ -95,11 +101,43 @@ public class ProveedorControlador {
         }
 
         Proveedor actualizado = proveedorRepositorio.save(proveedor);
+
+        Usuario destinatario = proveedor.getUsuario();
+        if (destinatario != null && StringUtils.hasText(destinatario.getEmail())) {
+            EmailNotificacion.Tipo tipo = null;
+            if (nuevoEstado == Proveedor.EstadoProveedor.APROBADO) {
+                tipo = EmailNotificacion.Tipo.PROVEEDOR_ESTADO_APROBADO;
+            } else if (nuevoEstado == Proveedor.EstadoProveedor.RECHAZADO) {
+                tipo = EmailNotificacion.Tipo.PROVEEDOR_ESTADO_RECHAZADO;
+            }
+
+            if (tipo != null) {
+                String asunto = StringUtils.hasText(request.getAsunto())
+                        ? request.getAsunto().trim()
+                        : generarAsuntoPorEstado(nuevoEstado);
+                String mensaje = StringUtils.hasText(request.getMensaje())
+                        ? request.getMensaje().trim()
+                        : generarMensajePorEstado(proveedor, nuevoEstado);
+
+                String datosJson = construirDatosJson(proveedor, nuevoEstado);
+                emailNotificacionServicio.registrarYEnviar(
+                        destinatario,
+                        destinatario.getEmail(),
+                        tipo,
+                        asunto,
+                        mensaje,
+                        datosJson
+                );
+            }
+        }
+
         return ResponseEntity.ok(actualizado);
     }
 
     public static class SolicitudEstado {
         private String estado;
+        private String asunto;
+        private String mensaje;
 
         public String getEstado() {
             return estado;
@@ -107,6 +145,22 @@ public class ProveedorControlador {
 
         public void setEstado(String estado) {
             this.estado = estado;
+        }
+
+        public String getAsunto() {
+            return asunto;
+        }
+
+        public void setAsunto(String asunto) {
+            this.asunto = asunto;
+        }
+
+        public String getMensaje() {
+            return mensaje;
+        }
+
+        public void setMensaje(String mensaje) {
+            this.mensaje = mensaje;
         }
 
         public Proveedor.EstadoProveedor obtenerEstado() {
@@ -119,5 +173,43 @@ public class ProveedorControlador {
                 return null;
             }
         }
+    }
+
+    private String generarAsuntoPorEstado(Proveedor.EstadoProveedor estado) {
+        if (estado == Proveedor.EstadoProveedor.APROBADO) {
+            return "Bienvenido a Eventos Perú";
+        }
+        if (estado == Proveedor.EstadoProveedor.RECHAZADO) {
+            return "Actualización sobre tu registro como proveedor";
+        }
+        return "Actualización de estado";
+    }
+
+    private String generarMensajePorEstado(Proveedor proveedor, Proveedor.EstadoProveedor estado) {
+        String nombreEmpresa = proveedor.getNombreEmpresa() != null ? proveedor.getNombreEmpresa() : "proveedor";
+        if (estado == Proveedor.EstadoProveedor.APROBADO) {
+            return "Hola " + nombreEmpresa + ",\n\n" +
+                    "¡Bienvenido a Eventos Perú! Tu registro ha sido aprobado y ya puedes ingresar al panel del proveedor para " +
+                    "gestionar tus servicios y responder a los clientes.\n\n" +
+                    "Gracias por confiar en nosotros.\n" +
+                    "Equipo de Eventos Perú";
+        }
+        if (estado == Proveedor.EstadoProveedor.RECHAZADO) {
+            return "Hola " + nombreEmpresa + ",\n\n" +
+                    "Tras revisar tu solicitud, por el momento no podremos aprobar tu cuenta. " +
+                    "Si tienes dudas o deseas compartir más información, puedes responder a este correo.\n\n" +
+                    "Saludos,\nEquipo de Eventos Perú";
+        }
+        return "Hola " + nombreEmpresa + ", tu estado ha sido actualizado.";
+    }
+
+    private String construirDatosJson(Proveedor proveedor, Proveedor.EstadoProveedor estado) {
+        Integer id = proveedor.getIdProveedor() != null ? proveedor.getIdProveedor() : 0;
+        String empresa = proveedor.getNombreEmpresa() != null ? proveedor.getNombreEmpresa() : "";
+        String empresaEscapada = empresa.replace("\"", "\\\"");
+        return "{" +
+                "\"proveedorId\":" + id + "," +
+                "\"empresa\":\"" + empresaEscapada + "\"," +
+                "\"estado\":\"" + estado.name() + "\"}";
     }
 }
