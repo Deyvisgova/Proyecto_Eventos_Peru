@@ -74,6 +74,31 @@ export const routes: Routes = [
   {
     path: 'proveedor',
     loadComponent: () => import('./componentes/proveedor/proveedor').then((m) => m.Proveedor),
+    children: [
+      { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+      {
+        path: 'inicio',
+        loadComponent: () =>
+          import('./componentes/proveedor/inicio/inicio').then((m) => m.InicioProveedor),
+      },
+      {
+        path: 'catalogo-servicios',
+        loadComponent: () =>
+          import('./componentes/proveedor/catalogo-servicios/catalogo-servicios').then(
+            (m) => m.CatalogoServicios
+          ),
+      },
+      {
+        path: 'reservas',
+        loadComponent: () =>
+          import('./componentes/proveedor/reservas/reservas').then((m) => m.ReservasProveedor),
+      },
+      {
+        path: 'subir-logo',
+        loadComponent: () =>
+          import('./componentes/proveedor/subir-logo/subir-logo').then((m) => m.SubirLogo),
+      },
+    ],
   },
 
   /* ================== CLIENTE (PÁGINA PRINCIPAL) ================== */

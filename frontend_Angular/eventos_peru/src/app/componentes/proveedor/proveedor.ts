@@ -1,12 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ProveedorService } from '../../servicios/proveedor.service';
 
 @Component({
   selector: 'app-proveedor',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './proveedor.html',
   styleUrls: ['./proveedor.css'],
 })
