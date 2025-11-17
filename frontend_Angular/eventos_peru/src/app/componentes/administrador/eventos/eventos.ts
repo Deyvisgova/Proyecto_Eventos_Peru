@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { EventoService } from '../../../servicios/evento.service';
 import { Evento } from '../../../modelos/evento';
 
@@ -41,29 +42,31 @@ export class Eventos implements OnInit {
       const nombreNormalizado = (evento.nombreEvento ?? '').toLowerCase();
       return nombreNormalizado.includes(termino);
     });
-
-    return this.eventos.filter((evento) => evento.nombreEvento?.toLowerCase().includes(termino));
   }
 
   cargarEventos(): void {
     this.cargando = true;
-    this.eventoService.obtenerEventos().subscribe({
-      next: (data) => {
-        this.eventos = Array.isArray(data) ? [...data] : [];
-        this.cargando = false;
-        this.cdr.detectChanges();
-
-        this.eventos = data;
-        this.cargando = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar eventos', error);
-        this.cargando = false;
-        alert('No se pudieron cargar los eventos.');
-
-        this.cdr.detectChanges();
-      },
-    });
+    this.eventoService
+      .obtenerEventos()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          const eventos = Array.isArray(data) ? data : [];
+          this.eventos = [...eventos].sort((a, b) =>
+            (a.nombreEvento ?? '').localeCompare(b.nombreEvento ?? '', 'es', { sensitivity: 'base' })
+          );
+        },
+        error: (error) => {
+          console.error('Error al cargar eventos', error);
+          alert('No se pudieron cargar los eventos.');
+          this.eventos = [];
+        },
+      });
   }
 
   abrirModalNuevo(): void {
@@ -153,5 +156,9 @@ export class Eventos implements OnInit {
 
   private crearEventoBase(): Evento {
     return { idEvento: null, nombreEvento: '' };
+  }
+
+  trackByEventoId(index: number, evento: Evento): number | null {
+    return evento.idEvento ?? index;
   }
 }
