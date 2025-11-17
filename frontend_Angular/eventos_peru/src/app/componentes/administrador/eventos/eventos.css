@@ -26,8 +26,6 @@
 .acciones input {
   flex: 1 1 220px;
   min-width: 200px;
-=======
-.acciones input {
   max-width: 260px;
 
 }
