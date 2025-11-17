@@ -20,7 +20,7 @@ export class Eventos implements OnInit {
   terminoBusqueda = '';
 
   nuevoEvento: Evento = this.crearEventoBase();
-  eventoSeleccionado: Evento | null = null;
+  eventoSeleccionado: Evento = this.crearEventoBase();
   eventoAEliminar: Evento | null = null;
 
   constructor(
@@ -58,7 +58,9 @@ export class Eventos implements OnInit {
         next: (data) => {
           const eventos = Array.isArray(data) ? data : [];
           this.eventos = [...eventos].sort((a, b) =>
-            (a.nombreEvento ?? '').localeCompare(b.nombreEvento ?? '', 'es', { sensitivity: 'base' })
+            (a.nombreEvento ?? '').localeCompare(b.nombreEvento ?? '', 'es', {
+              sensitivity: 'base',
+            })
           );
         },
         error: (error) => {
