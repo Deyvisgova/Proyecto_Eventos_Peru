@@ -44,6 +44,14 @@ export class Proveedores implements OnInit, OnDestroy {
   proveedores: ProveedorView[] = [];
   mensaje: Mensaje | null = null;
 
+  modalAbierto = false;
+  modalEstado: Estado | null = null;
+  modalProveedor: ProveedorView | null = null;
+  modalAsunto = '';
+  modalMensaje = '';
+  modalError = '';
+  modalEnviando = false;
+
   private mensajeTimer?: ReturnType<typeof setTimeout>;
 
   ngOnInit() {
@@ -103,10 +111,11 @@ export class Proveedores implements OnInit, OnDestroy {
   }
 
   // funciones para aprobar y rechazar
-  private actualizarEstado(id: number, estado: Estado) {
+  private actualizarEstado(id: number, estado: Estado, payload?: Record<string, any>) {
     this.cargando = true;
     this.error = '';
-    return this.http.put<any>(`${this.API}/${id}/estado`, { estado });
+    const body = { estado, ...(payload ?? {}) };
+    return this.http.put<any>(`${this.API}/${id}/estado`, body);
   }
 
   private mostrarMensaje(texto: string, tipo: TipoMensaje = 'info') {
@@ -174,38 +183,95 @@ export class Proveedores implements OnInit, OnDestroy {
   }
 
   aprobar(p: ProveedorView) {
-    this.actualizarEstado(p.id, 'APROBADO').subscribe({
+    this.abrirModal(p, 'APROBADO');
+  }
+
+  rechazar(p: ProveedorView) {
+    this.abrirModal(p, 'RECHAZADO');
+  }
+
+  private abrirModal(proveedor: ProveedorView, estado: Estado) {
+    this.modalProveedor = proveedor;
+    this.modalEstado = estado;
+    this.modalEnviando = false;
+    this.modalError = '';
+    this.modalAsunto = this.generarAsuntoPorEstado(estado);
+    this.modalMensaje = estado === 'APROBADO' ? this.generarMensajeBienvenida(proveedor) : '';
+    this.modalAbierto = true;
+  }
+
+  cerrarModalAccion() {
+    this.modalAbierto = false;
+    this.modalProveedor = null;
+    this.modalEstado = null;
+    this.modalMensaje = '';
+    this.modalError = '';
+  }
+
+  confirmarCambioEstado() {
+    if (!this.modalProveedor || !this.modalEstado) {
+      return;
+    }
+    const mensaje = this.modalMensaje.trim();
+    if (!mensaje) {
+      this.modalError =
+        this.modalEstado === 'RECHAZADO'
+          ? 'Por favor indica los motivos del rechazo.'
+          : 'El mensaje no puede estar vacío.';
+      return;
+    }
+
+    const asunto = this.modalAsunto.trim() || this.generarAsuntoPorEstado(this.modalEstado);
+    this.modalError = '';
+    this.modalEnviando = true;
+
+    const proveedorObjetivo = this.modalProveedor as ProveedorView;
+    const estadoObjetivo = this.modalEstado as Estado;
+
+    this.actualizarEstado(proveedorObjetivo.id, estadoObjetivo, {
+      asunto,
+      mensaje,
+    }).subscribe({
       next: (resp) => {
         const actualizado = this.extraerProveedorActualizado(resp);
-        const actualizadoLocal = this.actualizarEnMemoria(p, 'APROBADO', actualizado ?? undefined);
+        const actualizadoLocal = this.actualizarEnMemoria(
+          proveedorObjetivo,
+          estadoObjetivo,
+          actualizado ?? undefined
+        );
         if (actualizadoLocal) {
           this.cargando = false;
         }
-        this.mostrarMensaje('Proveedor aprobado correctamente.', 'success');
+        this.modalEnviando = false;
+        this.cerrarModalAccion();
+        const texto =
+          estadoObjetivo === 'APROBADO'
+            ? 'Proveedor aprobado y correo de bienvenida enviado.'
+            : 'Proveedor rechazado y correo notificado.';
+        const tipo: TipoMensaje = estadoObjetivo === 'APROBADO' ? 'success' : 'info';
+        this.mostrarMensaje(texto, tipo);
       },
       error: () => {
         this.cargando = false;
-        this.error = 'No se pudo aprobar.';
-        this.mostrarMensaje('No se pudo aprobar al proveedor.', 'danger');
+        this.modalEnviando = false;
+        this.modalError = 'No se pudo completar la acción. Inténtalo nuevamente.';
+        this.mostrarMensaje('No se pudo actualizar el estado del proveedor.', 'danger');
       },
     });
   }
 
-  rechazar(p: ProveedorView) {
-    this.actualizarEstado(p.id, 'RECHAZADO').subscribe({
-      next: (resp) => {
-        const actualizado = this.extraerProveedorActualizado(resp);
-        const actualizadoLocal = this.actualizarEnMemoria(p, 'RECHAZADO', actualizado ?? undefined);
-        if (actualizadoLocal) {
-          this.cargando = false;
-        }
-        this.mostrarMensaje('Proveedor rechazado.', 'info');
-      },
-      error: () => {
-        this.cargando = false;
-        this.error = 'No se pudo rechazar.';
-        this.mostrarMensaje('No se pudo rechazar al proveedor.', 'danger');
-      },
-    });
+  private generarAsuntoPorEstado(estado: Estado) {
+    if (estado === 'APROBADO') {
+      return 'Bienvenido a Eventos Perú';
+    }
+    if (estado === 'RECHAZADO') {
+      return 'Actualización sobre tu registro';
+    }
+    return 'Actualización de estado';
+  }
+
+  private generarMensajeBienvenida(proveedor: ProveedorView) {
+    const empresa = proveedor.razonSocial || 'socio';
+    return `Hola ${empresa},\n\n¡Bienvenido a Eventos Perú! Tu registro ya fue aprobado. Desde ahora puedes ingresar al panel del proveedor, publicar tus servicios y responder a los clientes.\n\nGracias por confiar en nosotros.\nEquipo de Eventos Perú.`;
   }
 }

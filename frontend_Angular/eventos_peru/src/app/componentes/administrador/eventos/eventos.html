@@ -1,0 +1,133 @@
+<div class="eventos-admin">
+  <div class="cabecera d-flex flex-column flex-md-row align-items-md-center gap-3">
+
+    <div class="cabecera-texto">
+
+    <div>
+
+      <h2 class="m-0">📅 Gestión de eventos</h2>
+      <p class="text-muted mb-0">Consulta, crea, edita o elimina los eventos disponibles.</p>
+    </div>
+    <div class="acciones ms-md-auto d-flex gap-2 w-100 w-md-auto">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Buscar evento..."
+        [(ngModel)]="terminoBusqueda"
+      />
+      <button class="btn btn-primary" (click)="abrirModalNuevo()">
+        <i class="bi bi-plus-circle me-1"></i>
+        Nuevo evento
+      </button>
+    </div>
+  </div>
+
+  <div class="card sombra">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Nombre del evento</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="3" class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Cargando eventos...
+              </td>
+            </tr>
+            <tr *ngIf="!cargando && eventosFiltrados.length === 0">
+              <td colspan="3" class="text-center py-4 text-muted">
+                No hay eventos para mostrar.
+              </td>
+            </tr>
+            <tr *ngFor="let evento of eventosFiltrados; index as i">
+              <td>{{ i + 1 }}</td>
+              <td class="fw-semibold">{{ evento.nombreEvento }}</td>
+              <td class="text-end">
+                <button class="btn btn-outline-primary btn-sm me-2" (click)="abrirModalEditar(evento)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" (click)="abrirModalEliminar(evento)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: nuevo evento -->
+  <div class="modal fade" id="modalNuevoEvento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Registrar evento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Nombre del evento</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="nuevoEvento.nombreEvento"
+            placeholder="Ej. Matrimonio, Graduación..."
+          />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="guardarEvento()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: editar evento -->
+  <div class="modal fade" id="modalEditarEvento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar evento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Nombre del evento</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="eventoSeleccionado!.nombreEvento"
+            placeholder="Nombre del evento"
+          />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="actualizarEvento()">Actualizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: eliminar -->
+  <div class="modal fade" id="modalEliminarEvento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4">
+          <i class="bi bi-exclamation-triangle text-warning fs-1 mb-3"></i>
+          <p class="mb-0">
+            ¿Seguro que deseas eliminar el evento <strong>{{ eventoAEliminar?.nombreEvento }}</strong>?
+          </p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger" (click)="eliminarEvento()">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

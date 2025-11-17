@@ -74,4 +74,50 @@
       </tbody>
     </table>
   </div>
+
+  <div class="modal-overlay" *ngIf="modalAbierto">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <p class="text-muted small mb-1">{{ modalEstado === 'APROBADO' ? 'Aprobar proveedor' : 'Rechazar proveedor' }}</p>
+          <h5 class="modal-title mb-0">
+            {{ modalEstado === 'APROBADO' ? 'Enviar correo de bienvenida' : 'Notificar motivos del rechazo' }}
+          </h5>
+        </div>
+        <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModalAccion()" [disabled]="modalEnviando"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">
+          Se enviará un correo a <strong>{{ modalProveedor?.email }}</strong> ({{ modalProveedor?.razonSocial }}).
+        </p>
+        <div class="mb-3">
+          <label class="form-label">Asunto</label>
+          <input type="text" class="form-control" [(ngModel)]="modalAsunto" [disabled]="modalEnviando" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mensaje</label>
+          <textarea
+            class="form-control"
+            rows="8"
+            [(ngModel)]="modalMensaje"
+            [placeholder]="modalEstado === 'RECHAZADO' ? 'Describe los motivos del rechazo y las indicaciones para el proveedor.' : ''"
+            [disabled]="modalEnviando"
+          ></textarea>
+          <div class="form-text" *ngIf="modalEstado === 'RECHAZADO'">
+            Puedes personalizar los motivos y pasos a seguir.
+          </div>
+        </div>
+        <div *ngIf="modalError" class="alert alert-danger py-2">
+          {{ modalError }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-link" type="button" (click)="cerrarModalAccion()" [disabled]="modalEnviando">Cancelar</button>
+        <button class="btn btn-primary" type="button" (click)="confirmarCambioEstado()" [disabled]="modalEnviando">
+          <span *ngIf="modalEnviando" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          {{ modalEstado === 'APROBADO' ? 'Enviar bienvenida' : 'Enviar rechazo' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
