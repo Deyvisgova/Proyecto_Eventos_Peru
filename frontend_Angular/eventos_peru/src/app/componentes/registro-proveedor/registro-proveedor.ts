@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { ProveedorService } from '../../servicios/proveedor.service'; // ✅ agregado para conexión backend
 
 @Component({
@@ -93,21 +94,29 @@ export class RegistroProveedor {
     this.proveedorSrv.registrar(dto).subscribe({
       next: () => {
         this.cargando = false;
-        alert(
-          '✅ Solicitud enviada 🎉\n\nSu cuenta está pendiente de validación por el administrador.'
-        );
-        // 🔄 Limpiar formulario
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Solicitud enviada 🎉',
+          text: 'Su cuenta está pendiente de validación por el administrador.',
+          confirmButtonText: 'Aceptar',
+        });
+
+        // Limpiar formulario
         this.ruc = '';
         this.nombre_empresa = '';
         this.direccion = '';
       },
-      error: (err: any) => {
+
+      error: () => {
         this.cargando = false;
-        const msg =
-          typeof err?.error === 'string'
-            ? err.error
-            : err?.error?.message || 'Error al registrar proveedor.';
-        alert(msg);
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'Solicitud en proceso',
+          text: 'Su cuenta está en espera de validación. Por favor, tenga paciencia.',
+          confirmButtonText: 'Aceptar',
+        });
       },
     });
   }
