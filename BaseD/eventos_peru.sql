@@ -62,8 +62,7 @@ CREATE TABLE `detalle_reserva` (
   `id_reserva` int(11) NOT NULL,
   `cantidad` int(11) DEFAULT 1,
   `precio_unitario` double NOT NULL,
-  `id_opcion` int(11) NOT NULL,
-  `id_servicio` int(11) NOT NULL
+  `id_opcion` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -74,7 +73,7 @@ CREATE TABLE `detalle_reserva` (
 
 CREATE TABLE `email_notificacion` (
   `id_email` int(11) NOT NULL,
-  `id_usuario` int(11) DEFAULT NULL,
+  `id_usuario` int(11) NOT NULL,
   `destinatario_email` varchar(200) NOT NULL,
   `tipo` enum('PROVEEDOR_REGISTRO_PENDIENTE','PROVEEDOR_ESTADO_APROBADO','PROVEEDOR_ESTADO_RECHAZADO','CLIENTE_RESERVA_DETALLE','TIPO_SERVICIO_PROPUESTO','TIPO_SERVICIO_APROBADO','TIPO_SERVICIO_RECHAZADO') NOT NULL,
   `asunto` varchar(200) NOT NULL,
@@ -263,7 +262,8 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `email`, `password`, `rol`, `fec
 ALTER TABLE `catalogo_evento_servicio`
   ADD PRIMARY KEY (`id_catalogo_evento`),
   ADD KEY `id_evento` (`id_evento`),
-  ADD KEY `id_catalogo` (`id_catalogo`);
+  ADD KEY `id_catalogo` (`id_catalogo`),
+  ADD UNIQUE KEY `uniq_evento_catalogo` (`id_evento`,`id_catalogo`);
 
 --
 -- Indices de la tabla `catalogo_servicios`
@@ -278,8 +278,7 @@ ALTER TABLE `catalogo_servicios`
 ALTER TABLE `detalle_reserva`
   ADD PRIMARY KEY (`id_detalle`),
   ADD KEY `id_reserva` (`id_reserva`),
-  ADD KEY `fk_detalle_opcion` (`id_opcion`),
-  ADD KEY `FKoj3v6c8wscwbjwwe4urglk56e` (`id_servicio`);
+  ADD KEY `fk_detalle_opcion` (`id_opcion`);
 
 --
 -- Indices de la tabla `email_notificacion`
@@ -299,7 +298,8 @@ ALTER TABLE `eventos`
 --
 ALTER TABLE `proveedores`
   ADD PRIMARY KEY (`id_proveedor`),
-  ADD UNIQUE KEY `id_usuario` (`id_usuario`);
+  ADD UNIQUE KEY `id_usuario` (`id_usuario`),
+  ADD UNIQUE KEY `uniq_ruc` (`ruc`);
 
 --
 -- Indices de la tabla `proveedor_servicio`
@@ -437,55 +437,54 @@ ALTER TABLE `usuarios`
 -- Filtros para la tabla `catalogo_evento_servicio`
 --
 ALTER TABLE `catalogo_evento_servicio`
-  ADD CONSTRAINT `catalogo_evento_servicio_ibfk_1` FOREIGN KEY (`id_evento`) REFERENCES `eventos` (`id_evento`),
-  ADD CONSTRAINT `catalogo_evento_servicio_ibfk_2` FOREIGN KEY (`id_catalogo`) REFERENCES `catalogo_servicios` (`id_catalogo`);
+  ADD CONSTRAINT `catalogo_evento_servicio_ibfk_1` FOREIGN KEY (`id_evento`) REFERENCES `eventos` (`id_evento`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `catalogo_evento_servicio_ibfk_2` FOREIGN KEY (`id_catalogo`) REFERENCES `catalogo_servicios` (`id_catalogo`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `detalle_reserva`
 --
 ALTER TABLE `detalle_reserva`
-  ADD CONSTRAINT `FKoj3v6c8wscwbjwwe4urglk56e` FOREIGN KEY (`id_servicio`) REFERENCES `servicios` (`id_servicio`),
-  ADD CONSTRAINT `detalle_reserva_ibfk_1` FOREIGN KEY (`id_reserva`) REFERENCES `reservas` (`id_reserva`),
-  ADD CONSTRAINT `fk_detalle_opcion` FOREIGN KEY (`id_opcion`) REFERENCES `servicio_opcion` (`id_opcion`);
+  ADD CONSTRAINT `detalle_reserva_ibfk_1` FOREIGN KEY (`id_reserva`) REFERENCES `reservas` (`id_reserva`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_detalle_opcion` FOREIGN KEY (`id_opcion`) REFERENCES `servicio_opcion` (`id_opcion`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `email_notificacion`
 --
 ALTER TABLE `email_notificacion`
-  ADD CONSTRAINT `email_notificacion_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+  ADD CONSTRAINT `email_notificacion_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `proveedores`
 --
 ALTER TABLE `proveedores`
-  ADD CONSTRAINT `proveedores_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+  ADD CONSTRAINT `proveedores_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `proveedor_servicio`
 --
 ALTER TABLE `proveedor_servicio`
-  ADD CONSTRAINT `proveedor_servicio_ibfk_1` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`),
-  ADD CONSTRAINT `proveedor_servicio_ibfk_2` FOREIGN KEY (`id_catalogo`) REFERENCES `catalogo_servicios` (`id_catalogo`);
+  ADD CONSTRAINT `proveedor_servicio_ibfk_1` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `proveedor_servicio_ibfk_2` FOREIGN KEY (`id_catalogo`) REFERENCES `catalogo_servicios` (`id_catalogo`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `proveedor_servicio_tag`
 --
 ALTER TABLE `proveedor_servicio_tag`
-  ADD CONSTRAINT `proveedor_servicio_tag_ibfk_1` FOREIGN KEY (`id_proveedor_servicio`) REFERENCES `proveedor_servicio` (`id_proveedor_servicio`),
-  ADD CONSTRAINT `proveedor_servicio_tag_ibfk_2` FOREIGN KEY (`id_tag`) REFERENCES `tags` (`id_tag`);
+  ADD CONSTRAINT `proveedor_servicio_tag_ibfk_1` FOREIGN KEY (`id_proveedor_servicio`) REFERENCES `proveedor_servicio` (`id_proveedor_servicio`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `proveedor_servicio_tag_ibfk_2` FOREIGN KEY (`id_tag`) REFERENCES `tags` (`id_tag`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `reservas`
 --
 ALTER TABLE `reservas`
-  ADD CONSTRAINT `FK8qpftoyr7k6wd1kcfe329dieq` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`),
-  ADD CONSTRAINT `reservas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `usuarios` (`id_usuario`);
+  ADD CONSTRAINT `FK8qpftoyr7k6wd1kcfe329dieq` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `reservas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `servicio_opcion`
 --
 ALTER TABLE `servicio_opcion`
-  ADD CONSTRAINT `servicio_opcion_ibfk_1` FOREIGN KEY (`id_proveedor_servicio`) REFERENCES `proveedor_servicio` (`id_proveedor_servicio`);
+  ADD CONSTRAINT `servicio_opcion_ibfk_1` FOREIGN KEY (`id_proveedor_servicio`) REFERENCES `proveedor_servicio` (`id_proveedor_servicio`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `tokens_recuperacion`
