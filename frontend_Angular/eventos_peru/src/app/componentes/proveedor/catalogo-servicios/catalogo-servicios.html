@@ -1,10 +1,187 @@
-<div class="card">
-  <div class="titulo-card">
-    <i class="bi bi-card-checklist text-primary"></i>
-    Catálogo de servicios
+<section class="catalogo-proveedor">
+  <header class="encabezado">
+    <div>
+      <h2>Gestiona tus servicios</h2>
+      <p>
+        Elige un tipo del catálogo, registra tu oferta y agrega opciones con precios y cobertura. Si falta un
+        tipo, envía tu propuesta.
+      </p>
+    </div>
+    <button type="button" class="btn-recargar" (click)="cargarCatalogo(); cargarOfertas()">
+      <i class="bi bi-arrow-repeat"></i>
+      Refrescar
+    </button>
+  </header>
+
+  <div class="alerta" *ngIf="error">{{ error }}</div>
+  <div class="exito" *ngIf="mensaje">{{ mensaje }}</div>
+
+  <div class="paneles">
+    <div class="panel">
+      <div class="panel-cabecera">
+        <h3>Registrar nueva oferta</h3>
+        <small>Se vincula al catálogo activo.</small>
+      </div>
+      <form class="formulario" (ngSubmit)="registrarOferta()">
+        <label>
+          Tipo de servicio
+          <select [(ngModel)]="nuevaOferta.idCatalogo" name="idCatalogo" [disabled]="!catalogoActivo.length">
+            <option *ngFor="let cat of catalogoActivo" [value]="cat.idCatalogo">{{ cat.nombre }}</option>
+          </select>
+        </label>
+        <label>
+          Nombre público
+          <input
+            type="text"
+            [(ngModel)]="nuevaOferta.nombrePublico"
+            name="nombrePublico"
+            placeholder="Ej. Paquete premium de decoración"
+          />
+        </label>
+        <label>
+          Descripción general
+          <textarea
+            rows="3"
+            [(ngModel)]="nuevaOferta.descripcionGeneral"
+            name="descripcionGeneral"
+            placeholder="Incluye lo que mejor describe tu servicio"
+          ></textarea>
+        </label>
+        <label>
+          URL de foto
+          <input type="url" [(ngModel)]="nuevaOferta.urlFoto" name="urlFoto" placeholder="https://..." />
+        </label>
+        <div class="fila">
+          <label>
+            ID de proveedor
+            <input type="number" [(ngModel)]="idProveedor" name="idProveedor" min="1" />
+          </label>
+          <button class="btn-primario" type="submit">Publicar oferta</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <div class="panel-cabecera">
+        <h3>Proponer nuevo tipo</h3>
+        <small>Si el catálogo no tiene lo que necesitas.</small>
+      </div>
+      <form class="formulario" (ngSubmit)="proponerTipo()">
+        <label>
+          Nombre del tipo
+          <input type="text" name="nombreTipo" [(ngModel)]="nuevoTipoProveedor.nombre" placeholder="Ej. Fotocabina" />
+        </label>
+        <label>
+          Descripción / nota para el admin
+          <textarea rows="3" [(ngModel)]="nuevoTipoProveedor.descripcion" name="descripcionTipo"></textarea>
+        </label>
+        <button class="btn-secundario" type="submit">Enviar propuesta</button>
+      </form>
+    </div>
   </div>
-  <p class="texto-suave">
-    Aquí podrás registrar y actualizar los servicios que ofreces, agregar descripciones y
-    precios, y mantener tu oferta siempre visible para los clientes.
-  </p>
-</div>
+
+  <div class="panel listado">
+    <div class="panel-cabecera">
+      <div>
+        <h3>Mis servicios</h3>
+        <small>Activa, pausa o detalla opciones</small>
+      </div>
+      <button class="btn-secundario" type="button" (click)="cargarOfertas()">Actualizar</button>
+    </div>
+
+    <div *ngIf="cargandoOfertas" class="estado">Cargando tus servicios...</div>
+    <div *ngIf="!cargandoOfertas && !ofertas.length" class="estado">Aún no registras servicios.</div>
+
+    <div class="tarjeta-servicio" *ngFor="let oferta of ofertas">
+      <header class="cabecera-servicio">
+        <div>
+          <p class="etiqueta">{{ oferta.catalogoServicio.nombre }}</p>
+          <h4>{{ oferta.nombrePublico }}</h4>
+          <p class="descripcion" *ngIf="oferta.descripcionGeneral">{{ oferta.descripcionGeneral }}</p>
+        </div>
+        <div class="estado-servicio">
+          <span class="badge" [ngClass]="oferta.estado === 'ACTIVO' ? 'badge-exito' : 'badge-aviso'">
+            {{ oferta.estado }}
+          </span>
+          <div class="acciones">
+            <button class="btn-secundario" type="button" (click)="cambiarEstado(oferta, 'PAUSADO')">
+              Pausar
+            </button>
+            <button class="btn-primario" type="button" (click)="cambiarEstado(oferta, 'ACTIVO')">
+              Activar
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="opciones">
+        <div class="opciones-encabezado">
+          <strong>Opciones/variantes</strong>
+          <button class="btn-secundario" type="button" (click)="cargarOpciones(oferta)">
+            Ver opciones
+          </button>
+        </div>
+
+        <div class="opcion-formulario">
+          <input
+            type="text"
+            placeholder="Nombre de la opción"
+            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].nombreOpcion"
+            name="nombreOpcion-{{ oferta.idProveedorServicio }}"
+          />
+          <input
+            type="number"
+            step="0.01"
+            placeholder="Precio"
+            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].precio"
+            name="precio-{{ oferta.idProveedorServicio }}"
+          />
+          <input
+            type="number"
+            placeholder="Duración (min)"
+            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].duracionMinutos"
+            name="duracion-{{ oferta.idProveedorServicio }}"
+          />
+          <input
+            type="number"
+            placeholder="Stock"
+            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].stock"
+            name="stock-{{ oferta.idProveedorServicio }}"
+          />
+          <input
+            type="url"
+            placeholder="URL de foto"
+            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].urlFoto"
+            name="foto-{{ oferta.idProveedorServicio }}"
+          />
+          <button class="btn-primario" type="button" (click)="agregarOpcion(oferta)">Agregar opción</button>
+        </div>
+
+        <div class="lista-opciones" *ngIf="opcionesPorServicio[oferta.idProveedorServicio]?.length">
+          <div class="opcion" *ngFor="let op of opcionesPorServicio[oferta.idProveedorServicio]">
+            <div>
+              <p class="nombre">{{ op.nombreOpcion }}</p>
+              <p class="descripcion" *ngIf="op.descripcion">{{ op.descripcion }}</p>
+              <small>Precio: S/ {{ op.precio }}</small>
+            </div>
+            <div class="estado-opcion">
+              <span class="badge" [ngClass]="op.estado === 'ACTIVO' ? 'badge-exito' : 'badge-error'">
+                {{ op.estado }}
+              </span>
+              <button
+                class="btn-secundario"
+                type="button"
+                (click)="cambiarEstadoOpcion(op, op.estado === 'ACTIVO' ? 'NO_DISPONIBLE' : 'ACTIVO')"
+              >
+                {{ op.estado === 'ACTIVO' ? 'Marcar no disponible' : 'Activar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <p *ngIf="!opcionesPorServicio[oferta.idProveedorServicio]?.length" class="texto-suave">
+          Aún no agregas opciones para esta oferta.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

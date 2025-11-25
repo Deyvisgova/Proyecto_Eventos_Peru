@@ -1,0 +1,43 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import {
+  CatalogoServicio,
+  EstadoCatalogo,
+  ModeracionCatalogoRequest,
+  NuevoCatalogoServicioRequest,
+} from '../modelos/catalogo-servicio';
+
+@Injectable({ providedIn: 'root' })
+export class CatalogoServicioService {
+  private http = inject(HttpClient);
+  private api = 'http://localhost:8080/api/catalogo-servicios';
+
+  listar(estado?: EstadoCatalogo): Observable<CatalogoServicio[]> {
+    let params = new HttpParams();
+    if (estado) {
+      params = params.set('estado', estado);
+    }
+    return this.http.get<CatalogoServicio[]>(this.api, { params });
+  }
+
+  listarPendientes(): Observable<CatalogoServicio[]> {
+    return this.http.get<CatalogoServicio[]>(`${this.api}/pendientes`);
+  }
+
+  crearComoAdmin(dto: NuevoCatalogoServicioRequest): Observable<CatalogoServicio> {
+    return this.http.post<CatalogoServicio>(`${this.api}/admin`, dto);
+  }
+
+  crearComoProveedor(dto: NuevoCatalogoServicioRequest): Observable<CatalogoServicio> {
+    return this.http.post<CatalogoServicio>(`${this.api}/proveedor`, dto);
+  }
+
+  aprobar(id: number, dto: ModeracionCatalogoRequest): Observable<CatalogoServicio> {
+    return this.http.put<CatalogoServicio>(`${this.api}/${id}/aprobar`, dto);
+  }
+
+  rechazar(id: number, dto: ModeracionCatalogoRequest): Observable<CatalogoServicio> {
+    return this.http.put<CatalogoServicio>(`${this.api}/${id}/rechazar`, dto);
+  }
+}
