@@ -1,50 +1,151 @@
-<div class="container mt-4">
-  <!-- 🟢 Bienvenida -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>
-      Bienvenido, <span class="text-primary">{{ nombre }}</span>
-    </h4>
-  </div>
-
-  <!-- 🟡 Evento actual -->
-  <div class="alert alert-info">
-    Estás viendo los servicios para: <strong>{{ tipoEvento }}</strong>
-  </div>
-
-  <!-- 🟣 Filtros -->
-  <div class="card p-3 mb-4 shadow-sm">
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">Tipo de evento:</label>
-        <select class="form-select" [(ngModel)]="filtroEvento" (change)="filtrar()">
-          <option *ngFor="let e of eventos" [value]="e">{{ e }}</option>
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">Proveedor:</label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="Buscar proveedor..."
-          [(ngModel)]="filtroProveedor"
-          (input)="filtrar()"
-        />
-      </div>
+<div class="cliente-page">
+  <header class="encabezado">
+    <div>
+      <p class="texto-sutil">Cliente</p>
+      <h3>Hola, {{ nombre }}</h3>
+      <p class="texto-sutil">Elige los servicios ideales para tu {{ tipoEvento || 'evento' }}</p>
     </div>
-  </div>
+    <button class="btn-secundario" (click)="cerrarSesion()">Cerrar sesión</button>
+  </header>
 
-  <!-- 🟢 Proveedores filtrados -->
-  <div class="row">
-    <div class="col-md-4 mb-4" *ngFor="let p of proveedoresFiltrados">
-      <div class="card h-100 shadow-sm">
-        <img [src]="p.imagen" class="card-img-top" [alt]="p.nombre" />
-        <div class="card-body">
-          <h5 class="card-title text-primary">{{ p.nombre }}</h5>
-          <p class="card-text small text-muted">{{ p.descripcion }}</p>
-          <button class="btn btn-outline-primary w-100" (click)="verProveedor(p.id)">
-            Ver servicios
-          </button>
+  <section class="layout">
+    <aside class="filtros">
+      <div class="filtro">
+        <div class="filtro-titulo">
+          <h4>Eventos</h4>
+          <button class="link" (click)="limpiarGrupo(selectedEventos)">Limpiar</button>
+        </div>
+        <div class="lista-check">
+          <label class="check" *ngFor="let e of eventos">
+            <input type="checkbox" [checked]="selectedEventos.has(e.toLowerCase())" (change)="toggleSeleccion(e, selectedEventos)" />
+            <span>{{ e }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="filtro">
+        <div class="filtro-titulo">
+          <h4>Proveedores</h4>
+          <button class="link" (click)="limpiarGrupo(selectedProveedores)">Limpiar</button>
+        </div>
+        <div class="lista-check">
+          <label class="check" *ngFor="let prov of listadoProveedores">
+            <input type="checkbox" [checked]="selectedProveedores.has(prov.toLowerCase())" (change)="toggleSeleccion(prov, selectedProveedores)" />
+            <span>{{ prov }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="filtro">
+        <div class="filtro-titulo">
+          <h4>Servicios</h4>
+          <button class="link" (click)="limpiarGrupo(selectedServicios)">Limpiar</button>
+        </div>
+        <div class="lista-check">
+          <label class="check" *ngFor="let srv of listadoServicios">
+            <input type="checkbox" [checked]="selectedServicios.has(srv.toLowerCase())" (change)="toggleSeleccion(srv, selectedServicios)" />
+            <span>{{ srv }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="filtro">
+        <div class="filtro-titulo">
+          <h4>Opciones de servicio</h4>
+          <button class="link" (click)="limpiarGrupo(selectedOpciones)">Limpiar</button>
+        </div>
+        <div class="lista-check" *ngIf="!cargandoOpciones; else cargandoOps">
+          <label class="check" *ngFor="let op of listadoOpciones">
+            <input type="checkbox" [checked]="selectedOpciones.has(op.toLowerCase())" (change)="toggleSeleccion(op, selectedOpciones)" />
+            <span>{{ op }}</span>
+          </label>
+          <p class="texto-sutil" *ngIf="!listadoOpciones.length">Aún no hay opciones disponibles.</p>
+        </div>
+        <ng-template #cargandoOps>
+          <p class="texto-sutil">Cargando opciones...</p>
+        </ng-template>
+      </div>
+    </aside>
+
+    <section class="contenido">
+      <div class="buscador">
+        <input type="text" placeholder="Busca por proveedor o servicio" [(ngModel)]="busquedaProveedor" (input)="aplicarFiltros()" />
+        <span class="resultados">{{ proveedoresFiltrados.length }} resultados</span>
+      </div>
+
+      <div class="estado" *ngIf="cargando">Cargando servicios...</div>
+      <div class="estado error" *ngIf="!cargando && error">{{ error }}</div>
+      <div class="estado" *ngIf="!cargando && !error && !proveedoresFiltrados.length">
+        No encontramos servicios con los filtros seleccionados.
+      </div>
+
+      <div class="grid" *ngIf="!cargando && !error">
+        <article class="card" *ngFor="let p of proveedoresFiltrados">
+          <div class="card-img" [ngStyle]="{ 'background-image': 'url(' + (p.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }">
+            <span class="badge">{{ p.catalogoServicio.nombre }}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-header">
+              <div>
+                <h5>{{ p.nombrePublico }}</h5>
+                <p class="texto-sutil">{{ p.descripcionGeneral || 'Servicio sin descripción.' }}</p>
+              </div>
+              <div class="logo-proveedor">{{ (p.proveedor.nombreEmpresa || p.proveedor.nombre || '?').slice(0, 1) }}</div>
+            </div>
+
+            <div class="proveedor">
+              <div>
+                <p class="texto-sutil">Proveedor</p>
+                <strong>{{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}</strong>
+              </div>
+              <span class="etiqueta">{{ p.catalogoServicio.nombre }}</span>
+            </div>
+
+            <button class="btn-primario" (click)="verServicios(p)">Ver servicios</button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="modalVisible" (click)="cerrarModal()"></div>
+  <div class="modal" *ngIf="modalVisible">
+    <div class="modal-header">
+      <div>
+        <p class="texto-sutil">Servicios</p>
+        <h4>{{ proveedorSeleccionado?.nombrePublico }}</h4>
+        <p class="texto-sutil">Selecciona las opciones y agenda tu fecha</p>
+      </div>
+      <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
+    </div>
+
+    <div class="modal-body" *ngIf="proveedorSeleccionado">
+      <div class="opcion" *ngFor="let o of opciones">
+        <label class="opcion-contenido">
+          <input type="checkbox" [(ngModel)]="seleccion[o.idOpcion]" />
+          <div class="opcion-media" [ngStyle]="{ 'background-image': 'url(' + (o.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }"></div>
+          <div class="opcion-texto">
+            <div class="opcion-header">
+              <h5>{{ o.nombreOpcion }}</h5>
+              <span class="precio">S/ {{ o.precio | number: '1.2-2' }}</span>
+            </div>
+            <p class="texto-sutil">{{ o.descripcion || 'Sin descripción' }}</p>
+            <div class="detalle">
+              <span *ngIf="o.stock != null">Stock: {{ o.stock }}</span>
+              <span *ngIf="o.duracionMinutos">Duración: {{ o.duracionMinutos }} min</span>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="estado" *ngIf="!opciones.length">Este proveedor aún no tiene opciones activas.</div>
+
+      <div class="agendar" *ngIf="opciones.length">
+        <label>¿Para qué fecha lo deseas?</label>
+        <input type="date" [(ngModel)]="fechaEvento" />
+        <div class="acciones">
+          <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
+          <button class="btn-primario" [disabled]="!fechaEvento">Agendar evento</button>
         </div>
       </div>
     </div>
