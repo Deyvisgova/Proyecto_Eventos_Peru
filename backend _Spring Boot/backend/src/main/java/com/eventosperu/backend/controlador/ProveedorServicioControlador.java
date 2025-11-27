@@ -110,6 +110,14 @@ public class ProveedorServicioControlador {
     }
 
     /**
+     * Elimina por completo una oferta del proveedor (incluye sus opciones asociadas por cascada si aplica).
+     */
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Integer id) {
+        proveedorServicioRepositorio.deleteById(id);
+    }
+
+    /**
      * Opciones/variantes disponibles para una oferta específica.
      */
     @GetMapping("/{id}/opciones")
@@ -173,5 +181,13 @@ public class ProveedorServicioControlador {
         ServicioOpcion opcion = opcionOpt.get();
         opcion.setEstado(estado);
         return servicioOpcionRepositorio.save(opcion);
+    }
+
+    /**
+     * Elimina una opción específica del servicio del proveedor.
+     */
+    @DeleteMapping("/opciones/{idOpcion}")
+    public void eliminarOpcion(@PathVariable Integer idOpcion) {
+        servicioOpcionRepositorio.deleteById(idOpcion);
     }
 }
