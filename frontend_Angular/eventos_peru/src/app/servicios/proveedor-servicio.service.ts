@@ -26,6 +26,10 @@ export class ProveedorServicioService {
     return this.http.put<ProveedorServicio>(`${this.api}/${id}`, dto);
   }
 
+  eliminarOferta(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${id}`);
+  }
+
   cambiarEstadoOferta(id: number, estado: EstadoProveedorServicio): Observable<ProveedorServicio> {
     const params = new HttpParams().set('estado', estado);
     return this.http.put<ProveedorServicio>(`${this.api}/${id}/estado`, null, { params });
@@ -39,8 +43,16 @@ export class ProveedorServicioService {
     return this.http.post<ServicioOpcion>(`${this.api}/${idProveedorServicio}/opciones`, dto);
   }
 
+  actualizarOpcion(idOpcion: number, dto: ServicioOpcionRequest): Observable<ServicioOpcion> {
+    return this.http.put<ServicioOpcion>(`${this.api}/opciones/${idOpcion}`, dto);
+  }
+
   cambiarEstadoOpcion(idOpcion: number, estado: EstadoServicioOpcion): Observable<ServicioOpcion> {
     const params = new HttpParams().set('estado', estado);
     return this.http.put<ServicioOpcion>(`${this.api}/opciones/${idOpcion}/estado`, null, { params });
+  }
+
+  eliminarOpcion(idOpcion: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/opciones/${idOpcion}`);
   }
 }

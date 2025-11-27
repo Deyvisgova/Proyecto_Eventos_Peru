@@ -11,4 +11,10 @@ public interface CatalogoServicioRepositorio extends JpaRepository<CatalogoServi
     List<CatalogoServicio> findByEstado(CatalogoServicio.EstadoCatalogo estado);
 
     CatalogoServicio findByNombre(String nombre);
+
+    List<CatalogoServicio> findByEstadoAndCreadoPor(CatalogoServicio.EstadoCatalogo estado, CatalogoServicio.FuenteCreacion creadoPor);
+
+    List<CatalogoServicio> findByCreadoPorAndIdProveedorSolicitante(CatalogoServicio.FuenteCreacion creadoPor, Integer idProveedorSolicitante);
+
+    List<CatalogoServicio> findByIdProveedorSolicitante(Integer idProveedorSolicitante);
 }

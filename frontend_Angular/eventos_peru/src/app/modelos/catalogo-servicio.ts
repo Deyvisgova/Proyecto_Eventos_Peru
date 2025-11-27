@@ -10,12 +10,14 @@ export interface CatalogoServicio {
   fechaCreacion?: string;
   fechaRevision?: string;
   idAdminRevisor?: number;
+  idProveedorSolicitante?: number;
   motivoRechazo?: string;
 }
 
 export interface NuevoCatalogoServicioRequest {
   nombre: string;
   descripcion?: string;
+  idProveedorSolicitante?: number;
 }
 
 export interface ModeracionCatalogoRequest {

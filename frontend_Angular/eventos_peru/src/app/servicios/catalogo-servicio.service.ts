@@ -25,12 +25,24 @@ export class CatalogoServicioService {
     return this.http.get<CatalogoServicio[]>(`${this.api}/pendientes`);
   }
 
+  listarPorProveedor(idProveedor: number): Observable<CatalogoServicio[]> {
+    return this.http.get<CatalogoServicio[]>(`${this.api}/proveedor/${idProveedor}`);
+  }
+
   crearComoAdmin(dto: NuevoCatalogoServicioRequest): Observable<CatalogoServicio> {
     return this.http.post<CatalogoServicio>(`${this.api}/admin`, dto);
   }
 
   crearComoProveedor(dto: NuevoCatalogoServicioRequest): Observable<CatalogoServicio> {
     return this.http.post<CatalogoServicio>(`${this.api}/proveedor`, dto);
+  }
+
+  actualizarPropuestaProveedor(
+    idProveedor: number,
+    idCatalogo: number,
+    dto: NuevoCatalogoServicioRequest
+  ): Observable<CatalogoServicio> {
+    return this.http.put<CatalogoServicio>(`${this.api}/proveedor/${idProveedor}/${idCatalogo}`, dto);
   }
 
   aprobar(id: number, dto: ModeracionCatalogoRequest): Observable<CatalogoServicio> {

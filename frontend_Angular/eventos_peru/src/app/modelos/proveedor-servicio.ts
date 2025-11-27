@@ -40,6 +40,7 @@ export interface ProveedorServicioRequest {
 }
 
 export interface ServicioOpcionRequest {
+  idProveedorServicio?: number;
   nombreOpcion: string;
   descripcion?: string;
   precio: number;

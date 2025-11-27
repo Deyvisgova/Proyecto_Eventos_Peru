@@ -95,6 +95,15 @@
   color: #374151;
 }
 
+.subida-archivo input[type='file'] {
+  padding: 0.35rem 0;
+}
+
+.subida-archivo small {
+  color: #6b7280;
+  font-weight: 500;
+}
+
 .formulario input,
 .formulario textarea,
 .formulario select {
@@ -136,6 +145,11 @@
 
 .listado {
   gap: 0.5rem;
+}
+
+.estado {
+  color: #6b7280;
+  font-weight: 600;
 }
 
 .tarjeta-servicio {
@@ -188,6 +202,13 @@
   gap: 0.5rem;
 }
 
+.edicion-oferta {
+  background: #f8fafc;
+  border: 1px dashed #e5e7eb;
+  padding: 0.75rem;
+  border-radius: 12px;
+}
+
 .opciones-encabezado {
   display: flex;
   justify-content: space-between;
@@ -216,6 +237,10 @@
   gap: 0.5rem;
 }
 
+.opcion-info {
+  flex: 1;
+}
+
 .opcion .nombre {
   margin: 0;
   font-weight: 700;
@@ -233,9 +258,28 @@
   gap: 0.35rem;
 }
 
+.opcion-edicion {
+  width: 260px;
+  background: #f8fafc;
+  border: 1px dashed #e5e7eb;
+  padding: 0.65rem;
+  border-radius: 10px;
+}
+
+.opcion-botones {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
 .texto-suave {
   color: #9ca3af;
   margin: 0;
+}
+
+.motivo {
+  color: #b91c1c;
+  font-weight: 600;
 }
 
 .badge {

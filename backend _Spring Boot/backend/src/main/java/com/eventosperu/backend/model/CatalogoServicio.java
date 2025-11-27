@@ -42,6 +42,9 @@ public class CatalogoServicio {
     @Column(name = "id_admin_revisor")
     private Integer idAdminRevisor;
 
+    @Column(name = "id_proveedor_solicitante")
+    private Integer idProveedorSolicitante;
+
     @Column(name = "motivo_rechazo", length = 255)
     private String motivoRechazo;
 
