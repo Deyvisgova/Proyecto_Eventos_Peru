@@ -11,6 +11,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.List;
 import java.util.Locale;
@@ -52,6 +60,39 @@ public class ProveedorControlador {
     @GetMapping("/{id}")
     public Proveedor obtenerProveedorPorId(@PathVariable Integer id) {
         return proveedorRepositorio.findById(id).orElse(null);
+    }
+
+    @PostMapping("/{id}/logo")
+    public ResponseEntity<?> subirLogo(
+            @PathVariable Integer id,
+            @RequestParam("file") MultipartFile archivo
+    ) {
+        Optional<Proveedor> proveedorOpt = proveedorRepositorio.findById(id);
+        if (proveedorOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
+        }
+        if (archivo.isEmpty()) {
+            return ResponseEntity.badRequest().body("Archivo vacío");
+        }
+
+        try {
+            Path destino = Paths.get("..", "frontend_Angular", "eventos_peru", "src", "assets", "logos_proveedores")
+                    .toAbsolutePath()
+                    .normalize();
+            Files.createDirectories(destino);
+
+            String nombreOriginal = StringUtils.cleanPath(archivo.getOriginalFilename());
+            String prefijoFecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            String nombreArchivo = prefijoFecha + "_" + nombreOriginal;
+
+            Path archivoDestino = destino.resolve(nombreArchivo);
+            archivo.transferTo(archivoDestino.toFile());
+
+            String rutaRelativa = Paths.get("assets", "logos_proveedores", nombreArchivo).toString().replace('\\', '/');
+            return ResponseEntity.ok().body(java.util.Map.of("path", rutaRelativa));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No se pudo guardar el logo");
+        }
     }
 
     // Actualizar proveedor existente

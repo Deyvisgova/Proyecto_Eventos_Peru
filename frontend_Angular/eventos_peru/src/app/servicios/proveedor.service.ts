@@ -22,4 +22,11 @@ export class ProveedorService {
   obtenerPorUsuario(idUsuario: number): Observable<any> {
     return this.http.get(`${this.API}/proveedores/usuario/${idUsuario}`);
   }
+
+  // 🔹 Subir logo de proveedor
+  subirLogo(idProveedor: number, archivo: File): Observable<{ path: string }> {
+    const formData = new FormData();
+    formData.append('file', archivo);
+    return this.http.post<{ path: string }>(`${this.API}/proveedores/${idProveedor}/logo`, formData);
+  }
 }
