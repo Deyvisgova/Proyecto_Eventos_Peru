@@ -114,6 +114,25 @@
   background: #fff;
 }
 
+.grupo-eventos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lista-check {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.lista-check .check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
 .fila {
   display: flex;
   gap: 0.5rem;
