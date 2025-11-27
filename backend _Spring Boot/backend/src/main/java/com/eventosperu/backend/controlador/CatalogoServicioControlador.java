@@ -57,7 +57,9 @@ public class CatalogoServicioControlador {
         catalogo.setCreadoPor(CatalogoServicio.FuenteCreacion.ADMIN);
         catalogo.setEstado(CatalogoServicio.EstadoCatalogo.ACTIVO);
         catalogo.setFechaRevision(LocalDateTime.now());
-        return catalogoServicioRepositorio.save(catalogo);
+        catalogo = catalogoServicioRepositorio.save(catalogo);
+        sincronizarEventos(catalogo, request.getIdEventos());
+        return catalogo;
     }
 
     /**
@@ -71,7 +73,9 @@ public class CatalogoServicioControlador {
         catalogo.setCreadoPor(CatalogoServicio.FuenteCreacion.PROVEEDOR);
         catalogo.setIdProveedorSolicitante(request.getIdProveedorSolicitante());
         catalogo.setEstado(CatalogoServicio.EstadoCatalogo.PENDIENTE);
-        return catalogoServicioRepositorio.save(catalogo);
+        catalogo = catalogoServicioRepositorio.save(catalogo);
+        sincronizarEventos(catalogo, request.getIdEventos());
+        return catalogo;
     }
 
     /**
@@ -114,7 +118,9 @@ public class CatalogoServicioControlador {
         catalogo.setFechaRevision(null);
         catalogo.setIdAdminRevisor(null);
         catalogo.setFechaCreacion(catalogo.getFechaCreacion() != null ? catalogo.getFechaCreacion() : LocalDateTime.now());
-        return catalogoServicioRepositorio.save(catalogo);
+        catalogo = catalogoServicioRepositorio.save(catalogo);
+        sincronizarEventos(catalogo, request.getIdEventos());
+        return catalogo;
     }
 
     /**
@@ -188,5 +194,28 @@ public class CatalogoServicioControlador {
                 .map(CatalogoEventoServicio::getCatalogoServicio)
                 .filter(c -> c.getEstado() == CatalogoServicio.EstadoCatalogo.ACTIVO)
                 .toList();
+    }
+
+    /**
+     * Devuelve el mapa completo de relaciones catálogo-evento para que el frontend sincronice filtros.
+     */
+    @GetMapping("/eventos-mapa")
+    public List<CatalogoEventoServicio> mapaCatalogoEvento() {
+        return catalogoEventoServicioRepositorio.findAll();
+    }
+
+    private void sincronizarEventos(CatalogoServicio catalogo, List<Integer> idEventos) {
+        catalogoEventoServicioRepositorio.deleteByCatalogoServicio(catalogo);
+        if (idEventos == null || idEventos.isEmpty()) {
+            return;
+        }
+
+        List<Evento> eventos = eventoRepositorio.findAllById(idEventos);
+        eventos.forEach(evento -> {
+            CatalogoEventoServicio relacion = new CatalogoEventoServicio();
+            relacion.setCatalogoServicio(catalogo);
+            relacion.setEvento(evento);
+            catalogoEventoServicioRepositorio.save(relacion);
+        });
     }
 }

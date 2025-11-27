@@ -104,6 +104,29 @@
             [disabled]="!idProveedor"
           ></textarea>
         </label>
+        <div class="grupo-eventos">
+          <p>Eventos aplicables</p>
+          <div class="lista-check">
+            <label class="check" *ngFor="let ev of eventos">
+              <input
+                type="checkbox"
+                [checked]="ev.idEvento != null && eventosSeleccionadosPropuesta.has(ev.idEvento)"
+                (change)="toggleEvento(ev.idEvento, eventosSeleccionadosPropuesta)"
+                [disabled]="!idProveedor"
+              />
+              <span>{{ ev.nombreEvento }}</span>
+            </label>
+            <label class="check">
+              <input
+                type="checkbox"
+                [checked]="eventos.length > 0 && eventosSeleccionadosPropuesta.size === eventos.length"
+                (change)="seleccionarTodosEventos()"
+                [disabled]="!idProveedor"
+              />
+              <span>Todos</span>
+            </label>
+          </div>
+        </div>
         <button class="btn-secundario" type="submit" [disabled]="!idProveedor">Enviar propuesta</button>
       </form>
     </div>

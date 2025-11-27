@@ -7,6 +7,11 @@ export interface ProveedorBasico {
   idProveedor: number;
   nombre?: string;
   nombreEmpresa?: string;
+  direccion?: string;
+  usuario?: {
+    celular?: string;
+    email?: string;
+  };
 }
 
 export interface ProveedorServicio {
