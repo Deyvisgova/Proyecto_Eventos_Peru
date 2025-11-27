@@ -8,6 +8,8 @@ import {
   NuevoCatalogoServicioRequest,
 } from '../../../modelos/catalogo-servicio';
 import { CatalogoServicioService } from '../../../servicios/catalogo-servicio.service';
+import { EventoService } from '../../../servicios/evento.service';
+import { Evento } from '../../../modelos/evento';
 
 @Component({
   selector: 'app-servicios-peo',
@@ -24,16 +26,34 @@ export class ServiciosPeo implements OnInit {
   motivosRechazo: Record<number, string> = {};
   idAdminRevisor = 1; // Placeholder para enlazar con sesión de admin
 
+  eventos: Evento[] = [];
+  eventosSeleccionados = new Set<number>();
+
   cargandoCatalogo = false;
   cargandoPendientes = false;
   mensaje = '';
   error = '';
 
-  constructor(private catalogoServicio: CatalogoServicioService) {}
+  constructor(
+    private catalogoServicio: CatalogoServicioService,
+    private eventoService: EventoService
+  ) {}
 
   ngOnInit(): void {
     this.cargarCatalogo();
     this.cargarPendientes();
+    this.cargarEventos();
+  }
+
+  cargarEventos(): void {
+    this.eventoService.obtenerEventos().subscribe({
+      next: (lista) => {
+        this.eventos = lista;
+      },
+      error: () => {
+        this.error = 'No se pudieron cargar los eventos disponibles.';
+      },
+    });
   }
 
   cargarCatalogo(): void {
@@ -73,16 +93,36 @@ export class ServiciosPeo implements OnInit {
       return;
     }
 
+    if (!this.eventosSeleccionados.size) {
+      this.error = 'Selecciona al menos un evento para el que aplica el servicio.';
+      return;
+    }
+
+    this.nuevoTipo.idEventos = Array.from(this.eventosSeleccionados);
+
     this.catalogoServicio.crearComoAdmin(this.nuevoTipo).subscribe({
       next: () => {
         this.mensaje = 'Tipo de servicio creado y activado.';
         this.nuevoTipo = { nombre: '', descripcion: '' };
+        this.eventosSeleccionados.clear();
         this.cargarCatalogo();
       },
       error: () => {
         this.error = 'No se pudo registrar el tipo de servicio.';
       },
     });
+  }
+
+  toggleEvento(idEvento: number, set: Set<number>): void {
+    if (set.has(idEvento)) {
+      set.delete(idEvento);
+    } else {
+      set.add(idEvento);
+    }
+  }
+
+  seleccionarTodos(): void {
+    this.eventosSeleccionados = new Set(this.eventos.map((e) => e.idEvento));
   }
 
   aprobar(catalogo: CatalogoServicio): void {

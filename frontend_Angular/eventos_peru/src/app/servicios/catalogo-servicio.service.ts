@@ -7,6 +7,7 @@ import {
   ModeracionCatalogoRequest,
   NuevoCatalogoServicioRequest,
 } from '../modelos/catalogo-servicio';
+import { CatalogoEventoServicio } from '../modelos/catalogo-evento-servicio';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogoServicioService {
@@ -35,6 +36,10 @@ export class CatalogoServicioService {
 
   crearComoProveedor(dto: NuevoCatalogoServicioRequest): Observable<CatalogoServicio> {
     return this.http.post<CatalogoServicio>(`${this.api}/proveedor`, dto);
+  }
+
+  listarRelaciones(): Observable<CatalogoEventoServicio[]> {
+    return this.http.get<CatalogoEventoServicio[]>(`${this.api}/eventos-mapa`);
   }
 
   actualizarPropuestaProveedor(

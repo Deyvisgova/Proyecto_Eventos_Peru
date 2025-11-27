@@ -12,4 +12,6 @@ import java.util.List;
 public interface CatalogoEventoServicioRepositorio extends JpaRepository<CatalogoEventoServicio, Integer> {
     List<CatalogoEventoServicio> findByEvento(Evento evento);
     List<CatalogoEventoServicio> findByCatalogoServicio(CatalogoServicio catalogoServicio);
+
+    void deleteByCatalogoServicio(CatalogoServicio catalogoServicio);
 }

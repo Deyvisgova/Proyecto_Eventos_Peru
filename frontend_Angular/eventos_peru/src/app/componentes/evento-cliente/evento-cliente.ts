@@ -1,25 +1,64 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
+import {
+  ProveedorServicio,
+  ServicioOpcion,
+} from '../../modelos/proveedor-servicio';
+import { ProveedorServicioService } from '../../servicios/proveedor-servicio.service';
+import { EventoService } from '../../servicios/evento.service';
+import { CatalogoServicioService } from '../../servicios/catalogo-servicio.service';
+import { CatalogoEventoServicio } from '../../modelos/catalogo-evento-servicio';
+import { Evento } from '../../modelos/evento';
 
 @Component({
   selector: 'app-evento-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './evento-cliente.html',
+  styleUrls: ['./evento-cliente.css'],
 })
 export class EventoCliente implements OnInit {
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private proveedorServicioSrv = inject(ProveedorServicioService);
+  private eventoSrv = inject(EventoService);
+  private catalogoSrv = inject(CatalogoServicioService);
 
   nombre = '';
   tipoEvento = '';
-  eventos = ['Cumpleaños', 'Matrimonio', 'Aniversario'];
-  filtroEvento = '';
-  filtroProveedor = '';
+  tipoEventoLabel = '';
+  eventosBase: string[] = ['Cumpleaños', 'Matrimonio', 'Aniversario'];
+  eventos: string[] = [...this.eventosBase];
+  eventosDisponibles: Evento[] = [];
+  mapaCatalogoEventos: Record<number, number[]> = {};
 
-  proveedores: any[] = [];
-  proveedoresFiltrados: any[] = [];
+  proveedores: ProveedorServicio[] = [];
+  proveedoresFiltrados: ProveedorServicio[] = [];
+
+  listadoProveedores: string[] = [];
+  listadoServicios: string[] = [];
+  listadoOpciones: string[] = [];
+
+  selectedEventos = new Set<string>();
+  selectedProveedores = new Set<string>();
+  busquedaProveedor = '';
+
+  opcionesPorProveedor: Record<number, ServicioOpcion[]> = {};
+
+  cargando = false;
+  cargandoOpciones = false;
+  error = '';
+
+  modalVisible = false;
+  proveedorSeleccionado: ProveedorServicio | null = null;
+  opciones: ServicioOpcion[] = [];
+  seleccion: Record<number, boolean> = {};
+  fechaEvento = '';
 
   ngOnInit() {
     // 🧠 Recuperar nombre y validar sesión
@@ -36,53 +75,228 @@ export class EventoCliente implements OnInit {
     this.nombre = usuario.nombre ?? '';
 
     // 🧠 Recuperar tipo de evento desde la URL
-    this.tipoEvento = this.route.snapshot.paramMap.get('tipo') ?? '';
-    this.filtroEvento = this.tipoEvento;
-
-    // 🔹 Datos simulados de proveedores
-    this.proveedores = [
-      {
-        id: 1,
-        nombre: 'Decoraciones Luna',
-        descripcion: 'Decoración temática y ambientación.',
-        imagen:
-          'https://img.freepik.com/foto-gratis/arreglo-globos-coloridos-fiesta-cumpleanos_23-2149039580.jpg',
-      },
-      {
-        id: 2,
-        nombre: 'Catering Sol',
-        descripcion: 'Buffet gourmet para toda ocasión.',
-        imagen:
-          'https://img.freepik.com/foto-gratis/comida-buffet-variedad-platos_23-2148758323.jpg',
-      },
-      {
-        id: 3,
-        nombre: 'Eventos Premium',
-        descripcion: 'Organización integral de eventos.',
-        imagen:
-          'https://img.freepik.com/foto-gratis/mesa-cena-decoracion-elegante_23-2149007042.jpg',
-      },
-    ];
-    this.proveedoresFiltrados = [...this.proveedores];
+    this.tipoEvento = this.normalizarEvento(this.route.snapshot.paramMap.get('tipo') ?? '');
+    if (this.tipoEvento) {
+      this.selectedEventos.add(this.tipoEvento);
+    }
+    this.cargarServicios();
   }
 
-  filtrar() {
-    const fEvento = this.filtroEvento.toLowerCase();
-    const fProv = this.filtroProveedor.toLowerCase();
-    this.proveedoresFiltrados = this.proveedores.filter(
-      (p) =>
-        p.nombre.toLowerCase().includes(fProv) &&
-        (fEvento === '' || this.eventos.includes(this.filtroEvento))
+  cargarServicios() {
+    this.cargando = true;
+    this.error = '';
+
+    forkJoin({
+      eventos: this.eventoSrv.obtenerEventos(),
+      relaciones: this.catalogoSrv.listarRelaciones(),
+      servicios: this.proveedorServicioSrv.listarVisibles(),
+    }).subscribe({
+      next: ({ eventos, relaciones, servicios }) => {
+        this.eventosDisponibles = eventos;
+        if (eventos.length) {
+          this.eventosBase = eventos.map((e) => e.nombreEvento);
+          this.eventos = [...this.eventosBase];
+        }
+
+        this.mapaCatalogoEventos = this.armarMapa(relaciones);
+        this.tipoEventoLabel = this.obtenerNombreEvento(this.tipoEvento);
+
+        this.proveedores = servicios;
+        this.prepararFiltrosBase();
+        this.preCargarOpciones();
+        this.aplicarFiltros();
+      },
+      error: (err) => {
+        console.error('No se pudieron cargar los servicios', err);
+        this.error = 'No pudimos cargar los servicios disponibles. Intenta nuevamente.';
+      },
+      complete: () => {
+        this.cargando = false;
+      },
+    });
+  }
+
+  prepararFiltrosBase() {
+    this.eventos = [...this.eventosBase];
+  }
+
+  normalizarEvento(valor: string) {
+    if (!valor) return '';
+    return valor
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
+  }
+
+  private obtenerNombreEvento(eventoNormalizado: string) {
+    if (!eventoNormalizado) return '';
+    const encontrado = this.eventosDisponibles.find(
+      (e) => this.normalizarEvento(e.nombreEvento) === eventoNormalizado
+    );
+    if (encontrado) return encontrado.nombreEvento;
+
+    return (
+      this.eventosBase.find((e) => this.normalizarEvento(e) === eventoNormalizado) ||
+      eventoNormalizado.charAt(0).toUpperCase() + eventoNormalizado.slice(1)
     );
   }
 
-  verProveedor(id: number) {
-    // 🟢 Navegar al detalle del proveedor
-    this.router.navigate(['/cliente/proveedor', id]);
+  private armarMapa(relaciones: CatalogoEventoServicio[]): Record<number, number[]> {
+    const mapa: Record<number, number[]> = {};
+    relaciones.forEach((rel) => {
+      const idCatalogo = rel.catalogoServicio?.idCatalogo;
+      const idEvento = rel.evento?.idEvento;
+      if (!idCatalogo || !idEvento) return;
+      if (!mapa[idCatalogo]) mapa[idCatalogo] = [];
+      mapa[idCatalogo].push(idEvento);
+    });
+    return mapa;
   }
 
-  cerrarSesion() {
-    localStorage.clear();
-    this.router.navigate(['/login']);
+  private obtenerIdsEventosSeleccionados(): number[] {
+    return Array.from(this.selectedEventos)
+      .map((nombre) =>
+        this.eventosDisponibles.find((e) => this.normalizarEvento(e.nombreEvento) === nombre)?.idEvento
+      )
+      .filter((id): id is number => Number.isFinite(id));
+  }
+
+  preCargarOpciones() {
+    if (!this.proveedores.length) return;
+    this.cargandoOpciones = true;
+    const solicitudes = this.proveedores.map((p) =>
+      this.proveedorServicioSrv
+        .listarOpciones(p.idProveedorServicio)
+        .pipe(map((ops) => ({ id: p.idProveedorServicio, opciones: ops.filter((o) => o.estado === 'ACTIVO') })))
+    );
+
+    forkJoin(solicitudes).subscribe({
+      next: (respuesta) => {
+        const opcionesSet = new Set<string>();
+        respuesta.forEach((item) => {
+          this.opcionesPorProveedor[item.id] = item.opciones;
+          item.opciones.forEach((o) => opcionesSet.add(o.nombreOpcion));
+        });
+        this.listadoOpciones = Array.from(opcionesSet).sort();
+        this.aplicarFiltros();
+      },
+      error: (err) => {
+        console.error('No se pudieron cargar las opciones', err);
+      },
+      complete: () => {
+        this.cargandoOpciones = false;
+      },
+    });
+  }
+
+  toggleSeleccion(valor: string, grupo: Set<string>) {
+    const clave = grupo === this.selectedEventos ? this.normalizarEvento(valor) : valor.toLowerCase();
+    if (grupo.has(clave)) {
+      grupo.delete(clave);
+    } else {
+      grupo.add(clave);
+    }
+    if (grupo === this.selectedEventos) {
+      const [primero] = Array.from(grupo);
+      this.tipoEvento = primero ?? '';
+      this.tipoEventoLabel = this.obtenerNombreEvento(this.tipoEvento);
+    }
+    this.aplicarFiltros();
+  }
+
+  limpiarGrupo(grupo: Set<string>) {
+    grupo.clear();
+    if (grupo === this.selectedEventos) {
+      this.tipoEvento = '';
+      this.tipoEventoLabel = '';
+    }
+    this.aplicarFiltros();
+  }
+
+  aplicarFiltros() {
+    const filtroTexto = this.busquedaProveedor.toLowerCase().trim();
+
+    const idsEventosSeleccionados = this.obtenerIdsEventosSeleccionados();
+
+    const coincideEvento = (p: ProveedorServicio) => {
+      if (!idsEventosSeleccionados.length || !Object.keys(this.mapaCatalogoEventos).length) return true;
+      const eventosCatalogo = this.mapaCatalogoEventos[p.catalogoServicio?.idCatalogo] || [];
+      return idsEventosSeleccionados.some((id) => eventosCatalogo.includes(id));
+    };
+
+    const proveedoresPorEvento = this.proveedores.filter((p) => coincideEvento(p));
+
+    const proveedoresSet = new Set<string>();
+    proveedoresPorEvento.forEach((p) => {
+      const nombreProveedor = (p.proveedor.nombreEmpresa || p.proveedor.nombre || '').trim();
+      if (nombreProveedor) proveedoresSet.add(nombreProveedor);
+    });
+    this.listadoProveedores = Array.from(proveedoresSet).sort();
+
+    // Asegurar que los proveedores seleccionados sigan disponibles
+    this.selectedProveedores.forEach((prov) => {
+      if (!this.listadoProveedores.some((p) => p.toLowerCase() === prov)) {
+        this.selectedProveedores.delete(prov);
+      }
+    });
+
+    const proveedoresSegunSeleccion = proveedoresPorEvento.filter((p) => {
+      const nombreProveedor = (p.proveedor.nombreEmpresa || p.proveedor.nombre || '').toLowerCase();
+      return !this.selectedProveedores.size || this.selectedProveedores.has(nombreProveedor);
+    });
+
+    const serviciosSet = new Set<string>();
+    const opcionesSet = new Set<string>();
+    proveedoresSegunSeleccion.forEach((p) => {
+      const nombreServicio = (p.catalogoServicio?.nombre || p.nombrePublico || '').trim();
+      if (nombreServicio) serviciosSet.add(nombreServicio);
+
+      const opcionesProveedor = this.opcionesPorProveedor[p.idProveedorServicio] || [];
+      opcionesProveedor.forEach((o) => opcionesSet.add(o.nombreOpcion));
+    });
+
+    this.listadoServicios = Array.from(serviciosSet).sort();
+    this.listadoOpciones = Array.from(opcionesSet).sort();
+
+    this.proveedoresFiltrados = proveedoresSegunSeleccion.filter((p) => {
+      const nombreProveedor = (p.proveedor.nombreEmpresa || p.proveedor.nombre || '').toLowerCase();
+      const nombreServicio = (p.catalogoServicio?.nombre || p.nombrePublico || '').toLowerCase();
+
+      const coincideTexto =
+        !filtroTexto ||
+        nombreProveedor.includes(filtroTexto) ||
+        nombreServicio.includes(filtroTexto) ||
+        p.nombrePublico.toLowerCase().includes(filtroTexto) ||
+        p.descripcionGeneral?.toLowerCase().includes(filtroTexto);
+
+      return coincideTexto;
+    });
+  }
+
+  verServicios(p: ProveedorServicio) {
+    this.proveedorSeleccionado = p;
+    this.modalVisible = true;
+    this.opciones = [];
+    this.seleccion = {};
+    this.fechaEvento = '';
+
+    this.proveedorServicioSrv.listarOpciones(p.idProveedorServicio).subscribe({
+      next: (ops) => {
+        this.opciones = ops.filter((o) => o.estado === 'ACTIVO');
+        this.opciones.forEach((o) => (this.seleccion[o.idOpcion] = false));
+        this.opcionesPorProveedor[p.idProveedorServicio] = this.opciones;
+      },
+      error: (err) => {
+        console.error('No se pudieron cargar las opciones', err);
+      },
+    });
+  }
+
+  cerrarModal() {
+    this.modalVisible = false;
+    this.proveedorSeleccionado = null;
+    this.opciones = [];
+    this.seleccion = {};
+    this.fechaEvento = '';
   }
 }

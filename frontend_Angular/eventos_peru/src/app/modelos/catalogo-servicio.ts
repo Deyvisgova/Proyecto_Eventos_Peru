@@ -18,6 +18,7 @@ export interface NuevoCatalogoServicioRequest {
   nombre: string;
   descripcion?: string;
   idProveedorSolicitante?: number;
+  idEventos?: number[];
 }
 
 export interface ModeracionCatalogoRequest {

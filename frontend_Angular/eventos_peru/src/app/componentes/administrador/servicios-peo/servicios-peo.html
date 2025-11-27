@@ -36,6 +36,19 @@
             placeholder="Breve detalle de qué abarca este servicio"
           ></textarea>
         </label>
+        <div class="grupo-eventos">
+          <p>Eventos aplicables</p>
+          <div class="lista-check">
+            <label class="check" *ngFor="let ev of eventos">
+              <input type="checkbox" [checked]="eventosSeleccionados.has(ev.idEvento)" (change)="toggleEvento(ev.idEvento, eventosSeleccionados)" />
+              <span>{{ ev.nombreEvento }}</span>
+            </label>
+            <label class="check">
+              <input type="checkbox" [checked]="eventos.length > 0 && eventosSeleccionados.size === eventos.length" (change)="seleccionarTodos()" />
+              <span>Todos</span>
+            </label>
+          </div>
+        </div>
         <button class="btn-primario" type="submit">Publicar tipo</button>
       </form>
     </div>

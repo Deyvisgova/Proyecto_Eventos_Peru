@@ -3,8 +3,21 @@
     <i class="bi bi-cloud-upload text-info"></i>
     Subir logo de la empresa
   </div>
+
   <p class="texto-suave">
-    Próximamente podrás cargar o actualizar el logo de tu marca. Así tus clientes
-    identificarán rápidamente tu catálogo en la plataforma.
+    Carga un archivo JPG o PNG para que los clientes identifiquen tu marca dentro del catálogo.
   </p>
+
+  <div class="formulario">
+    <label class="input-file">
+      <input type="file" accept="image/*" (change)="manejarArchivo($event)" />
+      <span>{{ seleccion?.name || 'Seleccionar archivo' }}</span>
+    </label>
+
+    <button class="btn" (click)="subir()" [disabled]="subiendo">
+      {{ subiendo ? 'Subiendo...' : 'Subir logo' }}
+    </button>
+
+    <p class="texto-suave" *ngIf="mensaje">{{ mensaje }}</p>
+  </div>
 </div>

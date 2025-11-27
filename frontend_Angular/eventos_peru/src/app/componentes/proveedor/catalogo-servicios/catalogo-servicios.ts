@@ -16,6 +16,8 @@ import {
   ServicioOpcion,
   ServicioOpcionRequest,
 } from '../../../modelos/proveedor-servicio';
+import { EventoService } from '../../../servicios/evento.service';
+import { Evento } from '../../../modelos/evento';
 
 type CarpetaDestino = 'servicios' | 'opciones';
 
@@ -34,6 +36,9 @@ export class CatalogoServicios implements OnInit {
   edicionOferta: Record<number, ProveedorServicioRequest> = {};
   edicionOpcion: Record<number, ServicioOpcionRequest> = {};
   propuestasEdicion: Record<number, NuevoCatalogoServicioRequest> = {};
+
+  eventos: Evento[] = [];
+  eventosSeleccionadosPropuesta = new Set<number>();
 
   idProveedor: number | null = null;
   nuevaOferta: ProveedorServicioRequest = {
@@ -58,12 +63,21 @@ export class CatalogoServicios implements OnInit {
   constructor(
     private catalogoServicio: CatalogoServicioService,
     private proveedorServicio: ProveedorServicioService,
-    private proveedorService: ProveedorService
+    private proveedorService: ProveedorService,
+    private eventoService: EventoService
   ) {}
 
   ngOnInit(): void {
     this.cargarCatalogo();
     this.resolverProveedor();
+    this.cargarEventos();
+  }
+
+  private cargarEventos(): void {
+    this.eventoService.obtenerEventos().subscribe({
+      next: (lista) => (this.eventos = lista),
+      error: () => (this.error = 'No se pudieron cargar los eventos para las propuestas.'),
+    });
   }
 
   private resolverProveedor(): void {
@@ -406,14 +420,21 @@ export class CatalogoServicios implements OnInit {
       this.error = 'No pudimos validar tu perfil de proveedor.';
       return;
     }
+
+    if (!this.eventosSeleccionadosPropuesta.size) {
+      this.error = 'Selecciona para qué eventos aplica el servicio que estás proponiendo.';
+      return;
+    }
     const payload: NuevoCatalogoServicioRequest = {
       ...this.nuevoTipoProveedor,
       idProveedorSolicitante: this.idProveedor,
+      idEventos: Array.from(this.eventosSeleccionadosPropuesta),
     };
     this.catalogoServicio.crearComoProveedor(payload).subscribe({
       next: () => {
         this.mensaje = 'Tipo propuesto. El admin verá la solicitud en la cola de revisión.';
         this.nuevoTipoProveedor = { nombre: '', descripcion: '' };
+        this.eventosSeleccionadosPropuesta.clear();
         this.cargarPropuestas();
       },
       error: () => {
@@ -500,5 +521,17 @@ export class CatalogoServicios implements OnInit {
       descripcion: catalogo.descripcion,
       idProveedorSolicitante: this.idProveedor ?? undefined,
     };
+  }
+
+  toggleEvento(idEvento: number, set: Set<number>): void {
+    if (set.has(idEvento)) {
+      set.delete(idEvento);
+    } else {
+      set.add(idEvento);
+    }
+  }
+
+  seleccionarTodosEventos(): void {
+    this.eventosSeleccionadosPropuesta = new Set(this.eventos.map((e) => e.idEvento));
   }
 }

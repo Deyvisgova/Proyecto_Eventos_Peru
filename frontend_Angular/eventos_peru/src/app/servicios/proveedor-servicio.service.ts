@@ -14,6 +14,10 @@ export class ProveedorServicioService {
   private http = inject(HttpClient);
   private api = 'http://localhost:8080/api/proveedor-servicios';
 
+  listarVisibles(): Observable<ProveedorServicio[]> {
+    return this.http.get<ProveedorServicio[]>(`${this.api}/visibles`);
+  }
+
   listarPorProveedor(idProveedor: number): Observable<ProveedorServicio[]> {
     return this.http.get<ProveedorServicio[]>(`${this.api}/proveedor/${idProveedor}`);
   }
