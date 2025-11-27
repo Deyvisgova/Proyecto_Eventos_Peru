@@ -1,0 +1,148 @@
+package com.eventosperu.backend.controlador;
+
+import com.eventosperu.backend.model.*;
+import com.eventosperu.backend.model.dto.ModeracionCatalogoRequest;
+import com.eventosperu.backend.model.dto.NuevoCatalogoServicioRequest;
+import com.eventosperu.backend.repositorio.CatalogoEventoServicioRepositorio;
+import com.eventosperu.backend.repositorio.CatalogoServicioRepositorio;
+import com.eventosperu.backend.repositorio.EventoRepositorio;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/catalogo-servicios")
+@CrossOrigin(origins = "*")
+public class CatalogoServicioControlador {
+
+    @Autowired
+    private CatalogoServicioRepositorio catalogoServicioRepositorio;
+
+    @Autowired
+    private CatalogoEventoServicioRepositorio catalogoEventoServicioRepositorio;
+
+    @Autowired
+    private EventoRepositorio eventoRepositorio;
+
+    /**
+     * Lista todo el catálogo (se puede filtrar por estado enviando ?estado=ACTIVO/PENDIENTE/RECHAZADO).
+     */
+    @GetMapping
+    public List<CatalogoServicio> listar(@RequestParam(required = false) CatalogoServicio.EstadoCatalogo estado) {
+        if (estado != null) {
+            return catalogoServicioRepositorio.findByEstado(estado);
+        }
+        return catalogoServicioRepositorio.findAll();
+    }
+
+    /**
+     * Cola de tipos propuestos por proveedores pendientes de moderación.
+     */
+    @GetMapping("/pendientes")
+    public List<CatalogoServicio> pendientes() {
+        return catalogoServicioRepositorio.findByEstado(CatalogoServicio.EstadoCatalogo.PENDIENTE);
+    }
+
+    /**
+     * Registro directo de un tipo de servicio por el administrador (queda activo de inmediato).
+     */
+    @PostMapping("/admin")
+    public CatalogoServicio crearComoAdmin(@RequestBody NuevoCatalogoServicioRequest request) {
+        CatalogoServicio catalogo = new CatalogoServicio();
+        catalogo.setNombre(request.getNombre());
+        catalogo.setDescripcion(request.getDescripcion());
+        catalogo.setCreadoPor(CatalogoServicio.FuenteCreacion.ADMIN);
+        catalogo.setEstado(CatalogoServicio.EstadoCatalogo.ACTIVO);
+        catalogo.setFechaRevision(LocalDateTime.now());
+        return catalogoServicioRepositorio.save(catalogo);
+    }
+
+    /**
+     * Registro de un nuevo tipo solicitado por un proveedor. Queda en estado PENDIENTE hasta que el admin decida.
+     */
+    @PostMapping("/proveedor")
+    public CatalogoServicio crearComoProveedor(@RequestBody NuevoCatalogoServicioRequest request) {
+        CatalogoServicio catalogo = new CatalogoServicio();
+        catalogo.setNombre(request.getNombre());
+        catalogo.setDescripcion(request.getDescripcion());
+        catalogo.setCreadoPor(CatalogoServicio.FuenteCreacion.PROVEEDOR);
+        catalogo.setEstado(CatalogoServicio.EstadoCatalogo.PENDIENTE);
+        return catalogoServicioRepositorio.save(catalogo);
+    }
+
+    /**
+     * El administrador aprueba un tipo propuesto. Todas las ofertas que dependan de él pasarán a ser visibles
+     * porque ahora el catálogo tiene estado ACTIVO.
+     */
+    @PutMapping("/{id}/aprobar")
+    public CatalogoServicio aprobar(@PathVariable Integer id, @RequestBody(required = false) ModeracionCatalogoRequest request) {
+        Optional<CatalogoServicio> catalogoOpt = catalogoServicioRepositorio.findById(id);
+        if (catalogoOpt.isEmpty()) {
+            return null;
+        }
+        CatalogoServicio catalogo = catalogoOpt.get();
+        catalogo.setEstado(CatalogoServicio.EstadoCatalogo.ACTIVO);
+        catalogo.setFechaRevision(LocalDateTime.now());
+        if (request != null) {
+            catalogo.setIdAdminRevisor(request.getIdAdminRevisor());
+        }
+        catalogo.setMotivoRechazo(null);
+        return catalogoServicioRepositorio.save(catalogo);
+    }
+
+    /**
+     * El administrador rechaza el tipo propuesto y deja constancia del motivo para que el proveedor lo vea.
+     */
+    @PutMapping("/{id}/rechazar")
+    public CatalogoServicio rechazar(@PathVariable Integer id, @RequestBody ModeracionCatalogoRequest request) {
+        Optional<CatalogoServicio> catalogoOpt = catalogoServicioRepositorio.findById(id);
+        if (catalogoOpt.isEmpty()) {
+            return null;
+        }
+        CatalogoServicio catalogo = catalogoOpt.get();
+        catalogo.setEstado(CatalogoServicio.EstadoCatalogo.RECHAZADO);
+        catalogo.setFechaRevision(LocalDateTime.now());
+        catalogo.setMotivoRechazo(request != null ? request.getMotivoRechazo() : null);
+        if (request != null) {
+            catalogo.setIdAdminRevisor(request.getIdAdminRevisor());
+        }
+        return catalogoServicioRepositorio.save(catalogo);
+    }
+
+    /**
+     * Relaciona un tipo de servicio con un evento específico.
+     */
+    @PostMapping("/{idCatalogo}/eventos/{idEvento}")
+    public CatalogoEventoServicio vincularEvento(@PathVariable Integer idCatalogo, @PathVariable Integer idEvento) {
+        Optional<CatalogoServicio> catalogoOpt = catalogoServicioRepositorio.findById(idCatalogo);
+        Optional<Evento> eventoOpt = eventoRepositorio.findById(idEvento);
+
+        if (catalogoOpt.isEmpty() || eventoOpt.isEmpty()) {
+            return null;
+        }
+
+        CatalogoEventoServicio relacion = new CatalogoEventoServicio();
+        relacion.setCatalogoServicio(catalogoOpt.get());
+        relacion.setEvento(eventoOpt.get());
+        return catalogoEventoServicioRepositorio.save(relacion);
+    }
+
+    /**
+     * Devuelve los tipos de servicio disponibles para un evento (solo los que estén ACTIVOS).
+     */
+    @GetMapping("/eventos/{idEvento}")
+    public List<CatalogoServicio> listarPorEvento(@PathVariable Integer idEvento) {
+        Optional<Evento> eventoOpt = eventoRepositorio.findById(idEvento);
+        if (eventoOpt.isEmpty()) {
+            return List.of();
+        }
+        return catalogoEventoServicioRepositorio.findByEvento(eventoOpt.get())
+                .stream()
+                .map(CatalogoEventoServicio::getCatalogoServicio)
+                .filter(c -> c.getEstado() == CatalogoServicio.EstadoCatalogo.ACTIVO)
+                .toList();
+    }
+}

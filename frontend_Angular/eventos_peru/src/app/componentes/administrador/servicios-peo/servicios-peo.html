@@ -1,45 +1,132 @@
 <section class="servicios-peo">
   <header class="encabezado">
     <div>
-      <h2>🛠️ Servicios PEO</h2>
-      <p>Consulta y gestiona los servicios ofrecidos por los proveedores.</p>
+      <h2>Catálogo y moderación de servicios</h2>
+      <p>
+        Aprueba o rechaza los tipos de servicio propuestos por proveedores y crea tipos base que
+        queden activos al instante.
+      </p>
     </div>
-    <button type="button" (click)="cargarServicios()" class="btn-recargar">
+    <button type="button" (click)="cargarCatalogo(); cargarPendientes()" class="btn-recargar">
       <i class="bi bi-arrow-repeat"></i>
       Actualizar
     </button>
   </header>
 
-  <div *ngIf="cargando" class="estado">Cargando servicios...</div>
-  <div *ngIf="!cargando && error" class="alerta">{{ error }}</div>
+  <div class="alerta" *ngIf="error">{{ error }}</div>
+  <div class="exito" *ngIf="mensaje">{{ mensaje }}</div>
 
-  <table *ngIf="!cargando && !error && servicios.length" class="tabla-servicios">
-    <thead>
-      <tr>
-        <th>Servicio</th>
-        <th>Proveedor</th>
-        <th>Evento</th>
-        <th>Precio (S/)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let servicio of servicios">
-        <td>
-          <div class="nombre-servicio">
-            <strong>{{ servicio.nombreServicio }}</strong>
-            <small *ngIf="servicio.descripcion">{{ servicio.descripcion }}</small>
+  <div class="paneles">
+    <div class="panel">
+      <div class="panel-cabecera">
+        <h3>Crear tipo de servicio (admin)</h3>
+        <p>Se publica como ACTIVO para que los proveedores creen sus ofertas.</p>
+      </div>
+      <form class="formulario" (ngSubmit)="registrarTipo()">
+        <label>
+          Nombre
+          <input type="text" [(ngModel)]="nuevoTipo.nombre" name="nombre" required placeholder="Ej. Decoración" />
+        </label>
+        <label>
+          Descripción
+          <textarea
+            rows="3"
+            [(ngModel)]="nuevoTipo.descripcion"
+            name="descripcion"
+            placeholder="Breve detalle de qué abarca este servicio"
+          ></textarea>
+        </label>
+        <button class="btn-primario" type="submit">Publicar tipo</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <div class="panel-cabecera">
+        <h3>Cola de tipos propuestos</h3>
+        <p>Revisa y responde a los tipos que solicitaron los proveedores.</p>
+      </div>
+      <div *ngIf="cargandoPendientes" class="estado">Cargando propuestas...</div>
+      <div *ngIf="!cargandoPendientes && !pendientes.length" class="estado">No hay propuestas pendientes.</div>
+
+      <div class="card-pendiente" *ngFor="let cat of pendientes">
+        <div class="card-info">
+          <div>
+            <p class="nombre">{{ cat.nombre }}</p>
+            <p class="descripcion" *ngIf="cat.descripcion">{{ cat.descripcion }}</p>
+            <small>Propuesto por {{ cat.creadoPor === 'PROVEEDOR' ? 'Proveedor' : 'Admin' }}</small>
           </div>
-        </td>
-        <td>{{ obtenerNombreProveedor(servicio) }}</td>
-        <td>{{ obtenerNombreEvento(servicio) }}</td>
-        <td>
-          {{ servicio.precio | number: '1.2-2' }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
+          <span class="badge badge-aviso">Pendiente</span>
+        </div>
+        <label class="motivo">
+          Motivo de rechazo
+          <textarea
+            rows="2"
+            [(ngModel)]="motivosRechazo[cat.idCatalogo]"
+            name="motivo-{{ cat.idCatalogo }}"
+            placeholder="Explica qué se debe corregir"
+          ></textarea>
+        </label>
+        <div class="acciones">
+          <button type="button" class="btn-secundario" (click)="rechazar(cat)">
+            <i class="bi bi-x-circle"></i>
+            Rechazar
+          </button>
+          <button type="button" class="btn-primario" (click)="aprobar(cat)">
+            <i class="bi bi-check-circle"></i>
+            Aprobar y activar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <p *ngIf="!cargando && !error && !servicios.length" class="estado">
-    No hay servicios registrados.
-  </p>
+  <div class="panel listado">
+    <div class="panel-cabecera">
+      <div>
+        <h3>Catálogo de tipos de servicio</h3>
+        <p>Estados y origen de cada tipo disponible.</p>
+      </div>
+      <div class="filtro">
+        <label>
+          Estado
+          <select [(ngModel)]="filtroEstado" name="filtro" (change)="cargarCatalogo()">
+            <option value="TODOS">Todos</option>
+            <option value="ACTIVO">Activos</option>
+            <option value="PENDIENTE">Pendientes</option>
+            <option value="RECHAZADO">Rechazados</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div *ngIf="cargandoCatalogo" class="estado">Cargando catálogo...</div>
+    <div *ngIf="!cargandoCatalogo && !catalogo.length" class="estado">No hay registros.</div>
+
+    <table *ngIf="!cargandoCatalogo && catalogo.length" class="tabla-servicios">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Estado</th>
+          <th>Creado por</th>
+          <th>Última revisión</th>
+          <th>Motivo rechazo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cat of catalogo">
+          <td>
+            <strong>{{ cat.nombre }}</strong>
+            <div class="descripcion" *ngIf="cat.descripcion">{{ cat.descripcion }}</div>
+          </td>
+          <td><span class="badge" [ngClass]="badgeClase(cat.estado)">{{ cat.estado }}</span></td>
+          <td>{{ cat.creadoPor }}</td>
+          <td>{{ cat.fechaRevision ? (cat.fechaRevision | date: 'short') : '-' }}</td>
+          <td>
+            <span *ngIf="cat.motivoRechazo; else sinMotivo">{{ cat.motivoRechazo }}</span>
+            <ng-template #sinMotivo>-</ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>
