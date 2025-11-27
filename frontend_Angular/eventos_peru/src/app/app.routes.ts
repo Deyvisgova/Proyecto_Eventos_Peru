@@ -73,6 +73,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./componentes/administrador/servicios-peo/servicios-peo').then((m) => m.ServiciosPeo),
       },
+      {
+        path: 'reservas',
+        loadComponent: () =>
+          import('./componentes/administrador/reservas/reservas').then((m) => m.ReservasAdmin),
+      },
     ],
   },
 
@@ -119,6 +124,13 @@ export const routes: Routes = [
     path: 'cliente/evento/:tipo',
     loadComponent: () =>
       import('./componentes/evento-cliente/evento-cliente').then((m) => m.EventoCliente),
+  },
+  {
+    path: 'cliente/reservas',
+    loadComponent: () =>
+      import('./componentes/evento-cliente/reservas-cliente/reservas-cliente').then(
+        (m) => m.ReservasCliente
+      ),
   },
 
   /* ================== CUALQUIER OTRA RUTA ================== */

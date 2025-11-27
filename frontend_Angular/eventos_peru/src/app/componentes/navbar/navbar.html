@@ -43,6 +43,10 @@
 
         <!-- 🔹 Cliente logueado -->
         <ng-container *ngIf="isLoggedIn && rol === 'CLIENTE'">
+          <a class="btn btn-outline-success d-flex align-items-center gap-2" routerLink="/cliente/reservas">
+            <i class="bi bi-calendar-check"></i>
+            Reservas
+          </a>
           <span class="text-light me-2">Hola, {{ nombre }}</span>
           <button class="btn btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
         </ng-container>

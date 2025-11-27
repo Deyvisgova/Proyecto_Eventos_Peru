@@ -124,8 +124,14 @@ export class Usuarios {
       return;
     }
 
+    const fechaRegistro = this.usuarioSeleccionado.fechaRegistro;
+    if (!fechaRegistro) {
+      alert('La fecha de registro no está disponible para actualizar al usuario.');
+      return;
+    }
+
     // Convertimos la fecha a formato ISO completo (con hora)
-    const fechaISO = new Date(this.usuarioSeleccionado.fechaRegistro).toISOString();
+    const fechaISO = new Date(fechaRegistro).toISOString();
 
     // Armamos el payload exacto que Spring espera
     const payload = {
