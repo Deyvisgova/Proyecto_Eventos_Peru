@@ -32,6 +32,15 @@ public class Reserva {
     @Column(name = "fecha_reserva")
     private LocalDateTime fechaReserva = LocalDateTime.now();
 
+    @Column(name = "fecha_confirmacion")
+    private LocalDateTime fechaConfirmacion;
+
+    @Column(name = "fecha_limite_rechazo")
+    private LocalDateTime fechaLimiteRechazo;
+
+    @Column(name = "fecha_rechazo")
+    private LocalDateTime fechaRechazo;
+
     public enum EstadoReserva {
         PENDIENTE,
         CONFIRMADA,
