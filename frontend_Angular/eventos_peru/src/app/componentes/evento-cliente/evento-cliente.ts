@@ -14,6 +14,8 @@ import { EventoService } from '../../servicios/evento.service';
 import { CatalogoServicioService } from '../../servicios/catalogo-servicio.service';
 import { CatalogoEventoServicio } from '../../modelos/catalogo-evento-servicio';
 import { Evento } from '../../modelos/evento';
+import { ReservaService } from '../../servicios/reserva.service';
+import { Reserva } from '../../modelos/reserva';
 
 @Component({
   selector: 'app-evento-cliente',
@@ -28,6 +30,7 @@ export class EventoCliente implements OnInit {
   private proveedorServicioSrv = inject(ProveedorServicioService);
   private eventoSrv = inject(EventoService);
   private catalogoSrv = inject(CatalogoServicioService);
+  private reservaSrv = inject(ReservaService);
 
   nombre = '';
   tipoEvento = '';
@@ -49,6 +52,10 @@ export class EventoCliente implements OnInit {
   busquedaProveedor = '';
 
   opcionesPorProveedor: Record<number, ServicioOpcion[]> = {};
+
+  reservasProveedor: Reserva[] = [];
+  diasCalendario: { fecha: string; numero: number; estado: string }[] = [];
+  mesActual = new Date();
 
   cargando = false;
   cargandoOpciones = false;
@@ -279,6 +286,9 @@ export class EventoCliente implements OnInit {
     this.opciones = [];
     this.seleccion = {};
     this.fechaEvento = '';
+    this.reservasProveedor = [];
+    this.diasCalendario = [];
+    this.mesActual = new Date();
 
     this.proveedorServicioSrv.listarOpciones(p.idProveedorServicio).subscribe({
       next: (ops) => {
@@ -290,6 +300,16 @@ export class EventoCliente implements OnInit {
         console.error('No se pudieron cargar las opciones', err);
       },
     });
+
+    const idProv = p.proveedor?.idProveedor;
+    if (idProv) {
+      this.reservaSrv.listarPorProveedor(idProv).subscribe({
+        next: (r) => {
+          this.reservasProveedor = r;
+          this.generarCalendario();
+        },
+      });
+    }
   }
 
   cerrarModal() {
@@ -298,5 +318,42 @@ export class EventoCliente implements OnInit {
     this.opciones = [];
     this.seleccion = {};
     this.fechaEvento = '';
+  }
+
+  generarCalendario() {
+    const año = this.mesActual.getFullYear();
+    const mes = this.mesActual.getMonth();
+    const diasMes = new Date(año, mes + 1, 0).getDate();
+
+    const mapa = new Map<string, string>();
+    this.reservasProveedor.forEach((r) => {
+      if (!r.fechaEvento) return;
+      const clave = String(r.fechaEvento);
+      const estadoActual = mapa.get(clave);
+      if (r.estado === 'CONFIRMADA') {
+        mapa.set(clave, 'confirmada');
+      } else if (r.estado === 'PENDIENTE' && estadoActual !== 'confirmada') {
+        mapa.set(clave, 'pendiente');
+      } else if (!estadoActual) {
+        mapa.set(clave, 'rechazada');
+      }
+    });
+
+    const dias: { fecha: string; numero: number; estado: string }[] = [];
+    for (let i = 1; i <= diasMes; i++) {
+      const fecha = new Date(año, mes, i);
+      const clave = fecha.toISOString().slice(0, 10);
+      dias.push({ fecha: clave, numero: i, estado: mapa.get(clave) || '' });
+    }
+    this.diasCalendario = dias;
+  }
+
+  cambiarMes(delta: number) {
+    this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + delta, 1);
+    this.generarCalendario();
+  }
+
+  seleccionarDia(fecha: string) {
+    this.fechaEvento = fecha;
   }
 }

@@ -349,10 +349,86 @@
   margin-top: 1rem;
 }
 
-.agendar input {
-  padding: 0.75rem 0.9rem;
-  border-radius: 10px;
+.calendario {
   border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f9fafb;
+}
+
+.calendario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-sutil {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.calendario-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendario .dia {
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+}
+
+.calendario .dia.confirmada {
+  background: #e8f8f0;
+  border-color: #16a34a;
+}
+
+.calendario .dia.pendiente {
+  background: #fff7e6;
+  border-color: #d97706;
+}
+
+.calendario .dia.rechazada {
+  background: #fdecea;
+  border-color: #c0392b;
+}
+
+.calendario .dia.activo {
+  outline: 2px solid #2563eb;
+}
+
+.leyenda {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.punto {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.punto.confirmada {
+  background: #16a34a;
+}
+
+.punto.pendiente {
+  background: #d97706;
+}
+
+.punto.rechazada {
+  background: #c0392b;
 }
 
 .acciones {
