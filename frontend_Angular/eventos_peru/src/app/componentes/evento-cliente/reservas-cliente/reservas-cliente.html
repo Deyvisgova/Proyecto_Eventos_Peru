@@ -1,0 +1,47 @@
+<div class="reservas-page">
+  <header>
+    <div>
+      <p class="texto-sutil">Cliente</p>
+      <h2>Mis reservas</h2>
+      <p class="texto-sutil">Aquí verás el detalle de cada reserva y podrás rechazar dentro del plazo.</p>
+    </div>
+  </header>
+
+  <div class="estado" *ngIf="cargando">Cargando reservas...</div>
+  <div class="estado error" *ngIf="error">{{ error }}</div>
+
+  <section class="grid" *ngIf="!cargando && reservas.length">
+    <article class="card" *ngFor="let r of reservas">
+      <div class="card-header">
+        <div>
+          <p class="texto-sutil">Fecha del evento</p>
+          <h4>{{ r.fechaEvento | date }}</h4>
+          <p class="texto-sutil">Proveedor: {{ r.proveedor?.nombreEmpresa || r.proveedor?.nombre }}</p>
+        </div>
+        <span [class]="estadoClase(r)">{{ r.estado }}</span>
+      </div>
+
+      <div class="detalles" *ngIf="detalles[r.idReserva]?.length">
+        <h5>Detalle</h5>
+        <ul>
+          <li *ngFor="let d of detalles[r.idReserva]">
+            <div>
+              <strong>{{ d.servicio?.nombreServicio }}</strong>
+              <p class="texto-sutil">Cantidad: {{ d.cantidad }}</p>
+            </div>
+            <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="acciones">
+        <small *ngIf="r.fechaLimiteRechazo">Puedes rechazar hasta {{ r.fechaLimiteRechazo | date }}</small>
+        <button class="btn-rechazar" [disabled]="!puedeRechazar(r)" (click)="rechazar(r)">
+          Rechazar
+        </button>
+      </div>
+    </article>
+  </section>
+
+  <div class="estado" *ngIf="!cargando && !reservas.length">Aún no tienes reservas registradas.</div>
+</div>

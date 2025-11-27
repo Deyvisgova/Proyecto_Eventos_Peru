@@ -1,19 +1,121 @@
 .card {
   background: #fff;
+  padding: 16px;
   border-radius: 12px;
-  padding: 18px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-.titulo-card {
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.tabla th,
+.tabla td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabla th {
+  text-align: left;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.acciones {
   display: flex;
+  gap: 8px;
   align-items: center;
-  gap: 10px;
-  font-size: 1.05rem;
-  margin-bottom: 10px;
-  color: #0f172a;
+}
+
+.btn-icono {
+  border: none;
+  background: #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-accion {
+  border: none;
+  background: #16a34a;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-accion.rechazo {
+  background: #c0392b;
+}
+
+.btn-accion:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.estado.confirmada,
+.estado.pendiente,
+.estado.cancelada {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.estado.confirmada {
+  background: #e8f8f0;
+  color: #16a34a;
+}
+
+.estado.pendiente {
+  background: #fff7e6;
+  color: #d97706;
+}
+
+.estado.cancelada {
+  background: #fdecea;
+  color: #c0392b;
+}
+
+.panel-detalle {
+  margin-top: 16px;
+  background: #f9fafb;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detalle-lista {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detalle-lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
 
 .texto-suave {
-  color: #475569;
+  color: #6b7280;
+  margin: 0;
+}
+
+.estado.error {
+  color: #c0392b;
 }
