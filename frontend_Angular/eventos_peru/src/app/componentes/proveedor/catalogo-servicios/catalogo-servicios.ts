@@ -3,7 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CatalogoServicioService } from '../../../servicios/catalogo-servicio.service';
 import { ProveedorServicioService } from '../../../servicios/proveedor-servicio.service';
-import { CatalogoServicio, EstadoCatalogo, NuevoCatalogoServicioRequest } from '../../../modelos/catalogo-servicio';
+import { ProveedorService } from '../../../servicios/proveedor.service';
+import {
+  CatalogoServicio,
+  EstadoCatalogo,
+  NuevoCatalogoServicioRequest,
+} from '../../../modelos/catalogo-servicio';
 import {
   EstadoProveedorServicio,
   ProveedorServicio,
@@ -22,11 +27,15 @@ import {
 export class CatalogoServicios implements OnInit {
   catalogoActivo: CatalogoServicio[] = [];
   ofertas: ProveedorServicio[] = [];
+  propuestas: CatalogoServicio[] = [];
   opcionesPorServicio: Record<number, ServicioOpcion[]> = {};
+  edicionOferta: Record<number, ProveedorServicioRequest> = {};
+  edicionOpcion: Record<number, ServicioOpcionRequest> = {};
+  propuestasEdicion: Record<number, NuevoCatalogoServicioRequest> = {};
 
-  idProveedor = 1; // valor de ejemplo, enlazar con sesión cuando se integre auth
+  idProveedor: number | null = null;
   nuevaOferta: ProveedorServicioRequest = {
-    idProveedor: this.idProveedor,
+    idProveedor: 0,
     idCatalogo: 0,
     nombrePublico: '',
     descripcionGeneral: '',
@@ -40,15 +49,89 @@ export class CatalogoServicios implements OnInit {
   error = '';
   cargandoCatalogo = false;
   cargandoOfertas = false;
+  cargandoPropuestas = false;
+  cargandoProveedor = false;
 
   constructor(
     private catalogoServicio: CatalogoServicioService,
-    private proveedorServicio: ProveedorServicioService
+    private proveedorServicio: ProveedorServicioService,
+    private proveedorService: ProveedorService
   ) {}
 
   ngOnInit(): void {
     this.cargarCatalogo();
+    this.resolverProveedor();
+  }
+
+  private resolverProveedor(): void {
+    const raw = localStorage.getItem('usuario');
+    if (!raw) {
+      this.error = 'Inicia sesión nuevamente para gestionar tus servicios.';
+      return;
+    }
+
+    try {
+      const usuario = JSON.parse(raw);
+      const proveedorId = this.extraerIdProveedor(usuario);
+      if (proveedorId) {
+        this.fijarProveedor(proveedorId);
+        return;
+      }
+
+      const idUsuario = this.extraerIdUsuario(usuario);
+      if (!idUsuario) {
+        this.error = 'No pudimos identificar tu cuenta de proveedor.';
+        return;
+      }
+
+      this.cargandoProveedor = true;
+      this.proveedorService.obtenerPorUsuario(idUsuario).subscribe({
+        next: (prov) => {
+          const id = prov?.idProveedor ?? prov?.id_proveedor ?? prov?.id;
+          if (id) {
+            this.fijarProveedor(Number(id));
+          } else {
+            this.error = 'No se encontró tu perfil de proveedor aprobado.';
+          }
+          this.cargandoProveedor = false;
+        },
+        error: () => {
+          this.error = 'No se pudo cargar tu perfil de proveedor.';
+          this.cargandoProveedor = false;
+        },
+      });
+    } catch (e) {
+      this.error = 'No se pudo leer tu sesión. Vuelve a iniciar sesión.';
+    }
+  }
+
+  private fijarProveedor(id: number): void {
+    this.idProveedor = id;
+    this.nuevaOferta.idProveedor = id;
     this.cargarOfertas();
+    this.cargarPropuestas();
+  }
+
+  private extraerIdUsuario(usuario: any): number | null {
+    const rawId =
+      usuario?.idUsuario ??
+      usuario?.id_usuario ??
+      usuario?.usuario?.idUsuario ??
+      usuario?.usuario?.id_usuario ??
+      null;
+    const id = Number(rawId);
+    return Number.isFinite(id) ? id : null;
+  }
+
+  private extraerIdProveedor(usuario: any): number | null {
+    const rawId =
+      usuario?.idProveedor ??
+      usuario?.id_proveedor ??
+      usuario?.proveedor?.idProveedor ??
+      usuario?.proveedor?.id_proveedor ??
+      null;
+    const id = Number(rawId);
+    return Number.isFinite(id) ? id : null;
   }
 
   cargarCatalogo(): void {
@@ -56,7 +139,7 @@ export class CatalogoServicios implements OnInit {
     this.catalogoServicio.listar('ACTIVO' as EstadoCatalogo).subscribe({
       next: (lista) => {
         this.catalogoActivo = lista;
-        if (lista.length) {
+        if (lista.length && !this.nuevaOferta.idCatalogo) {
           this.nuevaOferta.idCatalogo = lista[0].idCatalogo;
         }
         this.cargandoCatalogo = false;
@@ -69,11 +152,17 @@ export class CatalogoServicios implements OnInit {
   }
 
   cargarOfertas(): void {
+    if (!this.idProveedor) {
+      return;
+    }
     this.cargandoOfertas = true;
     this.proveedorServicio.listarPorProveedor(this.idProveedor).subscribe({
       next: (resp) => {
         this.ofertas = resp;
-        this.ofertas.forEach((oferta) => this.prepararFormularioOpcion(oferta.idProveedorServicio));
+        this.ofertas.forEach((oferta) => {
+          this.prepararFormularioOpcion(oferta.idProveedorServicio);
+          this.prepararEdicionOferta(oferta);
+        });
         this.cargandoOfertas = false;
       },
       error: () => {
@@ -84,16 +173,20 @@ export class CatalogoServicios implements OnInit {
   }
 
   registrarOferta(): void {
+    if (!this.idProveedor) {
+      this.error = 'No pudimos validar tu perfil de proveedor.';
+      return;
+    }
     if (!this.nuevaOferta.nombrePublico.trim() || !this.nuevaOferta.idCatalogo) {
       this.error = 'Elige un tipo de servicio y coloca un nombre público.';
       return;
     }
-    this.nuevaOferta.idProveedor = this.idProveedor;
+    this.nuevaOferta.idProveedor = this.idProveedor!;
     this.proveedorServicio.crearOferta(this.nuevaOferta).subscribe({
       next: () => {
         this.mensaje = 'Servicio registrado. Añade opciones para detallar precios y variantes.';
         this.nuevaOferta = {
-          idProveedor: this.idProveedor,
+          idProveedor: this.idProveedor ?? 0,
           idCatalogo: this.nuevaOferta.idCatalogo,
           nombrePublico: '',
           descripcionGeneral: '',
@@ -104,6 +197,32 @@ export class CatalogoServicios implements OnInit {
       error: () => {
         this.error = 'No se pudo registrar el servicio.';
       },
+    });
+  }
+
+  actualizarOferta(oferta: ProveedorServicio): void {
+    const dto = this.edicionOferta[oferta.idProveedorServicio];
+    if (!dto || !dto.nombrePublico.trim()) {
+      this.error = 'Completa el nombre público del servicio.';
+      return;
+    }
+    this.proveedorServicio.actualizarOferta(oferta.idProveedorServicio, dto).subscribe({
+      next: () => {
+        this.mensaje = 'Servicio actualizado correctamente.';
+        this.cargarOfertas();
+      },
+      error: () => (this.error = 'No se pudo actualizar el servicio.'),
+    });
+  }
+
+  eliminarOferta(oferta: ProveedorServicio): void {
+    if (!confirm('¿Deseas eliminar esta oferta y sus opciones?')) return;
+    this.proveedorServicio.eliminarOferta(oferta.idProveedorServicio).subscribe({
+      next: () => {
+        this.mensaje = 'Servicio eliminado.';
+        this.cargarOfertas();
+      },
+      error: () => (this.error = 'No se pudo eliminar el servicio.'),
     });
   }
 
@@ -121,7 +240,10 @@ export class CatalogoServicios implements OnInit {
 
   cargarOpciones(oferta: ProveedorServicio): void {
     this.proveedorServicio.listarOpciones(oferta.idProveedorServicio).subscribe({
-      next: (resp) => (this.opcionesPorServicio[oferta.idProveedorServicio] = resp),
+      next: (resp) => {
+        this.opcionesPorServicio[oferta.idProveedorServicio] = resp;
+        resp.forEach((op) => this.prepararEdicionOpcion(op));
+      },
       error: () => (this.error = 'No se pudieron cargar las variantes del servicio.'),
     });
   }
@@ -151,6 +273,34 @@ export class CatalogoServicios implements OnInit {
     });
   }
 
+  actualizarOpcion(opcion: ServicioOpcion): void {
+    const dto = this.edicionOpcion[opcion.idOpcion];
+    if (!dto || !dto.nombreOpcion?.trim()) {
+      this.error = 'Completa el nombre de la opción.';
+      return;
+    }
+    dto.idProveedorServicio = opcion.proveedorServicio.idProveedorServicio;
+    this.proveedorServicio.actualizarOpcion(opcion.idOpcion, dto).subscribe({
+      next: () => {
+        this.mensaje = 'Opción actualizada.';
+        this.cargarOpciones({ idProveedorServicio: opcion.proveedorServicio.idProveedorServicio } as ProveedorServicio);
+      },
+      error: () => (this.error = 'No se pudo actualizar la opción.'),
+    });
+  }
+
+  eliminarOpcion(opcion: ServicioOpcion): void {
+    if (!confirm('¿Eliminar esta opción?')) return;
+    this.proveedorServicio.eliminarOpcion(opcion.idOpcion).subscribe({
+      next: () => {
+        this.mensaje = 'Opción eliminada.';
+        const servicioId = opcion.proveedorServicio.idProveedorServicio;
+        this.cargarOpciones({ idProveedorServicio: servicioId } as ProveedorServicio);
+      },
+      error: () => (this.error = 'No se pudo eliminar la opción.'),
+    });
+  }
+
   cambiarEstadoOpcion(opcion: ServicioOpcion, estado: string): void {
     this.proveedorServicio.cambiarEstadoOpcion(opcion.idOpcion, estado as any).subscribe({
       next: () => {
@@ -167,15 +317,61 @@ export class CatalogoServicios implements OnInit {
       this.error = 'Indica el nombre del nuevo tipo.';
       return;
     }
-    this.catalogoServicio.crearComoProveedor(this.nuevoTipoProveedor).subscribe({
+    if (!this.idProveedor) {
+      this.error = 'No pudimos validar tu perfil de proveedor.';
+      return;
+    }
+    const payload: NuevoCatalogoServicioRequest = {
+      ...this.nuevoTipoProveedor,
+      idProveedorSolicitante: this.idProveedor,
+    };
+    this.catalogoServicio.crearComoProveedor(payload).subscribe({
       next: () => {
         this.mensaje = 'Tipo propuesto. El admin verá la solicitud en la cola de revisión.';
         this.nuevoTipoProveedor = { nombre: '', descripcion: '' };
+        this.cargarPropuestas();
       },
       error: () => {
         this.error = 'No se pudo enviar la propuesta de tipo.';
       },
     });
+  }
+
+  cargarPropuestas(): void {
+    if (!this.idProveedor) {
+      return;
+    }
+    this.cargandoPropuestas = true;
+    this.catalogoServicio.listarPorProveedor(this.idProveedor).subscribe({
+      next: (lista) => {
+        this.propuestas = lista;
+        lista.forEach((p) => this.prepararEdicionPropuesta(p));
+        this.cargandoPropuestas = false;
+      },
+      error: () => {
+        this.error = 'No se pudo cargar tus propuestas de servicios.';
+        this.cargandoPropuestas = false;
+      },
+    });
+  }
+
+  reenviarPropuesta(catalogo: CatalogoServicio): void {
+    if (!this.idProveedor) return;
+    const dto = this.propuestasEdicion[catalogo.idCatalogo];
+    if (!dto || !dto.nombre.trim()) {
+      this.error = 'Indica el nombre del servicio que quieres reenviar.';
+      return;
+    }
+    dto.idProveedorSolicitante = this.idProveedor;
+    this.catalogoServicio
+      .actualizarPropuestaProveedor(this.idProveedor, catalogo.idCatalogo, dto)
+      .subscribe({
+        next: () => {
+          this.mensaje = 'Propuesta actualizada y enviada a revisión.';
+          this.cargarPropuestas();
+        },
+        error: () => (this.error = 'No se pudo actualizar la propuesta.'),
+      });
   }
 
   private prepararFormularioOpcion(id: number): void {
@@ -189,5 +385,35 @@ export class CatalogoServicios implements OnInit {
         urlFoto: '',
       };
     }
+  }
+
+  private prepararEdicionOferta(oferta: ProveedorServicio): void {
+    this.edicionOferta[oferta.idProveedorServicio] = {
+      idProveedor: oferta.proveedor?.idProveedor ?? this.idProveedor ?? 0,
+      idCatalogo: oferta.catalogoServicio.idCatalogo,
+      nombrePublico: oferta.nombrePublico,
+      descripcionGeneral: oferta.descripcionGeneral,
+      urlFoto: oferta.urlFoto ?? '',
+    };
+  }
+
+  private prepararEdicionOpcion(opcion: ServicioOpcion): void {
+    this.edicionOpcion[opcion.idOpcion] = {
+      idProveedorServicio: opcion.proveedorServicio.idProveedorServicio,
+      nombreOpcion: opcion.nombreOpcion,
+      descripcion: opcion.descripcion,
+      precio: opcion.precio,
+      duracionMinutos: opcion.duracionMinutos ?? undefined,
+      stock: opcion.stock ?? undefined,
+      urlFoto: opcion.urlFoto ?? '',
+    };
+  }
+
+  private prepararEdicionPropuesta(catalogo: CatalogoServicio): void {
+    this.propuestasEdicion[catalogo.idCatalogo] = {
+      nombre: catalogo.nombre,
+      descripcion: catalogo.descripcion,
+      idProveedorSolicitante: this.idProveedor ?? undefined,
+    };
   }
 }

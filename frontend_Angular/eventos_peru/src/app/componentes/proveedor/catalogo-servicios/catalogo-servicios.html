@@ -7,7 +7,7 @@
         tipo, envía tu propuesta.
       </p>
     </div>
-    <button type="button" class="btn-recargar" (click)="cargarCatalogo(); cargarOfertas()">
+    <button type="button" class="btn-recargar" (click)="cargarCatalogo(); cargarOfertas(); cargarPropuestas()">
       <i class="bi bi-arrow-repeat"></i>
       Refrescar
     </button>
@@ -15,6 +15,8 @@
 
   <div class="alerta" *ngIf="error">{{ error }}</div>
   <div class="exito" *ngIf="mensaje">{{ mensaje }}</div>
+  <div class="alerta" *ngIf="!idProveedor && !cargandoProveedor">No se pudo identificar tu perfil de proveedor.</div>
+  <div class="exito" *ngIf="cargandoProveedor">Cargando datos de tu cuenta de proveedor...</div>
 
   <div class="paneles">
     <div class="panel">
@@ -25,7 +27,11 @@
       <form class="formulario" (ngSubmit)="registrarOferta()">
         <label>
           Tipo de servicio
-          <select [(ngModel)]="nuevaOferta.idCatalogo" name="idCatalogo" [disabled]="!catalogoActivo.length">
+          <select
+            [(ngModel)]="nuevaOferta.idCatalogo"
+            name="idCatalogo"
+            [disabled]="!catalogoActivo.length || !idProveedor"
+          >
             <option *ngFor="let cat of catalogoActivo" [value]="cat.idCatalogo">{{ cat.nombre }}</option>
           </select>
         </label>
@@ -36,6 +42,7 @@
             [(ngModel)]="nuevaOferta.nombrePublico"
             name="nombrePublico"
             placeholder="Ej. Paquete premium de decoración"
+            [disabled]="!idProveedor"
           />
         </label>
         <label>
@@ -45,19 +52,20 @@
             [(ngModel)]="nuevaOferta.descripcionGeneral"
             name="descripcionGeneral"
             placeholder="Incluye lo que mejor describe tu servicio"
+            [disabled]="!idProveedor"
           ></textarea>
         </label>
         <label>
           URL de foto
-          <input type="url" [(ngModel)]="nuevaOferta.urlFoto" name="urlFoto" placeholder="https://..." />
+          <input
+            type="url"
+            [(ngModel)]="nuevaOferta.urlFoto"
+            name="urlFoto"
+            placeholder="Ej. assets/servicios/foto.jpg"
+            [disabled]="!idProveedor"
+          />
         </label>
-        <div class="fila">
-          <label>
-            ID de proveedor
-            <input type="number" [(ngModel)]="idProveedor" name="idProveedor" min="1" />
-          </label>
-          <button class="btn-primario" type="submit">Publicar oferta</button>
-        </div>
+        <button class="btn-primario" type="submit" [disabled]="!idProveedor">Publicar oferta</button>
       </form>
     </div>
 
@@ -69,13 +77,24 @@
       <form class="formulario" (ngSubmit)="proponerTipo()">
         <label>
           Nombre del tipo
-          <input type="text" name="nombreTipo" [(ngModel)]="nuevoTipoProveedor.nombre" placeholder="Ej. Fotocabina" />
+          <input
+            type="text"
+            name="nombreTipo"
+            [(ngModel)]="nuevoTipoProveedor.nombre"
+            placeholder="Ej. Fotocabina"
+            [disabled]="!idProveedor"
+          />
         </label>
         <label>
           Descripción / nota para el admin
-          <textarea rows="3" [(ngModel)]="nuevoTipoProveedor.descripcion" name="descripcionTipo"></textarea>
+          <textarea
+            rows="3"
+            [(ngModel)]="nuevoTipoProveedor.descripcion"
+            name="descripcionTipo"
+            [disabled]="!idProveedor"
+          ></textarea>
         </label>
-        <button class="btn-secundario" type="submit">Enviar propuesta</button>
+        <button class="btn-secundario" type="submit" [disabled]="!idProveedor">Enviar propuesta</button>
       </form>
     </div>
   </div>
@@ -84,7 +103,7 @@
     <div class="panel-cabecera">
       <div>
         <h3>Mis servicios</h3>
-        <small>Activa, pausa o detalla opciones</small>
+        <small>Activa, pausa, edita o detalla opciones</small>
       </div>
       <button class="btn-secundario" type="button" (click)="cargarOfertas()">Actualizar</button>
     </div>
@@ -110,9 +129,39 @@
             <button class="btn-primario" type="button" (click)="cambiarEstado(oferta, 'ACTIVO')">
               Activar
             </button>
+            <button class="btn-secundario" type="button" (click)="eliminarOferta(oferta)">Eliminar</button>
           </div>
         </div>
       </header>
+
+      <div class="formulario edicion-oferta">
+        <label>
+          Nombre público
+          <input
+            type="text"
+            [(ngModel)]="edicionOferta[oferta.idProveedorServicio].nombrePublico"
+            name="edit-nombre-{{ oferta.idProveedorServicio }}"
+          />
+        </label>
+        <label>
+          Descripción general
+          <textarea
+            rows="2"
+            [(ngModel)]="edicionOferta[oferta.idProveedorServicio].descripcionGeneral"
+            name="edit-descripcion-{{ oferta.idProveedorServicio }}"
+          ></textarea>
+        </label>
+        <label>
+          URL de foto
+          <input
+            type="url"
+            [(ngModel)]="edicionOferta[oferta.idProveedorServicio].urlFoto"
+            name="edit-foto-{{ oferta.idProveedorServicio }}"
+            placeholder="Ej. assets/servicios/foto.jpg"
+          />
+        </label>
+        <button class="btn-primario" type="button" (click)="actualizarOferta(oferta)">Guardar cambios</button>
+      </div>
 
       <div class="opciones">
         <div class="opciones-encabezado">
@@ -159,28 +208,103 @@
 
         <div class="lista-opciones" *ngIf="opcionesPorServicio[oferta.idProveedorServicio]?.length">
           <div class="opcion" *ngFor="let op of opcionesPorServicio[oferta.idProveedorServicio]">
-            <div>
+            <div class="opcion-info">
               <p class="nombre">{{ op.nombreOpcion }}</p>
               <p class="descripcion" *ngIf="op.descripcion">{{ op.descripcion }}</p>
               <small>Precio: S/ {{ op.precio }}</small>
+              <small *ngIf="op.urlFoto">Foto: {{ op.urlFoto }}</small>
             </div>
             <div class="estado-opcion">
               <span class="badge" [ngClass]="op.estado === 'ACTIVO' ? 'badge-exito' : 'badge-error'">
                 {{ op.estado }}
               </span>
-              <button
-                class="btn-secundario"
-                type="button"
-                (click)="cambiarEstadoOpcion(op, op.estado === 'ACTIVO' ? 'NO_DISPONIBLE' : 'ACTIVO')"
-              >
-                {{ op.estado === 'ACTIVO' ? 'Marcar no disponible' : 'Activar' }}
-              </button>
+              <div class="formulario opcion-edicion">
+                <input
+                  type="text"
+                  [(ngModel)]="edicionOpcion[op.idOpcion].nombreOpcion"
+                  name="edit-nombre-op-{{ op.idOpcion }}"
+                  placeholder="Nombre"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="edicionOpcion[op.idOpcion].precio"
+                  name="edit-precio-op-{{ op.idOpcion }}"
+                  placeholder="Precio"
+                />
+                <input
+                  type="url"
+                  [(ngModel)]="edicionOpcion[op.idOpcion].urlFoto"
+                  name="edit-foto-op-{{ op.idOpcion }}"
+                  placeholder="Ej. assets/opciones/foto.jpg"
+                />
+                <div class="opcion-botones">
+                  <button
+                    class="btn-secundario"
+                    type="button"
+                    (click)="cambiarEstadoOpcion(op, op.estado === 'ACTIVO' ? 'NO_DISPONIBLE' : 'ACTIVO')"
+                  >
+                    {{ op.estado === 'ACTIVO' ? 'Marcar no disponible' : 'Activar' }}
+                  </button>
+                  <button class="btn-primario" type="button" (click)="actualizarOpcion(op)">Actualizar</button>
+                  <button class="btn-secundario" type="button" (click)="eliminarOpcion(op)">Eliminar</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         <p *ngIf="!opcionesPorServicio[oferta.idProveedorServicio]?.length" class="texto-suave">
           Aún no agregas opciones para esta oferta.
         </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel listado">
+    <div class="panel-cabecera">
+      <div>
+        <h3>Mis propuestas de tipos de servicio</h3>
+        <small>Revisa el estado y corrige si fueron rechazadas</small>
+      </div>
+      <button class="btn-secundario" type="button" (click)="cargarPropuestas()">Actualizar</button>
+    </div>
+
+    <div *ngIf="cargandoPropuestas" class="estado">Cargando propuestas...</div>
+    <div *ngIf="!cargandoPropuestas && !propuestas.length" class="estado">No has enviado propuestas aún.</div>
+
+    <div class="tarjeta-servicio" *ngFor="let p of propuestas">
+      <header class="cabecera-servicio">
+        <div>
+          <p class="etiqueta">{{ p.creadoPor }}</p>
+          <h4>{{ p.nombre }}</h4>
+          <p class="descripcion" *ngIf="p.descripcion">{{ p.descripcion }}</p>
+          <p class="motivo" *ngIf="p.motivoRechazo">Motivo de rechazo: {{ p.motivoRechazo }}</p>
+        </div>
+        <span class="badge" [ngClass]="p.estado === 'ACTIVO' ? 'badge-exito' : p.estado === 'RECHAZADO' ? 'badge-error' : 'badge-aviso'">
+          {{ p.estado }}
+        </span>
+      </header>
+
+      <div class="formulario" *ngIf="p.estado === 'RECHAZADO'">
+        <label>
+          Nombre del servicio
+          <input
+            type="text"
+            [(ngModel)]="propuestasEdicion[p.idCatalogo].nombre"
+            name="edit-propuesta-nombre-{{ p.idCatalogo }}"
+          />
+        </label>
+        <label>
+          Descripción
+          <textarea
+            rows="2"
+            [(ngModel)]="propuestasEdicion[p.idCatalogo].descripcion"
+            name="edit-propuesta-descripcion-{{ p.idCatalogo }}"
+          ></textarea>
+        </label>
+        <button class="btn-primario" type="button" (click)="reenviarPropuesta(p)">
+          Actualizar y reenviar a revisión
+        </button>
       </div>
     </div>
   </div>

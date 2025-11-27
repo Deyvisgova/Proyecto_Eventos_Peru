@@ -9,4 +9,5 @@ import lombok.Data;
 public class NuevoCatalogoServicioRequest {
     private String nombre;
     private String descripcion;
+    private Integer idProveedorSolicitante;
 }

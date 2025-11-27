@@ -69,7 +69,51 @@ public class CatalogoServicioControlador {
         catalogo.setNombre(request.getNombre());
         catalogo.setDescripcion(request.getDescripcion());
         catalogo.setCreadoPor(CatalogoServicio.FuenteCreacion.PROVEEDOR);
+        catalogo.setIdProveedorSolicitante(request.getIdProveedorSolicitante());
         catalogo.setEstado(CatalogoServicio.EstadoCatalogo.PENDIENTE);
+        return catalogoServicioRepositorio.save(catalogo);
+    }
+
+    /**
+     * Lista las propuestas de tipos realizadas por un proveedor específico.
+     */
+    @GetMapping("/proveedor/{idProveedor}")
+    public List<CatalogoServicio> propuestasPorProveedor(@PathVariable Integer idProveedor) {
+        return catalogoServicioRepositorio.findByCreadoPorAndIdProveedorSolicitante(
+                CatalogoServicio.FuenteCreacion.PROVEEDOR,
+                idProveedor
+        );
+    }
+
+    /**
+     * Permite al proveedor actualizar una propuesta rechazada y reenviarla a revisión.
+     */
+    @PutMapping("/proveedor/{idProveedor}/{idCatalogo}")
+    public CatalogoServicio actualizarPropuesta(
+            @PathVariable Integer idProveedor,
+            @PathVariable Integer idCatalogo,
+            @RequestBody NuevoCatalogoServicioRequest request
+    ) {
+        Optional<CatalogoServicio> catalogoOpt = catalogoServicioRepositorio.findById(idCatalogo);
+        if (catalogoOpt.isEmpty()) {
+            return null;
+        }
+
+        CatalogoServicio catalogo = catalogoOpt.get();
+        boolean esDelProveedor = idProveedor.equals(catalogo.getIdProveedorSolicitante())
+                && catalogo.getCreadoPor() == CatalogoServicio.FuenteCreacion.PROVEEDOR;
+
+        if (!esDelProveedor) {
+            return null;
+        }
+
+        catalogo.setNombre(request.getNombre());
+        catalogo.setDescripcion(request.getDescripcion());
+        catalogo.setEstado(CatalogoServicio.EstadoCatalogo.PENDIENTE);
+        catalogo.setMotivoRechazo(null);
+        catalogo.setFechaRevision(null);
+        catalogo.setIdAdminRevisor(null);
+        catalogo.setFechaCreacion(catalogo.getFechaCreacion() != null ? catalogo.getFechaCreacion() : LocalDateTime.now());
         return catalogoServicioRepositorio.save(catalogo);
     }
 
