@@ -1,16 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
+import {
+  ProveedorServicio,
+  ServicioOpcion,
+} from '../../modelos/proveedor-servicio';
+import { ProveedorServicioService } from '../../servicios/proveedor-servicio.service';
 
 @Component({
   selector: 'app-evento-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './evento-cliente.html',
+  styleUrls: ['./evento-cliente.css'],
 })
 export class EventoCliente implements OnInit {
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private proveedorServicioSrv = inject(ProveedorServicioService);
 
   nombre = '';
   tipoEvento = '';
@@ -18,8 +27,16 @@ export class EventoCliente implements OnInit {
   filtroEvento = '';
   filtroProveedor = '';
 
-  proveedores: any[] = [];
-  proveedoresFiltrados: any[] = [];
+  proveedores: ProveedorServicio[] = [];
+  proveedoresFiltrados: ProveedorServicio[] = [];
+
+  cargando = false;
+  error = '';
+
+  modalVisible = false;
+  proveedorSeleccionado: ProveedorServicio | null = null;
+  opciones: ServicioOpcion[] = [];
+  seleccion: Record<number, boolean> = {};
 
   ngOnInit() {
     // 🧠 Recuperar nombre y validar sesión
@@ -39,31 +56,26 @@ export class EventoCliente implements OnInit {
     this.tipoEvento = this.route.snapshot.paramMap.get('tipo') ?? '';
     this.filtroEvento = this.tipoEvento;
 
-    // 🔹 Datos simulados de proveedores
-    this.proveedores = [
-      {
-        id: 1,
-        nombre: 'Decoraciones Luna',
-        descripcion: 'Decoración temática y ambientación.',
-        imagen:
-          'https://img.freepik.com/foto-gratis/arreglo-globos-coloridos-fiesta-cumpleanos_23-2149039580.jpg',
+    this.cargarServicios();
+  }
+
+  cargarServicios() {
+    this.cargando = true;
+    this.error = '';
+    this.proveedorServicioSrv.listarVisibles().subscribe({
+      next: (lista) => {
+        this.proveedores = lista;
+        this.proveedoresFiltrados = [...this.proveedores];
+        this.filtrar();
       },
-      {
-        id: 2,
-        nombre: 'Catering Sol',
-        descripcion: 'Buffet gourmet para toda ocasión.',
-        imagen:
-          'https://img.freepik.com/foto-gratis/comida-buffet-variedad-platos_23-2148758323.jpg',
+      error: (err) => {
+        console.error('No se pudieron cargar los servicios', err);
+        this.error = 'No pudimos cargar los servicios disponibles. Intenta nuevamente.';
       },
-      {
-        id: 3,
-        nombre: 'Eventos Premium',
-        descripcion: 'Organización integral de eventos.',
-        imagen:
-          'https://img.freepik.com/foto-gratis/mesa-cena-decoracion-elegante_23-2149007042.jpg',
+      complete: () => {
+        this.cargando = false;
       },
-    ];
-    this.proveedoresFiltrados = [...this.proveedores];
+    });
   }
 
   filtrar() {
@@ -71,14 +83,35 @@ export class EventoCliente implements OnInit {
     const fProv = this.filtroProveedor.toLowerCase();
     this.proveedoresFiltrados = this.proveedores.filter(
       (p) =>
-        p.nombre.toLowerCase().includes(fProv) &&
+        (p.nombrePublico.toLowerCase().includes(fProv) ||
+          p.proveedor.nombreEmpresa?.toLowerCase().includes(fProv) ||
+          p.proveedor.nombre?.toLowerCase().includes(fProv)) &&
         (fEvento === '' || this.eventos.includes(this.filtroEvento))
     );
   }
 
-  verProveedor(id: number) {
-    // 🟢 Navegar al detalle del proveedor
-    this.router.navigate(['/cliente/proveedor', id]);
+  verServicios(p: ProveedorServicio) {
+    this.proveedorSeleccionado = p;
+    this.modalVisible = true;
+    this.opciones = [];
+    this.seleccion = {};
+
+    this.proveedorServicioSrv.listarOpciones(p.idProveedorServicio).subscribe({
+      next: (ops) => {
+        this.opciones = ops.filter((o) => o.estado === 'ACTIVO');
+        this.opciones.forEach((o) => (this.seleccion[o.idOpcion] = false));
+      },
+      error: (err) => {
+        console.error('No se pudieron cargar las opciones', err);
+      },
+    });
+  }
+
+  cerrarModal() {
+    this.modalVisible = false;
+    this.proveedorSeleccionado = null;
+    this.opciones = [];
+    this.seleccion = {};
   }
 
   cerrarSesion() {
