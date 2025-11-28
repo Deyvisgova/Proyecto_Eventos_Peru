@@ -114,7 +114,12 @@ public class ReservaControlador {
         LocalDateTime ahora = LocalDateTime.now();
         reserva.setEstado(Reserva.EstadoReserva.CONFIRMADA);
         reserva.setFechaConfirmacion(ahora);
-        reserva.setFechaLimiteRechazo(ahora.plusDays(3));
+
+        LocalDate fechaEvento = reserva.getFechaEvento();
+        LocalDateTime fechaLimite = fechaEvento != null
+                ? fechaEvento.minusDays(3).atTime(23, 59, 59)
+                : ahora.plusDays(3);
+        reserva.setFechaLimiteRechazo(fechaLimite);
         Reserva guardada = reservaRepositorio.save(reserva);
 
         String detalle = detalleReservaRepositorio.findByReserva(reserva).stream()
