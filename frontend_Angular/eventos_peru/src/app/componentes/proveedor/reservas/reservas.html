@@ -28,8 +28,55 @@
           <button class="btn-icono" (click)="verDetalle(r)" title="Ver detalle">
             <i class="bi bi-eye"></i>
           </button>
-          <button class="btn-accion" (click)="confirmar(r)" [disabled]="r.estado !== 'PENDIENTE'">Confirmar</button>
-          <button class="btn-accion rechazo" (click)="rechazar(r)" [disabled]="r.estado === 'CANCELADA'">Rechazar</button>
+          <button
+            class="btn-accion"
+            (click)="abrirModalAccion(r, 'CONFIRMAR')"
+            [disabled]="r.estado !== 'PENDIENTE'"
+          >
+            Confirmar
+          </button>
+          <button
+            class="btn-accion rechazo"
+            (click)="abrirModalAccion(r, 'RECHAZAR')"
+            [disabled]="r.estado === 'CANCELADA'"
+          >
+            Rechazar
+          </button>
+        </td>
+      </tr>
+      <tr *ngIf="seleccionada?.idReserva === r.idReserva" class="fila-detalle">
+        <td colspan="4">
+          <div class="encabezado-detalle">
+            <div>
+              <p class="texto-suave">Cliente</p>
+              <strong>{{ r.cliente?.nombre }}</strong>
+            </div>
+            <div>
+              <p class="texto-suave">Evento</p>
+              <strong>{{ r.fechaEvento | date }}</strong>
+            </div>
+            <div class="total-linea">
+              <p class="texto-suave">Total estimado</p>
+              <strong>S/ {{ totalReserva(r.idReserva) | number: '1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <ul class="detalle-lista" *ngIf="detalles[r.idReserva]?.length; else cargandoDetalle">
+            <li *ngFor="let d of detalles[r.idReserva]">
+              <div>
+                <strong>{{ d.servicio.nombreServicio }}</strong>
+                <p class="texto-suave">Cantidad: {{ d.cantidad }}</p>
+                <p class="texto-suave" *ngIf="d.servicio.descripcion">Opciones/Notas: {{ d.servicio.descripcion }}</p>
+              </div>
+              <div class="precio-linea">
+                <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
+                <small class="texto-suave">Subtotal: S/ {{ (d.precioUnitario * d.cantidad) | number: '1.2-2' }}</small>
+              </div>
+            </li>
+          </ul>
+          <ng-template #cargandoDetalle>
+            <p class="texto-suave">{{ detalleCargando[r.idReserva] ? 'Cargando detalle...' : 'Sin servicios registrados.' }}</p>
+          </ng-template>
         </td>
       </tr>
     </tbody>
@@ -38,23 +85,82 @@
   <div class="estado" *ngIf="!reservas.length && !cargando">No tienes reservas registradas.</div>
 </div>
 
-<div class="panel-detalle" *ngIf="seleccionada">
-  <div class="panel-header">
-    <div>
-      <p class="texto-suave">Detalle de reserva</p>
-      <h4>{{ seleccionada.cliente?.nombre }}</h4>
-      <p class="texto-suave">Evento: {{ seleccionada.fechaEvento | date }}</p>
-    </div>
-    <span [class]="estadoClase(seleccionada.estado)">{{ seleccionada.estado }}</span>
-  </div>
-
-  <ul class="detalle-lista" *ngIf="detalles[seleccionada.idReserva]?.length">
-    <li *ngFor="let d of detalles[seleccionada.idReserva]">
+<div class="modal-backdrop" *ngIf="mostrarModal" (click)="cerrarModal()"></div>
+<div class="modal" *ngIf="mostrarModal">
+  <div class="modal-contenido">
+    <div class="modal-header">
       <div>
-        <strong>{{ d.servicio.nombreServicio }}</strong>
-        <p class="texto-suave">Cantidad: {{ d.cantidad }}</p>
+        <p class="texto-suave">{{ tipoAccion === 'CONFIRMAR' ? 'Confirmar reserva' : 'Rechazar reserva' }}</p>
+        <h4>{{ seleccionada?.cliente?.nombre }}</h4>
+        <p class="texto-suave">Evento: {{ seleccionada?.fechaEvento | date }}</p>
       </div>
-      <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
-    </li>
-  </ul>
+      <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
+    </div>
+
+    <div class="modal-body" *ngIf="seleccionada">
+      <p class="texto-suave" *ngIf="tipoAccion === 'CONFIRMAR'">
+        Revisa el mensaje y el detalle que enviaremos al cliente al confirmar la reserva.
+      </p>
+      <p class="texto-suave" *ngIf="tipoAccion === 'RECHAZAR'">
+        Escribe el motivo del rechazo para que el cliente pueda revisar alternativas.
+      </p>
+
+      <div class="detalle-modal" *ngIf="detalles[seleccionada.idReserva]?.length; else sinDetalle">
+        <div class="detalle-item" *ngFor="let d of detalles[seleccionada.idReserva]">
+          <div>
+            <strong>{{ d.servicio.nombreServicio }}</strong>
+            <p class="texto-suave">Cantidad: {{ d.cantidad }}</p>
+            <p class="texto-suave" *ngIf="d.servicio.descripcion">Opciones: {{ d.servicio.descripcion }}</p>
+          </div>
+          <div class="alineado">
+            <span class="monto">S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
+            <small class="texto-suave">Subtotal: S/ {{ (d.precioUnitario * d.cantidad) | number: '1.2-2' }}</small>
+          </div>
+        </div>
+
+        <div class="total-modal">
+          <span>Monto total</span>
+          <strong>S/ {{ totalReserva(seleccionada.idReserva) | number: '1.2-2' }}</strong>
+        </div>
+      </div>
+      <ng-template #sinDetalle>
+        <p class="texto-suave">Aún no hay detalle de servicios para esta reserva.</p>
+      </ng-template>
+
+      <div class="campo-texto">
+        <label for="asunto">Asunto</label>
+        <input id="asunto" type="text" [(ngModel)]="asuntoMensaje" [readonly]="tipoAccion === 'CONFIRMAR'" />
+      </div>
+
+      <div class="campo-texto" *ngIf="tipoAccion === 'CONFIRMAR'">
+        <label for="mensajeConfirmacion">Mensaje</label>
+        <textarea
+          id="mensajeConfirmacion"
+          rows="4"
+          [(ngModel)]="cuerpoMensaje"
+          placeholder="Mensaje que acompañará la confirmación"
+        ></textarea>
+      </div>
+
+      <div class="campo-texto" *ngIf="tipoAccion === 'RECHAZAR'">
+        <label for="motivo">Motivo del rechazo</label>
+        <textarea
+          id="motivo"
+          rows="4"
+          [(ngModel)]="motivoRechazo"
+          placeholder="Describe brevemente por qué no puedes aceptar la reserva"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secundario" (click)="cerrarModal()">Cancelar</button>
+      <button class="btn-accion" *ngIf="tipoAccion === 'CONFIRMAR'" (click)="confirmarSeleccionada()">
+        Confirmar y notificar
+      </button>
+      <button class="btn-accion rechazo" *ngIf="tipoAccion === 'RECHAZAR'" (click)="rechazarSeleccionada()">
+        Rechazar
+      </button>
+    </div>
+  </div>
 </div>
