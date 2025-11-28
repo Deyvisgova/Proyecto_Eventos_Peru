@@ -1,12 +1,16 @@
 package com.eventosperu.backend.controlador;
 
+import com.eventosperu.backend.model.DetalleReserva;
 import com.eventosperu.backend.model.Reserva;
 import com.eventosperu.backend.model.Usuario;
 import com.eventosperu.backend.model.Proveedor;
+import com.eventosperu.backend.model.ServicioOpcion;
 import com.eventosperu.backend.repositorio.DetalleReservaRepositorio;
 import com.eventosperu.backend.repositorio.ReservaRepositorio;
 import com.eventosperu.backend.repositorio.UsuarioRepositorio;
 import com.eventosperu.backend.repositorio.ProveedorRepositorio;
+import com.eventosperu.backend.repositorio.ServicioOpcionRepositorio;
+import com.eventosperu.backend.repositorio.EventoRepositorio;
 import com.eventosperu.backend.servicio.EmailNotificacionServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +40,12 @@ public class ReservaControlador {
     private DetalleReservaRepositorio detalleReservaRepositorio;
 
     @Autowired
+    private ServicioOpcionRepositorio servicioOpcionRepositorio;
+
+    @Autowired
+    private EventoRepositorio eventoRepositorio;
+
+    @Autowired
     private EmailNotificacionServicio emailNotificacionServicio;
 
     // Obtener todas las reservas
@@ -47,6 +57,55 @@ public class ReservaControlador {
     // Crear una nueva reserva
     @PostMapping
     public Reserva guardarReserva(@RequestBody Reserva reserva) {
+        if (reserva.getEvento() != null && reserva.getEvento().getIdEvento() != null) {
+            reserva.setEvento(
+                    eventoRepositorio.findById(reserva.getEvento().getIdEvento())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evento no encontrado"))
+            );
+        }
+
+        if (reserva.getDetalles() != null) {
+            reserva.getDetalles().forEach(detalle -> {
+                detalle.setReserva(reserva);
+
+                if (detalle.getOpcion() != null && detalle.getOpcion().getIdOpcion() != null) {
+                    ServicioOpcion opcionCompleta = servicioOpcionRepositorio
+                            .findById(detalle.getOpcion().getIdOpcion())
+                            .orElse(null);
+                    if (opcionCompleta != null) {
+                        detalle.setOpcion(opcionCompleta);
+                        detalle.setNombreOpcion(detalle.getNombreOpcion() != null
+                                ? detalle.getNombreOpcion()
+                                : opcionCompleta.getNombreOpcion());
+                        if (detalle.getNombreServicio() == null && opcionCompleta.getProveedorServicio() != null) {
+                            if (opcionCompleta.getProveedorServicio().getCatalogoServicio() != null) {
+                                detalle.setNombreServicio(opcionCompleta.getProveedorServicio().getCatalogoServicio().getNombre());
+                                detalle.setServicio(opcionCompleta.getProveedorServicio().getCatalogoServicio());
+                            } else {
+                                detalle.setNombreServicio(opcionCompleta.getProveedorServicio().getNombrePublico());
+                            }
+                        }
+                        if (detalle.getPrecioUnitario() == null && opcionCompleta.getPrecio() != null) {
+                            detalle.setPrecioUnitario(opcionCompleta.getPrecio().doubleValue());
+                        }
+                    }
+                }
+
+                if (detalle.getNombreCliente() == null && reserva.getCliente() != null) {
+                    detalle.setNombreCliente(reserva.getCliente().getNombre());
+                }
+                if (detalle.getTelefonoCliente() == null && reserva.getCliente() != null) {
+                    detalle.setTelefonoCliente(reserva.getCliente().getCelular());
+                }
+                if (detalle.getFechaEvento() == null) {
+                    detalle.setFechaEvento(reserva.getFechaEvento());
+                }
+                if (detalle.getNombreEvento() == null && reserva.getEvento() != null) {
+                    detalle.setNombreEvento(reserva.getEvento().getNombreEvento());
+                }
+            });
+        }
+
         return reservaRepositorio.save(reserva);
     }
 
@@ -87,6 +146,7 @@ public class ReservaControlador {
                     reserva.setFechaEvento(datosActualizados.getFechaEvento());
                     reserva.setEstado(datosActualizados.getEstado());
                     reserva.setCliente(datosActualizados.getCliente());
+                    reserva.setEvento(datosActualizados.getEvento());
                     reserva.setProveedor(datosActualizados.getProveedor());
                     reserva.setFechaConfirmacion(datosActualizados.getFechaConfirmacion());
                     reserva.setFechaLimiteRechazo(datosActualizados.getFechaLimiteRechazo());
@@ -114,17 +174,70 @@ public class ReservaControlador {
         LocalDateTime ahora = LocalDateTime.now();
         reserva.setEstado(Reserva.EstadoReserva.CONFIRMADA);
         reserva.setFechaConfirmacion(ahora);
-        reserva.setFechaLimiteRechazo(ahora.plusDays(3));
+
+        LocalDateTime limiteRechazo = reserva.getFechaEvento() != null
+                ? reserva.getFechaEvento().atStartOfDay().minusDays(3)
+                : ahora.plusDays(3);
+        reserva.setFechaLimiteRechazo(limiteRechazo);
         Reserva guardada = reservaRepositorio.save(reserva);
 
-        String detalle = detalleReservaRepositorio.findByReserva(reserva).stream()
-                .map(d -> String.format("- %s (cant: %d) S/ %.2f", d.getServicio().getNombreServicio(), d.getCantidad(), d.getPrecioUnitario()))
+        List<DetalleReserva> detalles = detalleReservaRepositorio.findByReserva(reserva);
+        String detalle = detalles.stream()
+                .map(d -> {
+                    String servicio = d.getNombreServicio();
+                    if (servicio == null && d.getServicio() != null) {
+                        servicio = d.getServicio().getNombre();
+                    }
+
+                    String opcion = d.getNombreOpcion();
+                    if (opcion == null && d.getOpcion() != null) {
+                        opcion = d.getOpcion().getNombreOpcion();
+                    }
+
+                    double subtotal = d.getSubtotal() != null
+                            ? d.getSubtotal()
+                            : (d.getPrecioUnitario() != null ? d.getPrecioUnitario() : 0) * (d.getCantidad() != null ? d.getCantidad() : 0);
+
+                    String etiquetaOpcion = opcion != null && !opcion.isBlank() ? " - " + opcion : "";
+                    return String.format("• %s%s x%d - S/ %.2f",
+                            servicio != null ? servicio : "Servicio",
+                            etiquetaOpcion,
+                            d.getCantidad() != null ? d.getCantidad() : 0,
+                            subtotal);
+                })
                 .collect(Collectors.joining("\n"));
 
-        String cuerpo = "¡Tu reserva fue confirmada!\n\n" +
-                "Detalle:\n" + detalle + "\n\n" +
-                "Fecha del evento: " + reserva.getFechaEvento() + "\n" +
-                "Puedes rechazarla dentro de los próximos 3 días si algo no cuadra.";
+        double total = detalles.stream()
+                .mapToDouble(d -> {
+                    if (d.getSubtotal() != null) return d.getSubtotal();
+                    double unit = d.getPrecioUnitario() != null ? d.getPrecioUnitario() : 0;
+                    int qty = d.getCantidad() != null ? d.getCantidad() : 0;
+                    return unit * qty;
+                })
+                .sum();
+
+        String nombreEvento = detalles.stream()
+                .findFirst()
+                .map(d -> {
+                    if (d.getNombreEvento() != null) return d.getNombreEvento();
+                    return "evento";
+                })
+                .orElseGet(() -> reserva.getEvento() != null ? reserva.getEvento().getNombreEvento() : "evento");
+
+        String nombreCliente = reserva.getCliente() != null ? reserva.getCliente().getNombre() : "cliente";
+        String nombreProveedor = reserva.getProveedor() != null ? reserva.getProveedor().getNombreEmpresa() : "nuestro equipo";
+        String fechaEventoTexto = reserva.getFechaEvento() != null ? reserva.getFechaEvento().toString() : "fecha por definir";
+
+        String cuerpo = String.format(
+                "Hola %s,\n\nConfirmamos tu reserva con %s para el %s.\n\nResumen del evento \"%s\":\n%s\n\nMonto total estimado: S/ %.2f\nPuedes rechazarla hasta el %s.",
+                nombreCliente,
+                nombreProveedor,
+                fechaEventoTexto,
+                nombreEvento,
+                detalle.isBlank() ? "• Servicios pendientes de detalle" : detalle,
+                total,
+                guardada.getFechaLimiteRechazo().toLocalDate()
+        );
 
         emailNotificacionServicio.registrarYEnviar(
                 reserva.getCliente(),

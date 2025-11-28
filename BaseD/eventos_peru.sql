@@ -60,9 +60,18 @@ CREATE TABLE `catalogo_servicios` (
 CREATE TABLE `detalle_reserva` (
   `id_detalle` int(11) NOT NULL,
   `id_reserva` int(11) NOT NULL,
+  `id_servicio` int(11) DEFAULT NULL,
+  `id_opcion` int(11) NOT NULL,
   `cantidad` int(11) DEFAULT 1,
   `precio_unitario` double NOT NULL,
-  `id_opcion` int(11) NOT NULL
+  `subtotal` double DEFAULT NULL,
+  `total` double DEFAULT NULL,
+  `fecha_evento` date DEFAULT NULL,
+  `nombre_cliente` varchar(150) DEFAULT NULL,
+  `telefono_cliente` varchar(50) DEFAULT NULL,
+  `nombre_evento` varchar(150) DEFAULT NULL,
+  `nombre_servicio` varchar(150) DEFAULT NULL,
+  `nombre_opcion` varchar(150) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -172,10 +181,14 @@ CREATE TABLE `proveedor_servicio_tag` (
 CREATE TABLE `reservas` (
   `id_reserva` int(11) NOT NULL,
   `id_cliente` int(11) NOT NULL,
+  `id_evento` int(11) NOT NULL,
   `fecha_evento` date NOT NULL,
   `estado` enum('PENDIENTE','CONFIRMADA','CANCELADA') DEFAULT 'PENDIENTE',
   `fecha_reserva` timestamp NOT NULL DEFAULT current_timestamp(),
-  `id_proveedor` int(11) NOT NULL
+  `id_proveedor` int(11) NOT NULL,
+  `fecha_confirmacion` datetime DEFAULT NULL,
+  `fecha_limite_rechazo` datetime DEFAULT NULL,
+  `fecha_rechazo` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -278,7 +291,8 @@ ALTER TABLE `catalogo_servicios`
 ALTER TABLE `detalle_reserva`
   ADD PRIMARY KEY (`id_detalle`),
   ADD KEY `id_reserva` (`id_reserva`),
-  ADD KEY `fk_detalle_opcion` (`id_opcion`);
+  ADD KEY `fk_detalle_opcion` (`id_opcion`),
+  ADD KEY `fk_detalle_servicio` (`id_servicio`);
 
 --
 -- Indices de la tabla `email_notificacion`
@@ -322,7 +336,8 @@ ALTER TABLE `proveedor_servicio_tag`
 ALTER TABLE `reservas`
   ADD PRIMARY KEY (`id_reserva`),
   ADD KEY `id_cliente` (`id_cliente`),
-  ADD KEY `FK8qpftoyr7k6wd1kcfe329dieq` (`id_proveedor`);
+  ADD KEY `FK8qpftoyr7k6wd1kcfe329dieq` (`id_proveedor`),
+  ADD KEY `fk_reserva_evento` (`id_evento`);
 
 --
 -- Indices de la tabla `servicio_opcion`
@@ -445,7 +460,8 @@ ALTER TABLE `catalogo_evento_servicio`
 --
 ALTER TABLE `detalle_reserva`
   ADD CONSTRAINT `detalle_reserva_ibfk_1` FOREIGN KEY (`id_reserva`) REFERENCES `reservas` (`id_reserva`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_detalle_opcion` FOREIGN KEY (`id_opcion`) REFERENCES `servicio_opcion` (`id_opcion`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_detalle_opcion` FOREIGN KEY (`id_opcion`) REFERENCES `servicio_opcion` (`id_opcion`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_detalle_servicio` FOREIGN KEY (`id_servicio`) REFERENCES `catalogo_servicios` (`id_catalogo`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `email_notificacion`
@@ -478,7 +494,8 @@ ALTER TABLE `proveedor_servicio_tag`
 --
 ALTER TABLE `reservas`
   ADD CONSTRAINT `FK8qpftoyr7k6wd1kcfe329dieq` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `reservas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `reservas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_reserva_evento` FOREIGN KEY (`id_evento`) REFERENCES `eventos` (`id_evento`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `servicio_opcion`
