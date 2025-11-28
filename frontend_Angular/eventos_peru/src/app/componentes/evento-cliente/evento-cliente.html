@@ -33,8 +33,20 @@
         </div>
         <div class="lista-check">
           <label class="check" *ngFor="let prov of listadoProveedores">
-            <input type="checkbox" [checked]="selectedProveedores.has(prov.toLowerCase())" (change)="toggleSeleccion(prov, selectedProveedores)" />
-            <span>{{ prov }}</span>
+            <input
+              type="checkbox"
+              [checked]="selectedProveedores.has(claveProveedor(prov.nombre))"
+              (change)="toggleSeleccion(prov.nombre, selectedProveedores)"
+            />
+            <span class="logo-filtro">
+              <span class="logo-mini" *ngIf="prov.logo; else inicialLogo">
+                <img [src]="prov.logo" alt="Logo {{ prov.nombre }}" />
+              </span>
+              <ng-template #inicialLogo>
+                <span class="logo-mini sin-imagen">{{ prov.nombre.slice(0, 1) }}</span>
+              </ng-template>
+              <span>{{ prov.nombre }}</span>
+            </span>
           </label>
         </div>
       </div>
@@ -109,7 +121,7 @@
 
           <div
             class="card-img"
-            [ngStyle]="{ 'background-image': 'url(' + (p.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }"
+            [ngStyle]="{ 'background-image': 'url(' + imagenServicioCard(p) + ')' }"
           ></div>
 
           <div class="card-body">
@@ -148,7 +160,7 @@
       <div class="opcion" *ngFor="let o of opciones">
         <label class="opcion-contenido">
           <input type="checkbox" [(ngModel)]="seleccion[o.idOpcion]" (change)="mensajeAgendar = ''" />
-          <div class="opcion-media" [ngStyle]="{ 'background-image': 'url(' + (o.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }"></div>
+          <div class="opcion-media" [ngStyle]="{ 'background-image': 'url(' + imagenOpcionServicio(o) + ')' }"></div>
           <div class="opcion-texto">
             <div class="opcion-header">
               <h5>{{ o.nombreOpcion }}</h5>

@@ -93,4 +93,11 @@ export class ReservasCliente implements OnInit {
       error: () => alert('No pudimos rechazar la reserva. Verifica el plazo de 3 días.'),
     });
   }
+
+  subtotalDetalle(detalle: DetalleReserva): number {
+    if (typeof detalle.subtotal === 'number') return detalle.subtotal;
+    const unit = detalle.precioUnitario || 0;
+    const qty = detalle.cantidad || 0;
+    return unit * qty;
+  }
 }
