@@ -1,5 +1,6 @@
 package com.eventosperu.backend.controlador;
 
+import com.eventosperu.backend.model.DetalleReserva;
 import com.eventosperu.backend.model.Reserva;
 import com.eventosperu.backend.model.Usuario;
 import com.eventosperu.backend.model.Proveedor;
@@ -114,17 +115,45 @@ public class ReservaControlador {
         LocalDateTime ahora = LocalDateTime.now();
         reserva.setEstado(Reserva.EstadoReserva.CONFIRMADA);
         reserva.setFechaConfirmacion(ahora);
-        reserva.setFechaLimiteRechazo(ahora.plusDays(3));
+
+        LocalDateTime limiteRechazo = reserva.getFechaEvento() != null
+                ? reserva.getFechaEvento().atStartOfDay().minusDays(3)
+                : ahora.plusDays(3);
+        reserva.setFechaLimiteRechazo(limiteRechazo);
         Reserva guardada = reservaRepositorio.save(reserva);
 
-        String detalle = detalleReservaRepositorio.findByReserva(reserva).stream()
-                .map(d -> String.format("- %s (cant: %d) S/ %.2f", d.getServicio().getNombreServicio(), d.getCantidad(), d.getPrecioUnitario()))
+        List<DetalleReserva> detalles = detalleReservaRepositorio.findByReserva(reserva);
+        String detalle = detalles.stream()
+                .map(d -> String.format("• %s%s x%d - S/ %.2f",
+                        d.getServicio().getNombreServicio(),
+                        d.getServicio().getDescripcion() != null ? " (" + d.getServicio().getDescripcion() + ")" : "",
+                        d.getCantidad(),
+                        d.getPrecioUnitario() * d.getCantidad()))
                 .collect(Collectors.joining("\n"));
 
-        String cuerpo = "¡Tu reserva fue confirmada!\n\n" +
-                "Detalle:\n" + detalle + "\n\n" +
-                "Fecha del evento: " + reserva.getFechaEvento() + "\n" +
-                "Puedes rechazarla dentro de los próximos 3 días si algo no cuadra.";
+        double total = detalles.stream()
+                .mapToDouble(d -> d.getPrecioUnitario() * d.getCantidad())
+                .sum();
+
+        String nombreEvento = detalles.stream()
+                .findFirst()
+                .map(d -> d.getServicio().getEvento().getNombreEvento())
+                .orElse("evento");
+
+        String nombreCliente = reserva.getCliente() != null ? reserva.getCliente().getNombre() : "cliente";
+        String nombreProveedor = reserva.getProveedor() != null ? reserva.getProveedor().getNombreEmpresa() : "nuestro equipo";
+        String fechaEventoTexto = reserva.getFechaEvento() != null ? reserva.getFechaEvento().toString() : "fecha por definir";
+
+        String cuerpo = String.format(
+                "Hola %s,\n\nConfirmamos tu reserva con %s para el %s.\n\nResumen del evento \"%s\":\n%s\n\nMonto total estimado: S/ %.2f\nPuedes rechazarla hasta el %s.",
+                nombreCliente,
+                nombreProveedor,
+                fechaEventoTexto,
+                nombreEvento,
+                detalle.isBlank() ? "• Servicios pendientes de detalle" : detalle,
+                total,
+                guardada.getFechaLimiteRechazo().toLocalDate()
+        );
 
         emailNotificacionServicio.registrarYEnviar(
                 reserva.getCliente(),
