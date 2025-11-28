@@ -1,0 +1,17 @@
+/* Estructura general para mantener el pie de página al final */
+:host {
+  display: block;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+}
+
+.app-contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

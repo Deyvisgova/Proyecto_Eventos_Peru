@@ -2,10 +2,10 @@ package com.eventosperu.backend.controlador;
 
 import com.eventosperu.backend.model.DetalleReserva;
 import com.eventosperu.backend.model.Reserva;
-import com.eventosperu.backend.model.Servicio;
+import com.eventosperu.backend.model.CatalogoServicio;
 import com.eventosperu.backend.repositorio.DetalleReservaRepositorio;
 import com.eventosperu.backend.repositorio.ReservaRepositorio;
-import com.eventosperu.backend.repositorio.ServicioRepositorio;
+import com.eventosperu.backend.repositorio.CatalogoServicioRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +23,7 @@ public class DetalleReservaControlador {
     private ReservaRepositorio reservaRepositorio;
 
     @Autowired
-    private ServicioRepositorio servicioRepositorio;
+    private CatalogoServicioRepositorio catalogoServicioRepositorio;
 
     // Obtener todos los detalles
     @GetMapping
@@ -54,7 +54,7 @@ public class DetalleReservaControlador {
     // Buscar detalles por servicio
     @GetMapping("/servicio/{idServicio}")
     public List<DetalleReserva> obtenerPorServicio(@PathVariable Integer idServicio) {
-        Servicio servicio = servicioRepositorio.findById(idServicio).orElse(null);
+        CatalogoServicio servicio = catalogoServicioRepositorio.findById(idServicio).orElse(null);
         if (servicio == null) return List.of();
         return detalleReservaRepositorio.findByServicio(servicio);
     }
@@ -68,6 +68,15 @@ public class DetalleReservaControlador {
                     detalle.setPrecioUnitario(datosActualizados.getPrecioUnitario());
                     detalle.setReserva(datosActualizados.getReserva());
                     detalle.setServicio(datosActualizados.getServicio());
+                    detalle.setOpcion(datosActualizados.getOpcion());
+                    detalle.setNombreEvento(datosActualizados.getNombreEvento());
+                    detalle.setNombreServicio(datosActualizados.getNombreServicio());
+                    detalle.setNombreOpcion(datosActualizados.getNombreOpcion());
+                    detalle.setNombreCliente(datosActualizados.getNombreCliente());
+                    detalle.setTelefonoCliente(datosActualizados.getTelefonoCliente());
+                    detalle.setFechaEvento(datosActualizados.getFechaEvento());
+                    detalle.setSubtotal(datosActualizados.getSubtotal());
+                    detalle.setTotal(datosActualizados.getTotal());
                     return detalleReservaRepositorio.save(detalle);
                 })
                 .orElse(null);
