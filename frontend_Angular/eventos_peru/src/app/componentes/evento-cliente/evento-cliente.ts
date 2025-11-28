@@ -44,7 +44,7 @@ export class EventoCliente implements OnInit {
   proveedores: ProveedorServicio[] = [];
   proveedoresFiltrados: ProveedorServicio[] = [];
 
-  listadoProveedores: string[] = [];
+  listadoProveedores: { nombre: string; logo?: string }[] = [];
   listadoServicios: string[] = [];
   listadoOpciones: string[] = [];
 
@@ -205,6 +205,10 @@ export class EventoCliente implements OnInit {
     return mapa;
   }
 
+  claveProveedor(valor: string) {
+    return valor.toLowerCase();
+  }
+
   private obtenerIdsEventosSeleccionados(): number[] {
     return Array.from(this.selectedEventos)
       .map((nombre) =>
@@ -242,7 +246,7 @@ export class EventoCliente implements OnInit {
   }
 
   toggleSeleccion(valor: string, grupo: Set<string>) {
-    const clave = grupo === this.selectedEventos ? this.normalizarEvento(valor) : valor.toLowerCase();
+    const clave = grupo === this.selectedEventos ? this.normalizarEvento(valor) : this.claveProveedor(valor);
     if (grupo.has(clave)) {
       grupo.delete(clave);
     } else {
@@ -278,16 +282,24 @@ export class EventoCliente implements OnInit {
 
     const proveedoresPorEvento = this.proveedores.filter((p) => coincideEvento(p));
 
-    const proveedoresSet = new Set<string>();
+    const proveedoresMap = new Map<string, { nombre: string; logo?: string }>();
     proveedoresPorEvento.forEach((p) => {
       const nombreProveedor = (p.proveedor.nombreEmpresa || p.proveedor.nombre || '').trim();
-      if (nombreProveedor) proveedoresSet.add(nombreProveedor);
+      if (!nombreProveedor) return;
+      const clave = this.claveProveedor(nombreProveedor);
+      const logo = this.logoProveedor(p);
+      const existente = proveedoresMap.get(clave);
+      if (!existente) {
+        proveedoresMap.set(clave, { nombre: nombreProveedor, logo });
+      } else if (logo && !existente.logo) {
+        proveedoresMap.set(clave, { ...existente, logo });
+      }
     });
-    this.listadoProveedores = Array.from(proveedoresSet).sort();
+    this.listadoProveedores = Array.from(proveedoresMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     // Asegurar que los proveedores seleccionados sigan disponibles
     this.selectedProveedores.forEach((prov) => {
-      if (!this.listadoProveedores.some((p) => p.toLowerCase() === prov)) {
+      if (!this.listadoProveedores.some((p) => this.claveProveedor(p.nombre) === prov)) {
         this.selectedProveedores.delete(prov);
       }
     });
