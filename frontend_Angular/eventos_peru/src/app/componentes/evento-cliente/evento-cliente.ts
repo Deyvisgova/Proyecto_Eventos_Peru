@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
+import Swal from 'sweetalert2';
 import { map } from 'rxjs/operators';
 import {
   ProveedorServicio,
@@ -16,6 +17,7 @@ import { CatalogoEventoServicio } from '../../modelos/catalogo-evento-servicio';
 import { Evento } from '../../modelos/evento';
 import { ReservaService } from '../../servicios/reserva.service';
 import { Reserva } from '../../modelos/reserva';
+import { DetalleReservaService } from '../../servicios/detalle-reserva.service';
 
 @Component({
   selector: 'app-evento-cliente',
@@ -31,6 +33,7 @@ export class EventoCliente implements OnInit {
   private eventoSrv = inject(EventoService);
   private catalogoSrv = inject(CatalogoServicioService);
   private reservaSrv = inject(ReservaService);
+  private detalleSrv = inject(DetalleReservaService);
 
   nombre = '';
   clienteId: number | null = null;
@@ -381,6 +384,7 @@ export class EventoCliente implements OnInit {
 
     this.agendando = true;
     this.mensajeAgendar = '';
+    const opcionesElegidas = [...this.opcionesSeleccionadas];
 
     const payload: Partial<Reserva> = {
       cliente: { idUsuario: this.clienteId } as any,
@@ -391,16 +395,48 @@ export class EventoCliente implements OnInit {
 
     this.reservaSrv.crear(payload).subscribe({
       next: (resp) => {
-        this.mensajeAgendar = '¡Listo! Tu solicitud fue registrada y el proveedor la revisará pronto.';
-        this.reservasProveedor = [...this.reservasProveedor, resp];
-        this.generarCalendario();
+        const detalles = this.prepararDetalles(resp, opcionesElegidas);
+        if (!detalles.length) {
+          this.finalizarAgendamiento(resp);
+          return;
+        }
+
+        forkJoin(detalles.map((d) => this.detalleSrv.crear(d))).subscribe({
+          next: () => {},
+          error: () => {
+            this.mensajeAgendar = 'La reserva se creó pero no pudimos guardar el detalle. Inténtalo de nuevo.';
+            this.agendando = false;
+          },
+          complete: () => this.finalizarAgendamiento(resp),
+        });
       },
       error: () => {
         this.mensajeAgendar = 'No pudimos agendar el evento. Inténtalo de nuevo más tarde.';
-      },
-      complete: () => {
         this.agendando = false;
       },
+    });
+  }
+
+  private prepararDetalles(reserva: Reserva, seleccionadas: ServicioOpcion[]) {
+    return seleccionadas.map((op) => ({
+      reserva: { idReserva: reserva.idReserva } as any,
+      servicio: { idServicio: op.idOpcion } as any,
+      cantidad: 1,
+      precioUnitario: op.precio,
+    }));
+  }
+
+  private finalizarAgendamiento(reserva: Reserva) {
+    this.mensajeAgendar = '¡Listo! Tu solicitud fue registrada y el proveedor la revisará pronto.';
+    this.reservasProveedor = [...this.reservasProveedor, reserva];
+    this.generarCalendario();
+    this.agendando = false;
+
+    Swal.fire({
+      icon: 'success',
+      title: '¡Reserva enviada!',
+      text: `Felicitaciones, tu evento para ${new Date(this.fechaEvento).toLocaleDateString()} fue registrado.`,
+      confirmButtonText: 'Entendido',
     });
   }
 
