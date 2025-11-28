@@ -1,6 +1,8 @@
 export type EstadoCatalogo = 'ACTIVO' | 'PENDIENTE' | 'RECHAZADO';
 export type FuenteCatalogo = 'ADMIN' | 'PROVEEDOR';
 
+import { Evento } from './evento';
+
 export interface CatalogoServicio {
   idCatalogo: number;
   nombre: string;
@@ -12,6 +14,8 @@ export interface CatalogoServicio {
   idAdminRevisor?: number;
   idProveedorSolicitante?: number;
   motivoRechazo?: string;
+  // Algunos endpoints devuelven el evento asociado directamente
+  evento?: Evento;
 }
 
 export interface NuevoCatalogoServicioRequest {
