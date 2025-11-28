@@ -2,6 +2,7 @@ package com.eventosperu.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.eventosperu.backend.model.ServicioOpcion;
 
 @Data
 @Entity
@@ -17,8 +18,8 @@ public class DetalleReserva {
     private Reserva reserva;
 
     @ManyToOne
-    @JoinColumn(name = "id_servicio", nullable = false)
-    private Servicio servicio;
+    @JoinColumn(name = "id_opcion", nullable = false)
+    private ServicioOpcion opcion;
 
     @Column(nullable = false)
     private Integer cantidad = 1;

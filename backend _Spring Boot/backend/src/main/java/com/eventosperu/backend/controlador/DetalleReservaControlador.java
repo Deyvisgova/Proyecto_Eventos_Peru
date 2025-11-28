@@ -2,10 +2,10 @@ package com.eventosperu.backend.controlador;
 
 import com.eventosperu.backend.model.DetalleReserva;
 import com.eventosperu.backend.model.Reserva;
-import com.eventosperu.backend.model.Servicio;
+import com.eventosperu.backend.model.ServicioOpcion;
 import com.eventosperu.backend.repositorio.DetalleReservaRepositorio;
 import com.eventosperu.backend.repositorio.ReservaRepositorio;
-import com.eventosperu.backend.repositorio.ServicioRepositorio;
+import com.eventosperu.backend.repositorio.ServicioOpcionRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +23,7 @@ public class DetalleReservaControlador {
     private ReservaRepositorio reservaRepositorio;
 
     @Autowired
-    private ServicioRepositorio servicioRepositorio;
+    private ServicioOpcionRepositorio opcionRepositorio;
 
     // Obtener todos los detalles
     @GetMapping
@@ -34,6 +34,16 @@ public class DetalleReservaControlador {
     // Crear un nuevo detalle
     @PostMapping
     public DetalleReserva guardarDetalle(@RequestBody DetalleReserva detalle) {
+        if (detalle.getReserva() != null && detalle.getReserva().getIdReserva() != null) {
+            reservaRepositorio.findById(detalle.getReserva().getIdReserva())
+                    .ifPresent(detalle::setReserva);
+        }
+
+        if (detalle.getOpcion() != null && detalle.getOpcion().getIdOpcion() != null) {
+            opcionRepositorio.findById(detalle.getOpcion().getIdOpcion())
+                    .ifPresent(detalle::setOpcion);
+        }
+
         return detalleReservaRepositorio.save(detalle);
     }
 
@@ -51,12 +61,12 @@ public class DetalleReservaControlador {
         return detalleReservaRepositorio.findByReserva(reserva);
     }
 
-    // Buscar detalles por servicio
-    @GetMapping("/servicio/{idServicio}")
-    public List<DetalleReserva> obtenerPorServicio(@PathVariable Integer idServicio) {
-        Servicio servicio = servicioRepositorio.findById(idServicio).orElse(null);
-        if (servicio == null) return List.of();
-        return detalleReservaRepositorio.findByServicio(servicio);
+    // Buscar detalles por opción de servicio
+    @GetMapping({"/opcion/{idOpcion}", "/servicio/{idOpcion}"})
+    public List<DetalleReserva> obtenerPorOpcion(@PathVariable Integer idOpcion) {
+        ServicioOpcion opcion = opcionRepositorio.findById(idOpcion).orElse(null);
+        if (opcion == null) return List.of();
+        return detalleReservaRepositorio.findByOpcion(opcion);
     }
 
     // Actualizar detalle

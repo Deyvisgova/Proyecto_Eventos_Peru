@@ -3,10 +3,12 @@ package com.eventosperu.backend.controlador;
 import com.eventosperu.backend.model.Reserva;
 import com.eventosperu.backend.model.Usuario;
 import com.eventosperu.backend.model.Proveedor;
+import com.eventosperu.backend.model.Evento;
 import com.eventosperu.backend.repositorio.DetalleReservaRepositorio;
 import com.eventosperu.backend.repositorio.ReservaRepositorio;
 import com.eventosperu.backend.repositorio.UsuarioRepositorio;
 import com.eventosperu.backend.repositorio.ProveedorRepositorio;
+import com.eventosperu.backend.repositorio.EventoRepositorio;
 import com.eventosperu.backend.servicio.EmailNotificacionServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,6 +40,9 @@ public class ReservaControlador {
     @Autowired
     private EmailNotificacionServicio emailNotificacionServicio;
 
+    @Autowired
+    private EventoRepositorio eventoRepositorio;
+
     // Obtener todas las reservas
     @GetMapping
     public List<Reserva> obtenerReservas() {
@@ -47,6 +52,35 @@ public class ReservaControlador {
     // Crear una nueva reserva
     @PostMapping
     public Reserva guardarReserva(@RequestBody Reserva reserva) {
+        if (reserva.getCliente() == null || reserva.getCliente().getIdUsuario() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cliente requerido");
+        }
+
+        if (reserva.getProveedor() == null || reserva.getProveedor().getIdProveedor() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Proveedor requerido");
+        }
+
+        if (reserva.getEvento() == null || reserva.getEvento().getIdEvento() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Evento requerido");
+        }
+
+        Usuario cliente = usuarioRepositorio.findById(reserva.getCliente().getIdUsuario())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
+
+        Proveedor proveedor = proveedorRepositorio.findById(reserva.getProveedor().getIdProveedor())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado"));
+
+        Evento evento = eventoRepositorio.findById(reserva.getEvento().getIdEvento())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento no encontrado"));
+
+        reserva.setCliente(cliente);
+        reserva.setProveedor(proveedor);
+        reserva.setEvento(evento);
+
+        if (reserva.getEstado() == null) {
+            reserva.setEstado(Reserva.EstadoReserva.PENDIENTE);
+        }
+
         return reservaRepositorio.save(reserva);
     }
 
@@ -88,6 +122,7 @@ public class ReservaControlador {
                     reserva.setEstado(datosActualizados.getEstado());
                     reserva.setCliente(datosActualizados.getCliente());
                     reserva.setProveedor(datosActualizados.getProveedor());
+                    reserva.setEvento(datosActualizados.getEvento());
                     reserva.setFechaConfirmacion(datosActualizados.getFechaConfirmacion());
                     reserva.setFechaLimiteRechazo(datosActualizados.getFechaLimiteRechazo());
                     reserva.setFechaRechazo(datosActualizados.getFechaRechazo());
