@@ -1,4 +1,5 @@
 import { CatalogoServicio } from './catalogo-servicio';
+import { Evento } from './evento';
 
 export type EstadoProveedorServicio = 'ACTIVO' | 'PAUSADO';
 export type EstadoServicioOpcion = 'ACTIVO' | 'NO_DISPONIBLE';
@@ -19,16 +20,21 @@ export interface ProveedorBasico {
 export interface ProveedorServicio {
   idProveedorServicio: number;
   proveedor: ProveedorBasico;
-  catalogoServicio: CatalogoServicio;
+  catalogoServicio: CatalogoServicio & { evento?: Evento };
   nombrePublico: string;
   descripcionGeneral?: string;
   urlFoto?: string;
   estado: EstadoProveedorServicio;
 }
 
+type ProveedorServicioLigero = {
+  idProveedorServicio: number;
+  catalogoServicio?: CatalogoServicio & { evento?: Evento };
+};
+
 export interface ServicioOpcion {
   idOpcion: number;
-  proveedorServicio: { idProveedorServicio: number };
+  proveedorServicio?: ProveedorServicioLigero | (ProveedorServicio & { catalogoServicio?: CatalogoServicio & { evento?: Evento } });
   nombreOpcion: string;
   descripcion?: string;
   precio: number;
