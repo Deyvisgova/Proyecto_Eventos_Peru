@@ -28,7 +28,8 @@ export class ReservaService {
     return this.http.post<Reserva>(`${this.api}/${idReserva}/confirmar`, {});
   }
 
-  rechazar(idReserva: number): Observable<Reserva> {
-    return this.http.post<Reserva>(`${this.api}/${idReserva}/rechazar`, {});
+  rechazar(idReserva: number, motivo?: string): Observable<Reserva> {
+    const body = motivo ? { motivo } : {};
+    return this.http.post<Reserva>(`${this.api}/${idReserva}/rechazar`, body);
   }
 }

@@ -1,9 +1,11 @@
 package com.eventosperu.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -40,6 +42,10 @@ public class Reserva {
 
     @Column(name = "fecha_rechazo")
     private LocalDateTime fechaRechazo;
+
+    @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties(value = {"reserva"}, allowSetters = true)
+    private List<DetalleReserva> detalles;
 
     public enum EstadoReserva {
         PENDIENTE,
