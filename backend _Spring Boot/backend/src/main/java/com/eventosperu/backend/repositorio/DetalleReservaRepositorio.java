@@ -2,7 +2,7 @@ package com.eventosperu.backend.repositorio;
 
 import com.eventosperu.backend.model.DetalleReserva;
 import com.eventosperu.backend.model.Reserva;
-import com.eventosperu.backend.model.Servicio;
+import com.eventosperu.backend.model.ServicioOpcion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +14,6 @@ public interface DetalleReservaRepositorio extends JpaRepository<DetalleReserva,
     // Buscar todos los detalles por reserva
     List<DetalleReserva> findByReserva(Reserva reserva);
 
-    // Buscar todos los detalles por servicio
-    List<DetalleReserva> findByServicio(Servicio servicio);
+    // Buscar todos los detalles por opción de servicio
+    List<DetalleReserva> findByOpcion(ServicioOpcion opcion);
 }
