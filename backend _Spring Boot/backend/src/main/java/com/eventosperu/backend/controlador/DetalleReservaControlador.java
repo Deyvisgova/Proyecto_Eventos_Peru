@@ -68,6 +68,15 @@ public class DetalleReservaControlador {
                     detalle.setPrecioUnitario(datosActualizados.getPrecioUnitario());
                     detalle.setReserva(datosActualizados.getReserva());
                     detalle.setServicio(datosActualizados.getServicio());
+                    detalle.setOpcion(datosActualizados.getOpcion());
+                    detalle.setNombreEvento(datosActualizados.getNombreEvento());
+                    detalle.setNombreServicio(datosActualizados.getNombreServicio());
+                    detalle.setNombreOpcion(datosActualizados.getNombreOpcion());
+                    detalle.setNombreCliente(datosActualizados.getNombreCliente());
+                    detalle.setTelefonoCliente(datosActualizados.getTelefonoCliente());
+                    detalle.setFechaEvento(datosActualizados.getFechaEvento());
+                    detalle.setSubtotal(datosActualizados.getSubtotal());
+                    detalle.setTotal(datosActualizados.getTotal());
                     return detalleReservaRepositorio.save(detalle);
                 })
                 .orElse(null);

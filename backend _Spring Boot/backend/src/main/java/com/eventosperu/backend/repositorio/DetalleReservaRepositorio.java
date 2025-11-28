@@ -1,8 +1,8 @@
 package com.eventosperu.backend.repositorio;
 
 import com.eventosperu.backend.model.DetalleReserva;
-import com.eventosperu.backend.model.Reserva;
 import com.eventosperu.backend.model.Servicio;
+import com.eventosperu.backend.model.Reserva;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

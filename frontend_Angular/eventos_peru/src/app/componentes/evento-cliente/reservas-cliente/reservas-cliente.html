@@ -26,10 +26,10 @@
         <ul>
           <li *ngFor="let d of detalles[r.idReserva]">
             <div>
-              <strong>{{ d.servicio.nombreServicio }}</strong>
+              <strong>{{ d.nombreServicio || d.servicio?.nombreServicio }}</strong>
               <p class="texto-sutil">Cantidad: {{ d.cantidad }}</p>
             </div>
-            <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
+            <span>S/ {{ subtotalDetalle(d) | number: '1.2-2' }}</span>
           </li>
         </ul>
       </div>
