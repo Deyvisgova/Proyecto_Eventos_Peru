@@ -44,7 +44,9 @@ export class EventoCliente implements OnInit {
   proveedores: ProveedorServicio[] = [];
   proveedoresFiltrados: ProveedorServicio[] = [];
 
-  listadoProveedores: string[] = [];
+  usuarioSesion: any = null;
+
+  listadoProveedores: { nombre: string; logo?: string }[] = [];
   listadoServicios: string[] = [];
   listadoOpciones: string[] = [];
 
@@ -79,6 +81,7 @@ export class EventoCliente implements OnInit {
       return;
     }
     const usuario = JSON.parse(raw);
+    this.usuarioSesion = usuario;
     if (usuario.rol !== 'CLIENTE') {
       this.router.navigate(['/login']);
       return;
@@ -205,6 +208,10 @@ export class EventoCliente implements OnInit {
     return mapa;
   }
 
+  claveProveedor(valor: string) {
+    return valor.toLowerCase();
+  }
+
   private obtenerIdsEventosSeleccionados(): number[] {
     return Array.from(this.selectedEventos)
       .map((nombre) =>
@@ -242,7 +249,7 @@ export class EventoCliente implements OnInit {
   }
 
   toggleSeleccion(valor: string, grupo: Set<string>) {
-    const clave = grupo === this.selectedEventos ? this.normalizarEvento(valor) : valor.toLowerCase();
+    const clave = grupo === this.selectedEventos ? this.normalizarEvento(valor) : this.claveProveedor(valor);
     if (grupo.has(clave)) {
       grupo.delete(clave);
     } else {
@@ -278,16 +285,24 @@ export class EventoCliente implements OnInit {
 
     const proveedoresPorEvento = this.proveedores.filter((p) => coincideEvento(p));
 
-    const proveedoresSet = new Set<string>();
+    const proveedoresMap = new Map<string, { nombre: string; logo?: string }>();
     proveedoresPorEvento.forEach((p) => {
       const nombreProveedor = (p.proveedor.nombreEmpresa || p.proveedor.nombre || '').trim();
-      if (nombreProveedor) proveedoresSet.add(nombreProveedor);
+      if (!nombreProveedor) return;
+      const clave = this.claveProveedor(nombreProveedor);
+      const logo = this.logoProveedor(p);
+      const existente = proveedoresMap.get(clave);
+      if (!existente) {
+        proveedoresMap.set(clave, { nombre: nombreProveedor, logo });
+      } else if (logo && !existente.logo) {
+        proveedoresMap.set(clave, { ...existente, logo });
+      }
     });
-    this.listadoProveedores = Array.from(proveedoresSet).sort();
+    this.listadoProveedores = Array.from(proveedoresMap.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     // Asegurar que los proveedores seleccionados sigan disponibles
     this.selectedProveedores.forEach((prov) => {
-      if (!this.listadoProveedores.some((p) => p.toLowerCase() === prov)) {
+      if (!this.listadoProveedores.some((p) => this.claveProveedor(p.nombre) === prov)) {
         this.selectedProveedores.delete(prov);
       }
     });
@@ -374,6 +389,12 @@ export class EventoCliente implements OnInit {
       return;
     }
 
+    const [idEventoSeleccionado] = this.obtenerIdsEventosSeleccionados();
+    if (!idEventoSeleccionado) {
+      this.mensajeAgendar = 'Elige un tipo de evento para continuar.';
+      return;
+    }
+
     if (!this.tieneSeleccion) {
       this.mensajeAgendar = 'Elige al menos un servicio u opción para agendar.';
       return;
@@ -382,11 +403,36 @@ export class EventoCliente implements OnInit {
     this.agendando = true;
     this.mensajeAgendar = '';
 
+    const nombreCliente = this.nombre || '';
+    const telefonoCliente =
+      this.usuarioSesion?.celular || this.usuarioSesion?.telefono || this.usuarioSesion?.usuario?.celular || '';
+
+    const detalles = this.opcionesSeleccionadas.map((op) => ({
+      reserva: { idReserva: 0 } as any,
+      servicio: { idCatalogo: this.proveedorSeleccionado?.catalogoServicio?.idCatalogo } as any,
+      cantidad: 1,
+      precioUnitario: op.precio,
+      opcion: { idOpcion: op.idOpcion } as any,
+      nombreEvento: this.tipoEventoLabel || this.tipoEvento || 'Evento',
+      nombreServicio:
+        this.proveedorSeleccionado?.catalogoServicio?.nombre ||
+        this.proveedorSeleccionado?.nombrePublico ||
+        'Servicio',
+      nombreOpcion: op.nombreOpcion,
+      nombreCliente,
+      telefonoCliente,
+      fechaEvento: this.fechaEvento,
+      subtotal: op.precio,
+      total: op.precio,
+    }));
+
     const payload: Partial<Reserva> = {
       cliente: { idUsuario: this.clienteId } as any,
+      evento: { idEvento: idEventoSeleccionado } as any,
       proveedor: { idProveedor: this.proveedorSeleccionado.proveedor.idProveedor } as any,
       fechaEvento: this.fechaEvento,
       estado: 'PENDIENTE' as Reserva['estado'],
+      detalles,
     };
 
     this.reservaSrv.crear(payload).subscribe({
