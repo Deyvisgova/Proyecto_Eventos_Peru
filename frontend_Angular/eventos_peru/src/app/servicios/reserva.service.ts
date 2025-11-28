@@ -12,6 +12,10 @@ export class ReservaService {
     return this.http.get<Reserva[]>(this.api);
   }
 
+  crear(reserva: Partial<Reserva>): Observable<Reserva> {
+    return this.http.post<Reserva>(this.api, reserva);
+  }
+
   listarPorCliente(idCliente: number): Observable<Reserva[]> {
     return this.http.get<Reserva[]>(`${this.api}/cliente/${idCliente}`);
   }

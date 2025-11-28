@@ -8,6 +8,8 @@ export interface ProveedorBasico {
   nombre?: string;
   nombreEmpresa?: string;
   direccion?: string;
+  logo?: string;
+  urlLogo?: string;
   usuario?: {
     celular?: string;
     email?: string;
