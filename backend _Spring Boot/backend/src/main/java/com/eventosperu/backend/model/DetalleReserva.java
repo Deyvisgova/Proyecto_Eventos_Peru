@@ -2,11 +2,13 @@ package com.eventosperu.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.io.Serializable;
+import com.eventosperu.backend.model.ServicioOpcion;
 
 @Data
 @Entity
 @Table(name = "detalle_reserva")
-public class DetalleReserva {
+public class DetalleReserva implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,8 +19,8 @@ public class DetalleReserva {
     private Reserva reserva;
 
     @ManyToOne
-    @JoinColumn(name = "id_servicio", nullable = false)
-    private Servicio servicio;
+    @JoinColumn(name = "id_opcion", nullable = false)
+    private ServicioOpcion opcion;
 
     @Column(nullable = false)
     private Integer cantidad = 1;

@@ -374,6 +374,12 @@ export class EventoCliente implements OnInit {
       return;
     }
 
+    const idEventoSeleccionado = this.obtenerIdsEventosSeleccionados()[0];
+    if (!idEventoSeleccionado) {
+      this.mensajeAgendar = 'Selecciona el tipo de evento para completar la reserva.';
+      return;
+    }
+
     if (!this.tieneSeleccion) {
       this.mensajeAgendar = 'Elige al menos un servicio u opción para agendar.';
       return;
@@ -382,11 +388,18 @@ export class EventoCliente implements OnInit {
     this.agendando = true;
     this.mensajeAgendar = '';
 
-    const payload: Partial<Reserva> = {
-      cliente: { idUsuario: this.clienteId } as any,
-      proveedor: { idProveedor: this.proveedorSeleccionado.proveedor.idProveedor } as any,
+    const detalles = this.opcionesSeleccionadas.map((op) => ({
+      idOpcion: op.idOpcion,
+      cantidad: 1,
+      precioUnitario: op.precio,
+    }));
+
+    const payload = {
+      idCliente: this.clienteId,
+      idProveedor: this.proveedorSeleccionado.proveedor.idProveedor,
+      idEvento: idEventoSeleccionado,
       fechaEvento: this.fechaEvento,
-      estado: 'PENDIENTE' as Reserva['estado'],
+      detalles,
     };
 
     this.reservaSrv.crear(payload).subscribe({

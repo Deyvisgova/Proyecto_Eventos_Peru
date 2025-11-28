@@ -22,6 +22,10 @@ public class Reserva {
     @JoinColumn(name = "id_proveedor", nullable = false)
     private Proveedor proveedor;
 
+    @ManyToOne
+    @JoinColumn(name = "id_evento")
+    private Evento evento;
+
     @Column(name = "fecha_evento", nullable = false)
     private LocalDate fechaEvento;
 
