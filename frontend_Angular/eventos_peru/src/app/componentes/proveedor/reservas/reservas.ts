@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { DetalleReserva, Reserva } from '../../../modelos/reserva';
 import { ReservaService } from '../../../servicios/reserva.service';
 import { DetalleReservaService } from '../../../servicios/detalle-reserva.service';
@@ -9,7 +10,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-reservas-proveedor',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './reservas.html',
   styleUrls: ['./reservas.css'],
 })
@@ -22,9 +23,16 @@ export class ReservasProveedor implements OnInit {
   idProveedor: number | null = null;
   reservas: Reserva[] = [];
   detalles: Record<number, DetalleReserva[]> = {};
+  detalleCargando: Record<number, boolean> = {};
   seleccionada: Reserva | null = null;
   cargando = false;
   error = '';
+
+  mostrarModal = false;
+  tipoAccion: 'CONFIRMAR' | 'RECHAZAR' | null = null;
+  motivoRechazo = '';
+  asuntoMensaje = '';
+  cuerpoMensaje = '';
 
   ngOnInit(): void {
     const raw = localStorage.getItem('usuario');
@@ -71,13 +79,21 @@ export class ReservasProveedor implements OnInit {
   }
 
   cargarDetalle(idReserva: number) {
-    if (this.detalles[idReserva]) return;
+    if (this.detalles[idReserva]?.length && !this.detalleCargando[idReserva]) return;
+    this.detalleCargando[idReserva] = true;
     this.detalleSrv.listarPorReserva(idReserva).subscribe({
       next: (det) => (this.detalles[idReserva] = det),
+      error: () => (this.detalles[idReserva] = []),
+      complete: () => (this.detalleCargando[idReserva] = false),
     });
   }
 
   verDetalle(reserva: Reserva) {
+    if (this.seleccionada?.idReserva === reserva.idReserva) {
+      this.seleccionada = null;
+      return;
+    }
+
     this.seleccionada = reserva;
     this.cargarDetalle(reserva.idReserva);
   }
@@ -88,23 +104,52 @@ export class ReservasProveedor implements OnInit {
     return 'estado cancelada';
   }
 
-  confirmar(reserva: Reserva) {
-    this.reservaSrv.confirmar(reserva.idReserva).subscribe({
+  abrirModalAccion(reserva: Reserva, tipo: 'CONFIRMAR' | 'RECHAZAR') {
+    this.seleccionada = reserva;
+    this.cargarDetalle(reserva.idReserva);
+    this.tipoAccion = tipo;
+    this.motivoRechazo = '';
+    this.asuntoMensaje = tipo === 'CONFIRMAR' ? 'Confirmación de reserva' : 'Rechazo de reserva';
+    this.cuerpoMensaje =
+      tipo === 'CONFIRMAR'
+        ? `Hola ${reserva.cliente?.nombre || 'cliente'},\n\nConfirmamos tu reserva para el ${new Date(
+            reserva.fechaEvento,
+          ).toLocaleDateString()} con el siguiente detalle.`
+        : '';
+    this.mostrarModal = true;
+  }
+
+  confirmarSeleccionada() {
+    if (!this.seleccionada) return;
+    this.reservaSrv.confirmar(this.seleccionada.idReserva).subscribe({
       next: (resp) => {
         this.reservas = this.reservas.map((r) => (r.idReserva === resp.idReserva ? resp : r));
         this.seleccionada = resp;
+        this.mostrarModal = false;
       },
       error: () => alert('No pudimos confirmar la reserva'),
     });
   }
 
-  rechazar(reserva: Reserva) {
-    this.reservaSrv.rechazar(reserva.idReserva).subscribe({
+  rechazarSeleccionada() {
+    if (!this.seleccionada) return;
+    this.reservaSrv.rechazar(this.seleccionada.idReserva, this.motivoRechazo).subscribe({
       next: (resp) => {
         this.reservas = this.reservas.map((r) => (r.idReserva === resp.idReserva ? resp : r));
         this.seleccionada = resp;
+        this.mostrarModal = false;
       },
       error: () => alert('No pudimos actualizar la reserva'),
     });
+  }
+
+  cerrarModal() {
+    this.mostrarModal = false;
+    this.tipoAccion = null;
+  }
+
+  totalReserva(idReserva: number): number {
+    const det = this.detalles[idReserva] || [];
+    return det.reduce((acc, d) => acc + (d.cantidad || 0) * (d.precioUnitario || 0), 0);
   }
 }

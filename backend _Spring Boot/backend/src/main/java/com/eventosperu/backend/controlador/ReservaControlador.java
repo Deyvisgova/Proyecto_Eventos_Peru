@@ -114,6 +114,8 @@ public class ReservaControlador {
         LocalDateTime ahora = LocalDateTime.now();
         reserva.setEstado(Reserva.EstadoReserva.CONFIRMADA);
         reserva.setFechaConfirmacion(ahora);
+
+        // El plazo de cancelación es de 3 días desde la confirmación
         reserva.setFechaLimiteRechazo(ahora.plusDays(3));
         Reserva guardada = reservaRepositorio.save(reserva);
 
