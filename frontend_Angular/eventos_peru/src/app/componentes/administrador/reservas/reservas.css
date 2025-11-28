@@ -8,3 +8,49 @@
 .texto-suave {
   color: #6b7280;
 }
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.tabla th,
+.tabla td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.estado {
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+.estado.error {
+  color: #b91c1c;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge.pendiente {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.badge.confirmada {
+  background: #ecfdf3;
+  color: #16a34a;
+}
+
+.badge.cancelada,
+.badge.rechazada {
+  background: #fef2f2;
+  color: #b91c1c;
+}

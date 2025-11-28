@@ -382,11 +382,17 @@ export class EventoCliente implements OnInit {
     this.agendando = true;
     this.mensajeAgendar = '';
 
-    const payload: Partial<Reserva> = {
-      cliente: { idUsuario: this.clienteId } as any,
-      proveedor: { idProveedor: this.proveedorSeleccionado.proveedor.idProveedor } as any,
+    const detalles = this.opcionesSeleccionadas.map((op) => ({
+      idOpcion: op.idOpcion,
+      cantidad: 1,
+      precioUnitario: op.precio,
+    }));
+
+    const payload = {
+      idCliente: this.clienteId,
+      idProveedor: this.proveedorSeleccionado.proveedor.idProveedor,
       fechaEvento: this.fechaEvento,
-      estado: 'PENDIENTE' as Reserva['estado'],
+      detalles,
     };
 
     this.reservaSrv.crear(payload).subscribe({
