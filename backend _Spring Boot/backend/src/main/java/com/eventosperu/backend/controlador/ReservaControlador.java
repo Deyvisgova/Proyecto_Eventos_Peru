@@ -47,6 +47,27 @@ public class ReservaControlador {
     // Crear una nueva reserva
     @PostMapping
     public Reserva guardarReserva(@RequestBody Reserva reserva) {
+        if (reserva.getCliente() == null || reserva.getCliente().getIdUsuario() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cliente requerido");
+        }
+
+        if (reserva.getProveedor() == null || reserva.getProveedor().getIdProveedor() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Proveedor requerido");
+        }
+
+        Usuario cliente = usuarioRepositorio.findById(reserva.getCliente().getIdUsuario())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
+
+        Proveedor proveedor = proveedorRepositorio.findById(reserva.getProveedor().getIdProveedor())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado"));
+
+        reserva.setCliente(cliente);
+        reserva.setProveedor(proveedor);
+
+        if (reserva.getEstado() == null) {
+            reserva.setEstado(Reserva.EstadoReserva.PENDIENTE);
+        }
+
         return reservaRepositorio.save(reserva);
     }
 
