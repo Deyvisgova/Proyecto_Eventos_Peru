@@ -150,11 +150,12 @@
   flex-direction: column;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
+.card-header.enhanced {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   gap: 0.75rem;
   align-items: center;
+  padding: 1rem;
 }
 
 .card-img {
@@ -191,6 +192,20 @@
   place-items: center;
   font-weight: 800;
   color: #1f2937;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.logo-proveedor.con-imagen {
+  padding: 0;
+  background: #fff;
+}
+
+.logo-proveedor img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .proveedor {
@@ -202,6 +217,7 @@
 
 .datos-contacto {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 0.35rem;
   margin: 0.25rem 0 0.75rem 0;
 }
@@ -217,6 +233,39 @@
 
 .dato i {
   color: #2563eb;
+}
+
+.info-principal h5 {
+  margin: 0.15rem 0;
+}
+
+.info-principal .etiquetas-servicio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.chip.suave {
+  background: #f3f4ff;
+  border-color: #e0e7ff;
+  color: #4338ca;
+}
+
+.sello-servicio {
+  background: #eef2ff;
+  color: #312e81;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 700;
+  text-align: center;
+  border: 1px solid #c7d2fe;
+  align-self: flex-start;
+}
+
+.descripcion {
+  margin: 0;
+  min-height: 48px;
 }
 
 .etiqueta {
@@ -349,6 +398,21 @@
   margin-top: 1rem;
 }
 
+.resumen-opciones {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chips.compactas .chip {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.85rem;
+}
+
 .calendario {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -385,6 +449,18 @@
   border: 1px solid #e5e7eb;
 }
 
+.calendario .dia:not(.deshabilitado):hover {
+  border-color: #2563eb;
+}
+
+.calendario .dia.deshabilitado {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-style: dashed;
+  pointer-events: none;
+}
+
 .calendario .dia.confirmada {
   background: #e8f8f0;
   border-color: #16a34a;
@@ -402,6 +478,10 @@
 
 .calendario .dia.activo {
   outline: 2px solid #2563eb;
+}
+
+.seleccion-fecha {
+  margin: 0.35rem 0 0;
 }
 
 .leyenda {
@@ -433,8 +513,20 @@
 
 .acciones {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.botones {
+  display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  align-items: center;
+}
+
+.info-agendar {
+  margin: 0;
+  color: #111827;
 }
 
 @media (max-width: 992px) {

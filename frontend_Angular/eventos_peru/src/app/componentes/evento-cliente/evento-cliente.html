@@ -79,25 +79,41 @@
 
       <div class="grid" *ngIf="!cargando && !error">
         <article class="card" *ngFor="let p of proveedoresFiltrados">
-          <div class="card-img" [ngStyle]="{ 'background-image': 'url(' + (p.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }">
-            <span class="badge">{{ p.catalogoServicio.nombre }}</span>
+          <div class="card-header enhanced">
+            <div class="logo-proveedor" [class.con-imagen]="logoProveedor(p)">
+              <img
+                *ngIf="logoProveedor(p)"
+                [src]="logoProveedor(p)"
+                alt="Logo de {{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}"
+              />
+              <span *ngIf="!logoProveedor(p)">{{ inicialProveedor(p) }}</span>
+            </div>
+            <div class="info-principal">
+              <p class="texto-sutil etiqueta">Proveedor</p>
+              <h5>{{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}</h5>
+              <p class="texto-sutil ubicacion" *ngIf="p.proveedor.direccion">
+                <i class="bi bi-geo-alt"></i>
+                <span>{{ p.proveedor.direccion }}</span>
+              </p>
+              <div class="etiquetas-servicio">
+                <span class="etiqueta">{{ p.catalogoServicio.nombre }}</span>
+                <span class="chip suave" *ngIf="opcionesPorProveedor[p.idProveedorServicio]?.length">
+                  {{ opcionesPorProveedor[p.idProveedorServicio].length }} opciones activas
+                </span>
+              </div>
+            </div>
+            <div class="sello-servicio">
+              <span>{{ p.nombrePublico }}</span>
+            </div>
           </div>
-          <div class="card-body">
-            <div class="card-header">
-              <div>
-                <h5>{{ p.nombrePublico }}</h5>
-                <p class="texto-sutil">{{ p.descripcionGeneral || 'Servicio sin descripción.' }}</p>
-              </div>
-              <div class="logo-proveedor">{{ (p.proveedor.nombreEmpresa || p.proveedor.nombre || '?').slice(0, 1) }}</div>
-            </div>
 
-            <div class="proveedor">
-              <div>
-                <p class="texto-sutil">Proveedor</p>
-                <strong>{{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}</strong>
-              </div>
-              <span class="etiqueta">{{ p.catalogoServicio.nombre }}</span>
-            </div>
+          <div
+            class="card-img"
+            [ngStyle]="{ 'background-image': 'url(' + (p.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }"
+          ></div>
+
+          <div class="card-body">
+            <p class="texto-sutil descripcion">{{ p.descripcionGeneral || 'Servicio sin descripción.' }}</p>
 
             <div class="datos-contacto">
               <div class="dato">
@@ -105,8 +121,8 @@
                 <span>{{ p.proveedor.usuario?.celular || 'Sin teléfono' }}</span>
               </div>
               <div class="dato">
-                <i class="bi bi-geo-alt"></i>
-                <span>{{ p.proveedor.direccion || 'Sin dirección' }}</span>
+                <i class="bi bi-envelope"></i>
+                <span>{{ p.proveedor.usuario?.email || 'Sin correo' }}</span>
               </div>
             </div>
 
@@ -131,7 +147,7 @@
     <div class="modal-body" *ngIf="proveedorSeleccionado">
       <div class="opcion" *ngFor="let o of opciones">
         <label class="opcion-contenido">
-          <input type="checkbox" [(ngModel)]="seleccion[o.idOpcion]" />
+          <input type="checkbox" [(ngModel)]="seleccion[o.idOpcion]" (change)="mensajeAgendar = ''" />
           <div class="opcion-media" [ngStyle]="{ 'background-image': 'url(' + (o.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }"></div>
           <div class="opcion-texto">
             <div class="opcion-header">
@@ -149,6 +165,16 @@
 
       <div class="estado" *ngIf="!opciones.length">Este proveedor aún no tiene opciones activas.</div>
 
+      <div class="resumen-opciones" *ngIf="opciones.length">
+        <div>
+          <p class="texto-sutil">Seleccionados ({{ opcionesSeleccionadas.length }}/{{ opciones.length }})</p>
+          <h4>S/ {{ totalSeleccionado | number: '1.2-2' }}</h4>
+        </div>
+        <div class="chips compactas" *ngIf="tieneSeleccion">
+          <span class="chip" *ngFor="let op of opcionesSeleccionadas">{{ op.nombreOpcion }}</span>
+        </div>
+      </div>
+
       <div class="agendar" *ngIf="opciones.length">
         <label>¿Para qué fecha lo deseas?</label>
         <div class="calendario">
@@ -165,13 +191,17 @@
                 confirmada: d.estado === 'confirmada',
                 pendiente: d.estado === 'pendiente',
                 rechazada: d.estado === 'rechazada',
-                activo: fechaEvento === d.fecha
+                activo: fechaEvento === d.fecha,
+                deshabilitado: d.pasado
               }"
-              (click)="seleccionarDia(d.fecha)"
+              (click)="!d.pasado && seleccionarDia(d.fecha)"
             >
               {{ d.numero }}
             </div>
           </div>
+          <p class="texto-sutil seleccion-fecha" *ngIf="fechaEvento">
+            Elegiste {{ fechaEvento | date: 'fullDate' }}.
+          </p>
           <div class="leyenda">
             <span class="punto confirmada"></span> Reservada
             <span class="punto pendiente"></span> Pendiente
@@ -179,8 +209,13 @@
           </div>
         </div>
         <div class="acciones">
-          <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
-          <button class="btn-primario" [disabled]="!fechaEvento">Agendar evento</button>
+          <p class="texto-sutil info-agendar" *ngIf="mensajeAgendar">{{ mensajeAgendar }}</p>
+          <div class="botones">
+            <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
+            <button class="btn-primario" [disabled]="!fechaEvento || !tieneSeleccion || agendando" (click)="agendarEvento()">
+              {{ agendando ? 'Agendando...' : 'Agendar evento' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

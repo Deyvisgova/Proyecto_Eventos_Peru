@@ -33,6 +33,7 @@ export class EventoCliente implements OnInit {
   private reservaSrv = inject(ReservaService);
 
   nombre = '';
+  clienteId: number | null = null;
   tipoEvento = '';
   tipoEventoLabel = '';
   eventosBase: string[] = ['Cumpleaños', 'Matrimonio', 'Aniversario'];
@@ -54,8 +55,9 @@ export class EventoCliente implements OnInit {
   opcionesPorProveedor: Record<number, ServicioOpcion[]> = {};
 
   reservasProveedor: Reserva[] = [];
-  diasCalendario: { fecha: string; numero: number; estado: string }[] = [];
+  diasCalendario: { fecha: string; numero: number; estado: string; pasado: boolean }[] = [];
   mesActual = new Date();
+  hoy = this.obtenerInicioDia(new Date());
 
   cargando = false;
   cargandoOpciones = false;
@@ -66,6 +68,8 @@ export class EventoCliente implements OnInit {
   opciones: ServicioOpcion[] = [];
   seleccion: Record<number, boolean> = {};
   fechaEvento = '';
+  agendando = false;
+  mensajeAgendar = '';
 
   ngOnInit() {
     // 🧠 Recuperar nombre y validar sesión
@@ -80,6 +84,7 @@ export class EventoCliente implements OnInit {
       return;
     }
     this.nombre = usuario.nombre ?? '';
+    this.clienteId = usuario.idUsuario ?? usuario.id_usuario ?? null;
 
     // 🧠 Recuperar tipo de evento desde la URL
     this.tipoEvento = this.normalizarEvento(this.route.snapshot.paramMap.get('tipo') ?? '');
@@ -87,6 +92,46 @@ export class EventoCliente implements OnInit {
       this.selectedEventos.add(this.tipoEvento);
     }
     this.cargarServicios();
+  }
+
+  private obtenerInicioDia(fecha: Date) {
+    const copia = new Date(fecha);
+    copia.setHours(0, 0, 0, 0);
+    return copia;
+  }
+
+  private obtenerInicioMes(fecha: Date) {
+    const inicio = this.obtenerInicioDia(fecha);
+    inicio.setDate(1);
+    return inicio;
+  }
+
+  logoProveedor(p: ProveedorServicio) {
+    const proveedorPlano = p.proveedor as unknown as Record<string, unknown>;
+    const posibleLogo =
+      p.proveedor.logo ||
+      p.proveedor.urlLogo ||
+      proveedorPlano['logoUrl'] ||
+      proveedorPlano['logo'];
+
+    return typeof posibleLogo === 'string' ? posibleLogo : '';
+  }
+
+  inicialProveedor(p: ProveedorServicio) {
+    const nombre = p.proveedor.nombreEmpresa || p.proveedor.nombre || '?';
+    return nombre.slice(0, 1).toUpperCase();
+  }
+
+  get opcionesSeleccionadas(): ServicioOpcion[] {
+    return this.opciones.filter((o) => this.seleccion[o.idOpcion]);
+  }
+
+  get totalSeleccionado(): number {
+    return this.opcionesSeleccionadas.reduce((acc, op) => acc + (op.precio || 0), 0);
+  }
+
+  get tieneSeleccion(): boolean {
+    return this.opcionesSeleccionadas.length > 0;
   }
 
   cargarServicios() {
@@ -288,7 +333,10 @@ export class EventoCliente implements OnInit {
     this.fechaEvento = '';
     this.reservasProveedor = [];
     this.diasCalendario = [];
-    this.mesActual = new Date();
+    this.mesActual = this.obtenerInicioMes(new Date());
+    this.hoy = this.obtenerInicioDia(new Date());
+    this.mensajeAgendar = '';
+    this.generarCalendario();
 
     this.proveedorServicioSrv.listarOpciones(p.idProveedorServicio).subscribe({
       next: (ops) => {
@@ -320,6 +368,42 @@ export class EventoCliente implements OnInit {
     this.fechaEvento = '';
   }
 
+  agendarEvento() {
+    if (!this.proveedorSeleccionado || !this.fechaEvento || !this.clienteId) {
+      this.mensajeAgendar = 'Selecciona una fecha válida y asegúrate de haber iniciado sesión.';
+      return;
+    }
+
+    if (!this.tieneSeleccion) {
+      this.mensajeAgendar = 'Elige al menos un servicio u opción para agendar.';
+      return;
+    }
+
+    this.agendando = true;
+    this.mensajeAgendar = '';
+
+    const payload: Partial<Reserva> = {
+      cliente: { idUsuario: this.clienteId } as any,
+      proveedor: { idProveedor: this.proveedorSeleccionado.proveedor.idProveedor } as any,
+      fechaEvento: this.fechaEvento,
+      estado: 'PENDIENTE' as Reserva['estado'],
+    };
+
+    this.reservaSrv.crear(payload).subscribe({
+      next: (resp) => {
+        this.mensajeAgendar = '¡Listo! Tu solicitud fue registrada y el proveedor la revisará pronto.';
+        this.reservasProveedor = [...this.reservasProveedor, resp];
+        this.generarCalendario();
+      },
+      error: () => {
+        this.mensajeAgendar = 'No pudimos agendar el evento. Inténtalo de nuevo más tarde.';
+      },
+      complete: () => {
+        this.agendando = false;
+      },
+    });
+  }
+
   generarCalendario() {
     const año = this.mesActual.getFullYear();
     const mes = this.mesActual.getMonth();
@@ -339,21 +423,35 @@ export class EventoCliente implements OnInit {
       }
     });
 
-    const dias: { fecha: string; numero: number; estado: string }[] = [];
+    const dias: { fecha: string; numero: number; estado: string; pasado: boolean }[] = [];
     for (let i = 1; i <= diasMes; i++) {
-      const fecha = new Date(año, mes, i);
+      const fecha = this.obtenerInicioDia(new Date(año, mes, i));
       const clave = fecha.toISOString().slice(0, 10);
-      dias.push({ fecha: clave, numero: i, estado: mapa.get(clave) || '' });
+      dias.push({ fecha: clave, numero: i, estado: mapa.get(clave) || '', pasado: this.esFechaPasada(fecha) });
     }
     this.diasCalendario = dias;
   }
 
   cambiarMes(delta: number) {
-    this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + delta, 1);
+    const mesPropuesto = this.obtenerInicioMes(
+      new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + delta, 1)
+    );
+    const mesMinimo = this.obtenerInicioMes(this.hoy);
+
+    this.mesActual = mesPropuesto < mesMinimo ? mesMinimo : mesPropuesto;
     this.generarCalendario();
   }
 
   seleccionarDia(fecha: string) {
+    const fechaSeleccionada = new Date(fecha);
+    if (this.esFechaPasada(fechaSeleccionada)) {
+      return;
+    }
     this.fechaEvento = fecha;
+    this.mensajeAgendar = '';
+  }
+
+  private esFechaPasada(fecha: Date) {
+    return this.obtenerInicioDia(fecha) < this.hoy;
   }
 }
