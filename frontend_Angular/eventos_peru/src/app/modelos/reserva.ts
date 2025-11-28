@@ -8,6 +8,7 @@ export interface Reserva {
   idReserva: number;
   cliente?: Usuario | null;
   proveedor?: ProveedorBasico | null;
+  evento?: { idEvento: number } | null;
   fechaEvento: string | Date;
   estado: EstadoReserva;
   fechaReserva?: string | null;
