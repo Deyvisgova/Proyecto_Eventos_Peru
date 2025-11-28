@@ -93,22 +93,221 @@
 }
 
 .detalle-lista {
-  list-style: none;
-  padding: 0;
-  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.detalle-lista li {
+.detalle-contenedor {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 2fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.detalle-resumen {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.detalle-resumen ul {
+  list-style: disc;
+  padding-left: 18px;
+  margin: 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detalle-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: #fff;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
+}
+
+.fila-detalle td {
+  background: #f9fafb;
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.encabezado-detalle {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.total-linea {
+  text-align: right;
+}
+
+.precio-linea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.resumen-total {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 10;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+}
+
+.modal-contenido {
+  background: #fff;
+  width: min(720px, 95vw);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  border: 1px solid #e5e7eb;
+  z-index: 30;
+}
+
+.modal-header,
+.modal-footer {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.modal-body {
+  padding: 0 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detalle-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resumen-evento {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.detalle-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.alineado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: 999px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.titulo-linea {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.monto {
+  font-weight: 700;
+}
+
+.total-modal {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.bloque-correo {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.cuerpo-previo {
+  margin: 6px 0 0;
+  padding: 10px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  white-space: pre-line;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.campo-texto label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.campo-texto textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.campo-texto input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px;
+  font-family: inherit;
 }
 
 .texto-suave {
@@ -118,4 +317,16 @@
 
 .estado.error {
   color: #c0392b;
+}
+
+@media (max-width: 720px) {
+  .detalle-contenedor {
+    grid-template-columns: 1fr;
+  }
+
+  .detalle-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
 }
