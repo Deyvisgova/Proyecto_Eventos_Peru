@@ -1,15 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { DetalleReserva, Reserva } from '../../../modelos/reserva';
 import { ReservaService } from '../../../servicios/reserva.service';
 import { DetalleReservaService } from '../../../servicios/detalle-reserva.service';
 import { ProveedorService } from '../../../servicios/proveedor.service';
-import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-reservas-proveedor',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './reservas.html',
   styleUrls: ['./reservas.css'],
 })
@@ -23,6 +26,11 @@ export class ReservasProveedor implements OnInit {
   reservas: Reserva[] = [];
   detalles: Record<number, DetalleReserva[]> = {};
   seleccionada: Reserva | null = null;
+  detalleAbierto: number | null = null;
+  modalVisible = false;
+  modoAccion: 'confirmar' | 'cancelar' | null = null;
+  cuerpoCorreo = '';
+  reservaEnAccion: Reserva | null = null;
   cargando = false;
   error = '';
 
@@ -63,23 +71,24 @@ export class ReservasProveedor implements OnInit {
         }
 
         this.reservas = resp;
-        resp.forEach((r) => this.cargarDetalle(r.idReserva));
+        resp.forEach((r) => this.cargarDetalle(r.idReserva)?.subscribe());
       },
       error: () => (this.error = 'No pudimos cargar las reservas'),
       complete: () => (this.cargando = false),
     });
   }
 
-  cargarDetalle(idReserva: number) {
-    if (this.detalles[idReserva]) return;
-    this.detalleSrv.listarPorReserva(idReserva).subscribe({
-      next: (det) => (this.detalles[idReserva] = det),
-    });
+  cargarDetalle(idReserva: number): Observable<DetalleReserva[]> {
+    if (this.detalles[idReserva]) return of(this.detalles[idReserva]);
+    return this.detalleSrv.listarPorReserva(idReserva).pipe(
+      tap((det) => (this.detalles[idReserva] = det))
+    );
   }
 
   verDetalle(reserva: Reserva) {
-    this.seleccionada = reserva;
-    this.cargarDetalle(reserva.idReserva);
+    this.detalleAbierto = this.detalleAbierto === reserva.idReserva ? null : reserva.idReserva;
+    this.seleccionada = this.detalleAbierto ? reserva : null;
+    this.cargarDetalle(reserva.idReserva)?.subscribe();
   }
 
   estadoClase(estado: string) {
@@ -88,21 +97,81 @@ export class ReservasProveedor implements OnInit {
     return 'estado cancelada';
   }
 
-  confirmar(reserva: Reserva) {
+  abrirModal(reserva: Reserva, modo: 'confirmar' | 'cancelar') {
+    this.reservaEnAccion = reserva;
+    this.modoAccion = modo;
+    this.modalVisible = true;
+    this.cuerpoCorreo = '';
+    this.cargarDetalle(reserva.idReserva)?.subscribe((det) => {
+      if (modo === 'confirmar') {
+        this.cuerpoCorreo = this.construirCuerpoCorreo(reserva, det);
+      }
+    });
+  }
+
+  cerrarModal() {
+    this.modalVisible = false;
+    this.modoAccion = null;
+    this.reservaEnAccion = null;
+    this.cuerpoCorreo = '';
+  }
+
+  construirCuerpoCorreo(reserva: Reserva, det: DetalleReserva[] = []) {
+    const servicios = det.length
+      ? det
+          .map(
+            (d) =>
+              `• ${d.servicio?.nombreServicio || 'Servicio reservado'} (${d.cantidad} x S/ ${
+                d.precioUnitario?.toFixed(2) || '0.00'
+              })`
+          )
+          .join('\n')
+      : '• Servicios pendientes de confirmar';
+
+    const nombreEvento =
+      det.find((d) => d.servicio?.evento?.nombreEvento)?.servicio.evento?.nombreEvento || 'Evento reservado';
+
+    return `Hola ${reserva.cliente?.nombre || 'cliente'},
+
+¡Tu reserva fue confirmada! Estos son los datos principales:
+• Fecha: ${new Date(reserva.fechaEvento).toLocaleDateString()}
+• Evento: ${nombreEvento}
+• Estado: ${reserva.estado}
+• Servicios:
+${servicios}
+• Contacto del proveedor: ${
+      reserva.proveedor?.usuario?.email || 'sin correo'
+    } / ${reserva.proveedor?.usuario?.celular || 'sin teléfono'}
+
+Gracias por confiar en nosotros.`;
+  }
+
+  ejecutarAccion() {
+    if (!this.reservaEnAccion || !this.modoAccion) return;
+    if (this.modoAccion === 'confirmar') {
+      this.confirmarReserva(this.reservaEnAccion);
+    } else {
+      this.rechazarReserva(this.reservaEnAccion);
+    }
+  }
+
+  confirmarReserva(reserva: Reserva) {
     this.reservaSrv.confirmar(reserva.idReserva).subscribe({
       next: (resp) => {
         this.reservas = this.reservas.map((r) => (r.idReserva === resp.idReserva ? resp : r));
         this.seleccionada = resp;
+        this.cerrarModal();
       },
       error: () => alert('No pudimos confirmar la reserva'),
     });
   }
 
-  rechazar(reserva: Reserva) {
+  rechazarReserva(reserva: Reserva) {
     this.reservaSrv.rechazar(reserva.idReserva).subscribe({
       next: (resp) => {
         this.reservas = this.reservas.map((r) => (r.idReserva === resp.idReserva ? resp : r));
         this.seleccionada = resp;
+        this.cerrarModal();
       },
       error: () => alert('No pudimos actualizar la reserva'),
     });
