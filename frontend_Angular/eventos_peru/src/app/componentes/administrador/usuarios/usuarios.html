@@ -11,8 +11,8 @@
         <th>ID</th>
         <th>Nombre</th>
         <th>Correo</th>
+        <th>Celular</th>
         <th>Rol</th>
-        <th>Fecha de Registro</th>
         <th>Acciones</th>
       </tr>
     </thead>
@@ -21,8 +21,8 @@
         <td>{{ usuario.idUsuario }}</td>
         <td>{{ usuario.nombre }}</td>
         <td>{{ usuario.email }}</td>
+        <td>{{ usuario.celular || 'Sin número' }}</td>
         <td>{{ usuario.rol }}</td>
-        <td>{{ usuario.fechaRegistro | date : 'dd/MM/yyyy' }}</td>
         <td>
           <button class="btn-editar" (click)="abrirModalEditar(usuario)">✏️ Editar</button>
           <button class="btn-eliminar" (click)="abrirModalEliminar(usuario)">🗑️ Eliminar</button>
@@ -66,16 +66,49 @@
             />
           </div>
           <div class="mb-3">
-            <label>Contraseña</label>
+            <label>Celular</label>
             <input
-              type="password"
+              type="tel"
               class="form-control"
-              [(ngModel)]="nuevo.password"
-              name="password"
-              required
-              minlength="6"
-              placeholder="Ingrese una contraseña segura"
+              [(ngModel)]="nuevo.celular"
+              name="celular"
+              placeholder="Ej. 987654321"
             />
+          </div>
+          <div class="mb-3">
+            <label>Contraseña</label>
+            <div class="input-grupo-password">
+              <input
+                [type]="mostrarPassword ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="nuevo.password"
+                name="password"
+                required
+                minlength="6"
+                placeholder="Ingrese una contraseña segura"
+              />
+              <button type="button" class="btn-ojo" (click)="togglePassword('password')">
+                <i class="bi" [ngClass]="mostrarPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label>Confirmar contraseña</label>
+            <div class="input-grupo-password">
+              <input
+                [type]="mostrarConfirmacion ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="confirmacionPassword"
+                name="confirmacionPassword"
+                required
+                minlength="6"
+                placeholder="Repite la contraseña"
+              />
+              <button type="button" class="btn-ojo" (click)="togglePassword('confirmacion')">
+                <i class="bi" [ngClass]="mostrarConfirmacion ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
           </div>
 
           <div class="mb-3">
@@ -84,17 +117,6 @@
               <!-- Solo puede agregar administradores -->
               <option value="ADMIN">ADMIN</option>
             </select>
-          </div>
-
-          <div class="mb-3">
-            <label>Fecha de Registro</label>
-            <input
-              type="date"
-              class="form-control"
-              [(ngModel)]="nuevo.fechaRegistro"
-              name="fechaRegistro"
-              required
-            />
           </div>
         </form>
       </div>
@@ -153,23 +175,22 @@
             />
           </div>
           <div class="mb-3">
+            <label>Celular</label>
+            <input
+              type="tel"
+              class="form-control"
+              [(ngModel)]="usuarioSeleccionado.celular"
+              name="celular"
+              placeholder="Ej. 987654321"
+            />
+          </div>
+          <div class="mb-3">
             <label>Rol</label>
             <select class="form-select" [(ngModel)]="usuarioSeleccionado.rol" name="rol" required>
               <!-- Puede cambiar entre ADMIN y CLIENTE -->
               <option value="ADMIN">ADMIN</option>
               <option value="CLIENTE">CLIENTE</option>
             </select>
-          </div>
-
-          <div class="mb-3">
-            <label>Fecha de Registro</label>
-            <input
-              type="date"
-              class="form-control"
-              [(ngModel)]="usuarioSeleccionado.fechaRegistro"
-              name="fechaRegistro"
-              required
-            />
           </div>
         </form>
       </div>

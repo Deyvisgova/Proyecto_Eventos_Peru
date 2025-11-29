@@ -9,6 +9,7 @@ export interface CatalogoServicio {
   descripcion?: string;
   estado: EstadoCatalogo;
   creadoPor: FuenteCatalogo;
+  creadorNombre?: string;
   fechaCreacion?: string;
   fechaRevision?: string;
   idAdminRevisor?: number;

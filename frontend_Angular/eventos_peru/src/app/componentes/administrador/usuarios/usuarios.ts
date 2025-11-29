@@ -14,14 +14,17 @@ declare var bootstrap: any;
   templateUrl: './usuarios.html',
   styleUrls: ['./usuarios.css'],
 })
-export class Usuarios {
+export class Usuarios implements OnInit {
   // ==============================
   // 🔹 VARIABLES PRINCIPALES
   // ==============================
   usuarios: Usuario[] = [];
   nuevo: Usuario = {} as Usuario;
+  confirmacionPassword = '';
   usuarioSeleccionado: Usuario = {} as Usuario;
   usuarioAEliminar: Usuario | null = null;
+  mostrarPassword = false;
+  mostrarConfirmacion = false;
 
   constructor(private usuarioService: UsuarioService) {}
 
@@ -48,7 +51,10 @@ export class Usuarios {
   // 🔹 ABRIR MODAL DE AGREGAR
   // ==============================
   abrirModalAgregar() {
-    this.nuevo = { fechaRegistro: new Date().toISOString().slice(0, 10) } as any;
+    this.nuevo = {
+      fechaRegistro: new Date().toISOString(),
+    } as any;
+    this.confirmacionPassword = '';
     const modal = new bootstrap.Modal(document.getElementById('modalAgregar'));
     modal.show();
   }
@@ -57,8 +63,10 @@ export class Usuarios {
   // 🔹 GUARDAR NUEVO USUARIO (POST)
   // ===============================
   guardarUsuario() {
-    // ✅ Convertimos la fecha del input (2025-10-07) a formato ISO completo
-    const fechaISO = new Date(`${this.nuevo.fechaRegistro}T00:00:00`).toISOString();
+    if ((this.nuevo.password || '') !== this.confirmacionPassword) {
+      alert('Las contraseñas no coinciden.');
+      return;
+    }
 
     // ✅ Armamos el payload EXACTAMENTE como lo pide el backend
     const payload = {
@@ -67,7 +75,8 @@ export class Usuarios {
       email: this.nuevo.email?.trim(),
       password: this.nuevo.password,
       rol: this.nuevo.rol,
-      fechaRegistro: fechaISO, // formato ISO con hora
+      fechaRegistro: this.nuevo.fechaRegistro ?? new Date().toISOString(),
+      celular: this.nuevo.celular,
     };
 
     // ✅ Validamos campos requeridos
@@ -88,6 +97,7 @@ export class Usuarios {
         this.cargarUsuarios(); // recarga la tabla
         bootstrap.Modal.getInstance(document.getElementById('modalAgregar'))?.hide(); // cierra el modal
         this.nuevo = {} as any; // limpia el formulario
+        this.confirmacionPassword = '';
         console.log('✅ Usuario agregado correctamente:', resp);
       },
       error: (err) => {
@@ -104,12 +114,6 @@ export class Usuarios {
     // Clonamos el usuario para no modificar la tabla directamente
     this.usuarioSeleccionado = { ...usuario };
 
-    // 🧠 Convertimos la fecha del backend a formato "YYYY-MM-DD"
-    if (this.usuarioSeleccionado.fechaRegistro) {
-      const fecha = new Date(this.usuarioSeleccionado.fechaRegistro);
-      this.usuarioSeleccionado.fechaRegistro = fecha.toISOString().slice(0, 10);
-    }
-
     const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
     modal.show();
   }
@@ -124,15 +128,6 @@ export class Usuarios {
       return;
     }
 
-    const fechaRegistro = this.usuarioSeleccionado.fechaRegistro;
-    if (!fechaRegistro) {
-      alert('La fecha de registro no está disponible para actualizar al usuario.');
-      return;
-    }
-
-    // Convertimos la fecha a formato ISO completo (con hora)
-    const fechaISO = new Date(fechaRegistro).toISOString();
-
     // Armamos el payload exacto que Spring espera
     const payload = {
       idUsuario: id,
@@ -140,7 +135,10 @@ export class Usuarios {
       email: this.usuarioSeleccionado.email?.trim(),
       password: this.usuarioSeleccionado.password || '',
       rol: this.usuarioSeleccionado.rol,
-      fechaRegistro: fechaISO, // 👈 formato ISO válido para Spring
+      fechaRegistro: this.usuarioSeleccionado.fechaRegistro
+        ? new Date(this.usuarioSeleccionado.fechaRegistro).toISOString()
+        : undefined,
+      celular: this.usuarioSeleccionado.celular,
     };
 
     this.usuarioService.actualizarUsuario(id, payload).subscribe({
@@ -190,5 +188,13 @@ export class Usuarios {
         alert('No se pudo eliminar el usuario. Revisa el backend.');
       },
     });
+  }
+
+  togglePassword(tipo: 'password' | 'confirmacion'): void {
+    if (tipo === 'password') {
+      this.mostrarPassword = !this.mostrarPassword;
+    } else {
+      this.mostrarConfirmacion = !this.mostrarConfirmacion;
+    }
   }
 }

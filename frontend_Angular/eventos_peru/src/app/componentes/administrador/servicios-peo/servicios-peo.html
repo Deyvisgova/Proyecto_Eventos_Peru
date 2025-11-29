@@ -113,6 +113,15 @@
             <option value="RECHAZADO">Rechazados</option>
           </select>
         </label>
+        <label>
+          Buscar
+          <input
+            type="search"
+            [(ngModel)]="terminoBusqueda"
+            name="terminoBusqueda"
+            placeholder="Filtra por nombre o descripción"
+          />
+        </label>
       </div>
     </div>
 
@@ -127,23 +136,77 @@
           <th>Creado por</th>
           <th>Última revisión</th>
           <th>Motivo rechazo</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let cat of catalogo">
+        <tr *ngFor="let cat of catalogoFiltrado()">
           <td>
             <strong>{{ cat.nombre }}</strong>
             <div class="descripcion" *ngIf="cat.descripcion">{{ cat.descripcion }}</div>
           </td>
           <td><span class="badge" [ngClass]="badgeClase(cat.estado)">{{ cat.estado }}</span></td>
-          <td>{{ cat.creadoPor }}</td>
+          <td>{{ etiquetaCreador(cat) }}</td>
           <td>{{ cat.fechaRevision ? (cat.fechaRevision | date: 'short') : '-' }}</td>
           <td>
             <span *ngIf="cat.motivoRechazo; else sinMotivo">{{ cat.motivoRechazo }}</span>
             <ng-template #sinMotivo>-</ng-template>
           </td>
+          <td class="acciones">
+            <button class="btn-accion" (click)="abrirModalEditar(cat)">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button class="btn-accion eliminar" (click)="abrirModalEliminar(cat)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="overlay" *ngIf="modalEdicion && catalogoEnEdicion">
+    <div class="modal-flotante">
+      <header>
+        <h4><i class="bi bi-pencil"></i> Editar tipo de servicio</h4>
+        <button type="button" class="cerrar" (click)="cerrarModales()">×</button>
+      </header>
+      <div class="contenido-modal">
+        <label>
+          Nombre
+          <input type="text" [(ngModel)]="catalogoEnEdicion!.nombre" />
+        </label>
+        <label>
+          Descripción
+          <textarea rows="3" [(ngModel)]="catalogoEnEdicion!.descripcion"></textarea>
+        </label>
+        <label>
+          Estado
+          <select [(ngModel)]="catalogoEnEdicion!.estado">
+            <option value="ACTIVO">Activo</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="RECHAZADO">Rechazado</option>
+          </select>
+        </label>
+      </div>
+      <footer class="acciones-modal">
+        <button type="button" class="btn-secundario" (click)="cerrarModales()">Cancelar</button>
+        <button type="button" class="btn-primario" (click)="guardarEdicion()">Guardar cambios</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="modalEliminar">
+    <div class="modal-flotante confirmacion">
+      <header>
+        <h4><i class="bi bi-exclamation-triangle"></i> Confirmar eliminación</h4>
+        <button type="button" class="cerrar" (click)="cerrarModales()">×</button>
+      </header>
+      <p>¿Seguro que deseas eliminar "{{ catalogoAEliminar?.nombre }}" del catálogo?</p>
+      <footer class="acciones-modal">
+        <button type="button" class="btn-secundario" (click)="cerrarModales()">Cancelar</button>
+        <button type="button" class="btn-error" (click)="eliminarCatalogo()">Eliminar</button>
+      </footer>
+    </div>
   </div>
 </section>

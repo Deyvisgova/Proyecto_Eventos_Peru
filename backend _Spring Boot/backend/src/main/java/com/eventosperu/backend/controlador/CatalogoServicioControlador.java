@@ -2,6 +2,7 @@ package com.eventosperu.backend.controlador;
 
 import com.eventosperu.backend.model.*;
 import com.eventosperu.backend.model.dto.ModeracionCatalogoRequest;
+import com.eventosperu.backend.model.dto.ActualizarCatalogoServicioRequest;
 import com.eventosperu.backend.model.dto.NuevoCatalogoServicioRequest;
 import com.eventosperu.backend.repositorio.CatalogoEventoServicioRepositorio;
 import com.eventosperu.backend.repositorio.CatalogoServicioRepositorio;
@@ -87,6 +88,35 @@ public class CatalogoServicioControlador {
                 CatalogoServicio.FuenteCreacion.PROVEEDOR,
                 idProveedor
         );
+    }
+
+    /**
+     * Permite al administrador actualizar la información básica de un tipo de servicio.
+     */
+    @PutMapping("/{id}")
+    public CatalogoServicio actualizar(@PathVariable Integer id, @RequestBody ActualizarCatalogoServicioRequest request) {
+        Optional<CatalogoServicio> catalogoOpt = catalogoServicioRepositorio.findById(id);
+        if (catalogoOpt.isEmpty()) {
+            return null;
+        }
+
+        CatalogoServicio catalogo = catalogoOpt.get();
+        if (request.getNombre() != null) {
+            catalogo.setNombre(request.getNombre());
+        }
+        if (request.getDescripcion() != null) {
+            catalogo.setDescripcion(request.getDescripcion());
+        }
+        if (request.getEstado() != null) {
+            catalogo.setEstado(request.getEstado());
+        }
+        CatalogoServicio actualizado = catalogoServicioRepositorio.save(catalogo);
+
+        if (request.getIdEventos() != null) {
+            sincronizarEventos(actualizado, request.getIdEventos());
+        }
+
+        return actualizado;
     }
 
     /**
@@ -202,6 +232,20 @@ public class CatalogoServicioControlador {
     @GetMapping("/eventos-mapa")
     public List<CatalogoEventoServicio> mapaCatalogoEvento() {
         return catalogoEventoServicioRepositorio.findAll();
+    }
+
+    /**
+     * Elimina un tipo de servicio y sus relaciones con eventos.
+     */
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Integer id) {
+        Optional<CatalogoServicio> catalogoOpt = catalogoServicioRepositorio.findById(id);
+        if (catalogoOpt.isEmpty()) {
+            return;
+        }
+        CatalogoServicio catalogo = catalogoOpt.get();
+        catalogoEventoServicioRepositorio.deleteByCatalogoServicio(catalogo);
+        catalogoServicioRepositorio.delete(catalogo);
     }
 
     private void sincronizarEventos(CatalogoServicio catalogo, List<Integer> idEventos) {

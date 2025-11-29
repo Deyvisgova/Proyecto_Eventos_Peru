@@ -1,10 +1,143 @@
-.card {
-  background: #fff;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+.cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 12px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+h2 {
+  margin: 4px 0;
 }
 
 .texto-suave {
   color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.btn-refrescar {
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+}
+
+.alerta {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.tabla-contenedor {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.tabla-reservas {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-reservas th,
+.tabla-reservas td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.tabla-reservas thead {
+  background: #f8fafc;
+}
+
+.pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.pendiente {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.confirmada {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.cancelada,
+.rechazada {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.estado {
+  text-align: center;
+  padding: 12px;
+  color: #6b7280;
+}
+
+.detalle {
+  background: #f8fafc;
+}
+
+.detalles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.detalle-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.titulo-opcion {
+  margin: 0;
+  font-weight: 700;
+}
+
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  color: #374151;
+}
+
+@media (max-width: 768px) {
+  .cabecera {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-refrescar {
+    width: 100%;
+    justify-content: center;
+  }
 }

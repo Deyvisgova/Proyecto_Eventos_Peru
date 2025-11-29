@@ -78,6 +78,31 @@
 .btn-agregar:hover {
   background-color: #0056b3;
 }
+
+.input-grupo-password {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input-grupo-password .form-control {
+  flex: 1;
+}
+
+.btn-ojo {
+  background: #f1f1f1;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-ojo:hover {
+  background: #e9ecef;
+}
 .acciones-superiores {
   display: flex;
   justify-content: space-between;

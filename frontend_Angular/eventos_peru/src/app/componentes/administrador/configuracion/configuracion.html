@@ -1,0 +1,59 @@
+<section class="configuracion">
+  <header class="cabecera">
+    <div>
+      <p class="eyebrow">Configuración</p>
+      <h2>Preferencias del panel</h2>
+      <p class="texto-suave">
+        Ajusta notificaciones y atajos rápidos para el trabajo diario del administrador.
+      </p>
+    </div>
+    <button class="btn-guardar" (click)="guardar()">
+      <i class="bi bi-save"></i>
+      Guardar preferencias
+    </button>
+  </header>
+
+  <div class="paneles">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Alertas y correo</h3>
+        <p class="texto-suave">Controla qué eventos envían avisos automáticos.</p>
+      </div>
+      <label class="switch-row">
+        <div>
+          <p class="titulo">Notificaciones del sistema</p>
+          <p class="texto-suave">Avisos de errores y novedades importantes.</p>
+        </div>
+        <input type="checkbox" [(ngModel)]="preferencias.notificaciones" (change)="guardar()" />
+      </label>
+      <label class="switch-row">
+        <div>
+          <p class="titulo">Recordatorios de reservas</p>
+          <p class="texto-suave">Enviar resumen semanal de reservas pendientes.</p>
+        </div>
+        <input type="checkbox" [(ngModel)]="preferencias.recordatorios" (change)="guardar()" />
+      </label>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Interfaz</h3>
+        <p class="texto-suave">Preferencias visuales para tu sesión.</p>
+      </div>
+      <label class="switch-row">
+        <div>
+          <p class="titulo">Modo oscuro</p>
+          <p class="texto-suave">Se aplicará en tu próxima visita.</p>
+        </div>
+        <input type="checkbox" [(ngModel)]="preferencias.modoOscuro" (change)="guardar()" />
+      </label>
+      <label class="switch-row">
+        <div>
+          <p class="titulo">Resaltar registros nuevos</p>
+          <p class="texto-suave">Mantén a la vista altas de usuarios y servicios.</p>
+        </div>
+        <input type="checkbox" [(ngModel)]="preferencias.resaltarNuevos" (change)="guardar()" />
+      </label>
+    </div>
+  </div>
+</section>
