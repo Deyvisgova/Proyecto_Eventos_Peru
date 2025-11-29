@@ -12,6 +12,7 @@
       <div>
         <p class="texto-sutil">Servicios seleccionados</p>
         <strong class="carrito-contador">{{ opcionesSeleccionadas.length }}</strong>
+        <p class="texto-sutil" *ngIf="numeroReservaActual">Reserva N° {{ numeroReservaActual }}</p>
       </div>
     </div>
   </header>
