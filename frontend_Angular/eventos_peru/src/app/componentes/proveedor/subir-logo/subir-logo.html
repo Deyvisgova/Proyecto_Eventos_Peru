@@ -19,5 +19,15 @@
     </button>
 
     <p class="texto-suave" *ngIf="mensaje">{{ mensaje }}</p>
+
+    <div class="bloque-reportes">
+      <p class="titulo-reportes">Reportes</p>
+      <p class="texto-suave">
+        Descarga un PDF con reservas, variantes y el monto total registrado.
+      </p>
+      <button class="btn btn-secundario" (click)="descargarReportes()" [disabled]="cargandoReportes">
+        {{ cargandoReportes ? 'Preparando...' : 'Descargar reportes' }}
+      </button>
+    </div>
   </div>
 </div>
