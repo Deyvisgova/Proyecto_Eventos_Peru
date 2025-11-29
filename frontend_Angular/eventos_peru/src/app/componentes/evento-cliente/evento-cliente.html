@@ -5,6 +5,15 @@
       <h3>Hola, {{ nombre }}</h3>
       <p class="texto-sutil">Elige los servicios ideales para tu {{ tipoEventoLabel || 'evento' }}</p>
     </div>
+    <div class="carrito-info">
+      <div class="carrito-icono">
+        <i class="bi bi-cart3"></i>
+      </div>
+      <div>
+        <p class="texto-sutil">Servicios seleccionados</p>
+        <strong class="carrito-contador">{{ opcionesSeleccionadas.length }}</strong>
+      </div>
+    </div>
   </header>
 
   <section class="layout">
@@ -177,35 +186,49 @@
 
       <div class="agendar" *ngIf="opciones.length">
         <label>¿Para qué fecha lo deseas?</label>
-        <div class="calendario">
-          <div class="calendario-header">
-            <button class="btn-sutil" (click)="cambiarMes(-1)">&#8249;</button>
-            <strong>{{ mesActual | date: 'LLLL yyyy' }}</strong>
-            <button class="btn-sutil" (click)="cambiarMes(1)">&#8250;</button>
-          </div>
-          <div class="calendario-grid">
-            <div
-              class="dia"
-              *ngFor="let d of diasCalendario"
-              [ngClass]="{
-                confirmada: d.estado === 'confirmada',
-                pendiente: d.estado === 'pendiente',
-                rechazada: d.estado === 'rechazada',
-                activo: fechaEvento === d.fecha,
-                deshabilitado: d.pasado
-              }"
-              (click)="!d.pasado && seleccionarDia(d.fecha)"
-            >
-              {{ d.numero }}
+        <div class="calendario-con-hora">
+          <div class="calendario">
+            <div class="calendario-header">
+              <button class="btn-sutil" (click)="cambiarMes(-1)">&#8249;</button>
+              <strong>{{ mesActual | date: 'LLLL yyyy' }}</strong>
+              <button class="btn-sutil" (click)="cambiarMes(1)">&#8250;</button>
+            </div>
+            <div class="calendario-grid">
+              <div
+                class="dia"
+                *ngFor="let d of diasCalendario"
+                [ngClass]="{
+                  confirmada: d.estado === 'confirmada',
+                  pendiente: d.estado === 'pendiente',
+                  rechazada: d.estado === 'rechazada',
+                  activo: fechaEvento === d.fecha,
+                  deshabilitado: d.pasado
+                }"
+                (click)="!d.pasado && seleccionarDia(d.fecha)"
+              >
+                {{ d.numero }}
+              </div>
+            </div>
+            <div class="leyenda">
+              <span class="punto confirmada"></span> Reservada
+              <span class="punto pendiente"></span> Pendiente
+              <span class="punto rechazada"></span> Rechazada
             </div>
           </div>
-          <p class="texto-sutil seleccion-fecha" *ngIf="fechaEvento">
-            Elegiste {{ fechaEvento | date: 'fullDate' }}.
-          </p>
-          <div class="leyenda">
-            <span class="punto confirmada"></span> Reservada
-            <span class="punto pendiente"></span> Pendiente
-            <span class="punto rechazada"></span> Rechazada
+
+          <div class="selector-hora">
+            <label for="horaServicio">Hora y minutos</label>
+            <input
+              id="horaServicio"
+              type="time"
+              [(ngModel)]="horaEvento"
+              (input)="mensajeAgendar = ''"
+              min="00:00"
+              max="23:59"
+            />
+            <p class="texto-sutil" *ngIf="fechaEvento">
+              Elegiste {{ fechaEvento | date: 'fullDate' }} a las {{ horaEvento }}.
+            </p>
           </div>
         </div>
         <div class="acciones">
@@ -213,7 +236,7 @@
           <div class="botones">
             <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
             <button class="btn-primario" [disabled]="!fechaEvento || !tieneSeleccion || agendando" (click)="agendarEvento()">
-              {{ agendando ? 'Agendando...' : 'Agendar evento' }}
+              {{ agendando ? 'Agregando...' : 'Agregar servicio' }}
             </button>
           </div>
         </div>

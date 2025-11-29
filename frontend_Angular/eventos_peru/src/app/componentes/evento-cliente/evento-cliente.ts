@@ -71,6 +71,7 @@ export class EventoCliente implements OnInit {
   opciones: ServicioOpcion[] = [];
   seleccion: Record<number, boolean> = {};
   fechaEvento = '';
+  horaEvento = '12:00';
   agendando = false;
   mensajeAgendar = '';
 
@@ -340,6 +341,7 @@ export class EventoCliente implements OnInit {
     this.opciones = [];
     this.seleccion = {};
     this.fechaEvento = '';
+    this.horaEvento = '12:00';
     this.reservasProveedor = [];
     this.diasCalendario = [];
     this.mesActual = this.obtenerInicioMes(new Date());
@@ -375,6 +377,7 @@ export class EventoCliente implements OnInit {
     this.opciones = [];
     this.seleccion = {};
     this.fechaEvento = '';
+    this.horaEvento = '12:00';
   }
 
   private obtenerIdReserva(reserva: Reserva | any): number | null {
@@ -386,6 +389,11 @@ export class EventoCliente implements OnInit {
   agendarEvento() {
     if (!this.proveedorSeleccionado || !this.fechaEvento || !this.clienteId) {
       this.mensajeAgendar = 'Selecciona una fecha válida y asegúrate de haber iniciado sesión.';
+      return;
+    }
+
+    if (!this.horaEvento) {
+      this.mensajeAgendar = 'Selecciona la hora del servicio.';
       return;
     }
 
@@ -409,7 +417,8 @@ export class EventoCliente implements OnInit {
       (this.proveedorSeleccionado.proveedor as any).id_proveedor ??
       (this.proveedorSeleccionado.proveedor as any).id;
 
-    const fechaISO = new Date(this.fechaEvento).toISOString().slice(0, 10);
+    const fechaConHora = `${this.fechaEvento}T${this.horaEvento}`;
+    const fechaISO = new Date(fechaConHora).toISOString().slice(0, 10);
 
     const payload: Partial<Reserva> = {
       cliente: { idUsuario: this.clienteId } as any,
