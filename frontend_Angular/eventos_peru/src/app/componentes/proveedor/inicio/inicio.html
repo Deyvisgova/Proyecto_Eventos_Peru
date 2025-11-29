@@ -1,28 +1,71 @@
-<div class="card">
-  <div class="titulo-card">
-    <i class="bi bi-speedometer2 text-primary"></i>
-    Resumen rápido
-  </div>
-  <p class="texto-suave">
-    Bienvenido a tu panel. Desde aquí podrás revisar tus próximos eventos, actualizar tu
-    catálogo y dar seguimiento a las reservas de tus servicios.
-  </p>
-</div>
-
-<div class="grid">
-  <div class="card kpi">
-    <div class="icono verde"><i class="bi bi-calendar-event"></i></div>
+<section class="dashboard-proveedor">
+  <header class="bienvenida">
     <div>
-      <div class="kpi-numero">Próximas reservas</div>
-      <div class="texto-suave">Monitorea los eventos confirmados.</div>
+      <p class="saludo">Hola, {{ nombre || 'Proveedor' }}</p>
+      <h2>Bienvenido a tu panel</h2>
+      <p class="subtexto">{{ empresa || 'Actualiza tu perfil para mostrar el nombre comercial' }}</p>
+    </div>
+    <div class="estado" *ngIf="estado.error">{{ estado.error }}</div>
+    <div class="estado cargando" *ngIf="estado.cargando">Cargando datos reales...</div>
+  </header>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <p>Servicios activos</p>
+      <h3>{{ kpi.serviciosActivos }}</h3>
+      <small>{{ kpi.serviciosTotales }} en total</small>
+    </div>
+    <div class="kpi-card">
+      <p>Reservas pendientes</p>
+      <h3>{{ kpi.reservasPendientes }}</h3>
+      <small>Esperando confirmación</small>
+    </div>
+    <div class="kpi-card">
+      <p>Reservas confirmadas</p>
+      <h3>{{ kpi.reservasConfirmadas }}</h3>
+      <small>Últimos 30 días</small>
+    </div>
+    <div class="kpi-card">
+      <p>Ingresos estimados</p>
+      <h3>S/ {{ kpi.ingresosEstimados | number: '1.2-2' }}</h3>
+      <small>Según opciones reservadas</small>
     </div>
   </div>
 
-  <div class="card kpi">
-    <div class="icono azul"><i class="bi bi-card-checklist"></i></div>
-    <div>
-      <div class="kpi-numero">Catálogo activo</div>
-      <div class="texto-suave">Mantén tus servicios al día.</div>
+  <div class="paneles">
+    <div class="panel">
+      <div class="panel-cabecera">
+        <h3>Próximas reservas</h3>
+        <small>Muestra las siguientes fechas confirmadas o pendientes</small>
+      </div>
+      <div class="linea" *ngIf="!proximas.length">No hay reservas próximas registradas.</div>
+      <div class="reserva" *ngFor="let r of proximas">
+        <div>
+          <p class="fecha">{{ r.fechaEvento | date: 'fullDate' }}</p>
+          <p class="cliente">Cliente: {{ r.cliente?.nombre || 'Sin datos' }}</p>
+        </div>
+        <span class="badge" [ngClass]="r.estado === 'CONFIRMADA' ? 'badge-exito' : 'badge-aviso'">
+          {{ r.estado }}
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-cabecera">
+        <h3>Servicios publicados</h3>
+        <small>Últimos cargados desde la base de datos</small>
+      </div>
+      <div class="linea" *ngIf="!servicios.length">Aún no registras servicios.</div>
+      <div class="servicio-mini" *ngFor="let s of servicios | slice: 0:3">
+        <div class="mini-media">
+          <img [src]="s.urlFoto || 'assets/servicios/placeholder-servicio.svg'" alt="Servicio" />
+        </div>
+        <div>
+          <p class="etiqueta">{{ s.catalogoServicio.nombre }}</p>
+          <p class="titulo">{{ s.nombrePublico }}</p>
+          <small>{{ s.descripcionGeneral || 'Sin descripción' }}</small>
+        </div>
+      </div>
     </div>
   </div>
-</div>
+</section>

@@ -37,6 +37,11 @@ export class CatalogoServicios implements OnInit {
   edicionOpcion: Record<number, ServicioOpcionRequest> = {};
   propuestasEdicion: Record<number, NuevoCatalogoServicioRequest> = {};
 
+  servicioEnModal: ProveedorServicio | null = null;
+  opcionesEnModal: ProveedorServicio | null = null;
+
+  mostrarReportes = false;
+
   eventos: Evento[] = [];
   eventosSeleccionadosPropuesta = new Set<number>();
 
@@ -250,6 +255,25 @@ export class CatalogoServicios implements OnInit {
     }
   }
 
+  abrirModalServicio(oferta: ProveedorServicio): void {
+    this.servicioEnModal = oferta;
+    this.prepararEdicionOferta(oferta);
+  }
+
+  cerrarModalServicio(): void {
+    this.servicioEnModal = null;
+  }
+
+  abrirModalOpciones(oferta: ProveedorServicio): void {
+    this.opcionesEnModal = oferta;
+    this.cargarOpciones(oferta);
+    this.prepararFormularioOpcion(oferta.idProveedorServicio);
+  }
+
+  cerrarModalOpciones(): void {
+    this.opcionesEnModal = null;
+  }
+
   cargarOfertas(): void {
     if (!this.idProveedor) {
       return;
@@ -312,6 +336,13 @@ export class CatalogoServicios implements OnInit {
       },
       error: () => (this.error = 'No se pudo actualizar el servicio.'),
     });
+  }
+
+  guardarCambiosServicio(): void {
+    if (this.servicioEnModal) {
+      this.actualizarOferta(this.servicioEnModal);
+      this.cerrarModalServicio();
+    }
   }
 
   eliminarOferta(oferta: ProveedorServicio): void {
@@ -424,9 +455,9 @@ export class CatalogoServicios implements OnInit {
     });
   }
 
-  proponerTipo(): void {
+  proponerServicio(): void {
     if (!this.nuevoTipoProveedor.nombre.trim()) {
-      this.error = 'Indica el nombre del nuevo tipo.';
+      this.error = 'Indica el nombre del nuevo servicio.';
       return;
     }
     if (!this.idProveedor) {
@@ -445,15 +476,19 @@ export class CatalogoServicios implements OnInit {
     };
     this.catalogoServicio.crearComoProveedor(payload).subscribe({
       next: () => {
-        this.mensaje = 'Tipo propuesto. El admin verá la solicitud en la cola de revisión.';
+        this.mensaje = 'Servicio propuesto. El admin verá la solicitud en la cola de revisión.';
         this.nuevoTipoProveedor = { nombre: '', descripcion: '' };
         this.eventosSeleccionadosPropuesta.clear();
         this.cargarPropuestas();
       },
       error: () => {
-        this.error = 'No se pudo enviar la propuesta de tipo.';
+        this.error = 'No se pudo enviar la propuesta de servicio.';
       },
     });
+  }
+
+  proponerTipo(): void {
+    this.proponerServicio();
   }
 
   cargarPropuestas(): void {
@@ -557,5 +592,43 @@ export class CatalogoServicios implements OnInit {
     return lista
       .filter((ev) => ev.idEvento != null && Number.isFinite(Number(ev.idEvento)))
       .map((ev) => ({ ...ev, idEvento: Number(ev.idEvento) }));
+  }
+
+  generarResumenServicios(): string {
+    const resumenServicios = this.ofertas
+      .map(
+        (s) =>
+          `• ${s.nombrePublico} (${s.catalogoServicio.nombre}) - Estado: ${s.estado} - Foto: ${
+            s.urlFoto || 'sin foto'
+          }`
+      )
+      .join('\n');
+
+    const resumenPropuestas = this.propuestas
+      .map((p) => `• ${p.nombre} (${p.estado})`)
+      .join('\n');
+
+    return `Reporte de servicios del proveedor\n\nServicios publicados (${this.ofertas.length}):\n${
+      resumenServicios || 'sin registros'
+    }\n\nPropuestas enviadas (${this.propuestas.length}):\n${resumenPropuestas || 'sin propuestas'}`;
+  }
+
+  descargarReportePdf(): void {
+    const contenido = this.generarResumenServicios();
+    const blob = new Blob([contenido], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = 'reporte-servicios.pdf';
+    enlace.click();
+    URL.revokeObjectURL(url);
+  }
+
+  enviarReporteCorreo(): void {
+    const contenido = this.generarResumenServicios();
+    window.open(
+      `mailto:?subject=Reporte de servicios&body=${encodeURIComponent(contenido)}`,
+      '_blank'
+    );
   }
 }
