@@ -117,10 +117,9 @@
             </div>
           </div>
 
-          <div
-            class="card-img"
-            [ngStyle]="{ 'background-image': 'url(' + (p.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }"
-          ></div>
+          <div class="card-img sin-foto">
+            <span class="inicial-servicio">{{ p.nombrePublico.charAt(0) || 'S' }}</span>
+          </div>
 
           <div class="card-body">
             <p class="texto-sutil descripcion">{{ p.descripcionGeneral || 'Servicio sin descripción.' }}</p>
