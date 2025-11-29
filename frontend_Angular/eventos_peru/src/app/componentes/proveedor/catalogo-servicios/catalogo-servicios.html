@@ -2,10 +2,7 @@
   <header class="encabezado">
     <div>
       <h2>Gestiona tus servicios</h2>
-      <p>
-        Elige un tipo del catálogo, registra tu oferta y agrega opciones con precios y cobertura. Si falta un
-        tipo, envía tu propuesta.
-      </p>
+      <p>Datos reales cargados desde tu cuenta de proveedor.</p>
     </div>
     <button type="button" class="btn-recargar" (click)="cargarCatalogo(); cargarOfertas(); cargarPropuestas()">
       <i class="bi bi-arrow-repeat"></i>
@@ -22,7 +19,7 @@
     <div class="panel">
       <div class="panel-cabecera">
         <h3>Registrar nueva oferta</h3>
-        <small>Se vincula al catálogo activo.</small>
+        <small>Vinculada al catálogo activo</small>
       </div>
       <form class="formulario" (ngSubmit)="registrarOferta()">
         <label>
@@ -55,38 +52,18 @@
             [disabled]="!idProveedor"
           ></textarea>
         </label>
-        <label>
-          URL de foto
-          <input
-            type="url"
-            [(ngModel)]="nuevaOferta.urlFoto"
-            name="urlFoto"
-            placeholder="Ej. assets/servicios/foto.jpg"
-            [disabled]="!idProveedor"
-          />
-        </label>
-        <label class="subida-archivo">
-          Subir foto a assets/servicios
-          <input
-            type="file"
-            accept="image/*"
-            (change)="seleccionarArchivo($event, 'servicios', { tipo: 'oferta-nueva' })"
-            [disabled]="!idProveedor"
-          />
-          <small>El archivo se copiará dentro de assets/servicios y se colocará la ruta automáticamente.</small>
-        </label>
         <button class="btn-primario" type="submit" [disabled]="!idProveedor">Publicar oferta</button>
       </form>
     </div>
 
     <div class="panel">
       <div class="panel-cabecera">
-        <h3>Proponer nuevo tipo</h3>
-        <small>Si el catálogo no tiene lo que necesitas.</small>
+        <h3>Proponer nuevo servicio</h3>
+        <small>Si el catálogo no tiene lo que necesitas</small>
       </div>
-      <form class="formulario" (ngSubmit)="proponerTipo()">
+      <form class="formulario" (ngSubmit)="proponerServicio()">
         <label>
-          Nombre del tipo
+          Nombre del servicio
           <input
             type="text"
             name="nombreTipo"
@@ -127,16 +104,34 @@
             </label>
           </div>
         </div>
-        <button class="btn-secundario" type="submit" [disabled]="!idProveedor">Enviar propuesta</button>
+        <button class="btn-primario" type="submit" [disabled]="!idProveedor">Enviar propuesta</button>
       </form>
+    </div>
+
+    <div class="panel">
+      <div class="panel-cabecera">
+        <h3>Reportes rápidos</h3>
+        <small>Descarga en PDF o envía al correo</small>
+      </div>
+      <p class="texto-suave">Incluye servicios activos, fotos referenciales y propuestas enviadas.</p>
+      <div class="acciones-reportes">
+        <button class="btn-primario" type="button" (click)="descargarReportePdf()">
+          <i class="bi bi-file-earmark-pdf"></i>
+          Descargar PDF
+        </button>
+        <button class="btn-secundario" type="button" (click)="enviarReporteCorreo()">
+          <i class="bi bi-envelope"></i>
+          Enviar por correo
+        </button>
+      </div>
     </div>
   </div>
 
   <div class="panel listado">
     <div class="panel-cabecera">
       <div>
-        <h3>Mis servicios</h3>
-        <small>Activa, pausa, edita o detalla opciones</small>
+        <h3>Servicios publicados</h3>
+        <small>Editar o eliminar con dos acciones claras</small>
       </div>
       <button class="btn-secundario" type="button" (click)="cargarOfertas()">Actualizar</button>
     </div>
@@ -144,178 +139,42 @@
     <div *ngIf="cargandoOfertas" class="estado">Cargando tus servicios...</div>
     <div *ngIf="!cargandoOfertas && !ofertas.length" class="estado">Aún no registras servicios.</div>
 
-    <div class="tarjeta-servicio" *ngFor="let oferta of ofertas">
-      <header class="cabecera-servicio">
-        <div>
-          <p class="etiqueta">{{ oferta.catalogoServicio.nombre }}</p>
+    <div class="grid-servicios">
+      <article class="tarjeta-servicio" *ngFor="let oferta of ofertas">
+        <div class="servicio-marca">
+          <span>{{ oferta.nombrePublico.charAt(0) || 'S' }}</span>
+        </div>
+        <div class="servicio-info">
+          <div class="servicio-head">
+            <p class="etiqueta">{{ oferta.catalogoServicio.nombre }}</p>
+            <span class="badge" [ngClass]="oferta.estado === 'ACTIVO' ? 'badge-exito' : 'badge-aviso'">
+              {{ oferta.estado }}
+            </span>
+          </div>
           <h4>{{ oferta.nombrePublico }}</h4>
           <p class="descripcion" *ngIf="oferta.descripcionGeneral">{{ oferta.descripcionGeneral }}</p>
-        </div>
-        <div class="estado-servicio">
-          <span class="badge" [ngClass]="oferta.estado === 'ACTIVO' ? 'badge-exito' : 'badge-aviso'">
-            {{ oferta.estado }}
-          </span>
-          <div class="acciones">
-            <button class="btn-secundario" type="button" (click)="cambiarEstado(oferta, 'PAUSADO')">
-              Pausar
-            </button>
-            <button class="btn-primario" type="button" (click)="cambiarEstado(oferta, 'ACTIVO')">
-              Activar
-            </button>
-            <button class="btn-secundario" type="button" (click)="eliminarOferta(oferta)">Eliminar</button>
+          <div class="chips">
+            <span class="chip" *ngIf="oferta.catalogoServicio.evento?.nombreEvento">
+              Evento: {{ oferta.catalogoServicio.evento?.nombreEvento }}
+            </span>
+            <span class="chip" *ngIf="opcionesPorServicio[oferta.idProveedorServicio]?.length">
+              {{ opcionesPorServicio[oferta.idProveedorServicio].length }} variantes
+            </span>
           </div>
         </div>
-      </header>
-
-      <div class="formulario edicion-oferta">
-        <label>
-          Nombre público
-          <input
-            type="text"
-            [(ngModel)]="edicionOferta[oferta.idProveedorServicio].nombrePublico"
-            name="edit-nombre-{{ oferta.idProveedorServicio }}"
-          />
-        </label>
-        <label>
-          Descripción general
-          <textarea
-            rows="2"
-            [(ngModel)]="edicionOferta[oferta.idProveedorServicio].descripcionGeneral"
-            name="edit-descripcion-{{ oferta.idProveedorServicio }}"
-          ></textarea>
-        </label>
-        <label>
-          URL de foto
-          <input
-            type="url"
-            [(ngModel)]="edicionOferta[oferta.idProveedorServicio].urlFoto"
-            name="edit-foto-{{ oferta.idProveedorServicio }}"
-            placeholder="Ej. assets/servicios/foto.jpg"
-          />
-        </label>
-        <label class="subida-archivo">
-          Subir foto a assets/servicios
-          <input
-            type="file"
-            accept="image/*"
-            (change)="seleccionarArchivo($event, 'servicios', { tipo: 'oferta-edicion', id: oferta.idProveedorServicio })"
-          />
-          <small>La ruta se actualizará al guardar el archivo.</small>
-        </label>
-        <button class="btn-primario" type="button" (click)="actualizarOferta(oferta)">Guardar cambios</button>
-      </div>
-
-      <div class="opciones">
-        <div class="opciones-encabezado">
-          <strong>Opciones/variantes</strong>
-          <button class="btn-secundario" type="button" (click)="cargarOpciones(oferta)">
-            Ver opciones
-          </button>
+        <div class="acciones-card">
+          <button class="btn-primario" type="button" (click)="abrirModalServicio(oferta)">Editar</button>
+          <button class="btn-secundario" type="button" (click)="abrirModalOpciones(oferta)">Variantes</button>
+          <button class="btn-eliminar" type="button" (click)="eliminarOferta(oferta)">Eliminar</button>
         </div>
-
-        <div class="opcion-formulario">
-          <input
-            type="text"
-            placeholder="Nombre de la opción"
-            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].nombreOpcion"
-            name="nombreOpcion-{{ oferta.idProveedorServicio }}"
-          />
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Precio"
-            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].precio"
-            name="precio-{{ oferta.idProveedorServicio }}"
-          />
-          <input
-            type="number"
-            placeholder="Duración (min)"
-            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].duracionMinutos"
-            name="duracion-{{ oferta.idProveedorServicio }}"
-          />
-          <input
-            type="number"
-            placeholder="Stock"
-            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].stock"
-            name="stock-{{ oferta.idProveedorServicio }}"
-          />
-          <input
-            type="url"
-            placeholder="URL de foto"
-            [(ngModel)]="nuevaOpcion[oferta.idProveedorServicio].urlFoto"
-            name="foto-{{ oferta.idProveedorServicio }}"
-          />
-          <input
-            type="file"
-            accept="image/*"
-            (change)="seleccionarArchivo($event, 'opciones', { tipo: 'opcion-nueva', id: oferta.idProveedorServicio })"
-          />
-          <button class="btn-primario" type="button" (click)="agregarOpcion(oferta)">Agregar opción</button>
-        </div>
-
-        <div class="lista-opciones" *ngIf="opcionesPorServicio[oferta.idProveedorServicio]?.length">
-          <div class="opcion" *ngFor="let op of opcionesPorServicio[oferta.idProveedorServicio]">
-            <div class="opcion-info">
-              <p class="nombre">{{ op.nombreOpcion }}</p>
-              <p class="descripcion" *ngIf="op.descripcion">{{ op.descripcion }}</p>
-              <small>Precio: S/ {{ op.precio }}</small>
-              <small *ngIf="op.urlFoto">Foto: {{ op.urlFoto }}</small>
-            </div>
-            <div class="estado-opcion">
-              <span class="badge" [ngClass]="op.estado === 'ACTIVO' ? 'badge-exito' : 'badge-error'">
-                {{ op.estado }}
-              </span>
-              <div class="formulario opcion-edicion">
-                <input
-                  type="text"
-                  [(ngModel)]="edicionOpcion[op.idOpcion].nombreOpcion"
-                  name="edit-nombre-op-{{ op.idOpcion }}"
-                  placeholder="Nombre"
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  [(ngModel)]="edicionOpcion[op.idOpcion].precio"
-                  name="edit-precio-op-{{ op.idOpcion }}"
-                  placeholder="Precio"
-                />
-                <input
-                  type="url"
-                  [(ngModel)]="edicionOpcion[op.idOpcion].urlFoto"
-                  name="edit-foto-op-{{ op.idOpcion }}"
-                  placeholder="Ej. assets/opciones/foto.jpg"
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  (change)="seleccionarArchivo($event, 'opciones', { tipo: 'opcion-edicion', id: op.idOpcion })"
-                />
-                <div class="opcion-botones">
-                  <button
-                    class="btn-secundario"
-                    type="button"
-                    (click)="cambiarEstadoOpcion(op, op.estado === 'ACTIVO' ? 'NO_DISPONIBLE' : 'ACTIVO')"
-                  >
-                    {{ op.estado === 'ACTIVO' ? 'Marcar no disponible' : 'Activar' }}
-                  </button>
-                  <button class="btn-primario" type="button" (click)="actualizarOpcion(op)">Actualizar</button>
-                  <button class="btn-secundario" type="button" (click)="eliminarOpcion(op)">Eliminar</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <p *ngIf="!opcionesPorServicio[oferta.idProveedorServicio]?.length" class="texto-suave">
-          Aún no agregas opciones para esta oferta.
-        </p>
-      </div>
+      </article>
     </div>
   </div>
 
   <div class="panel listado">
     <div class="panel-cabecera">
       <div>
-        <h3>Mis propuestas de tipos de servicio</h3>
+        <h3>Mis propuestas de servicios</h3>
         <small>Revisa el estado y corrige si fueron rechazadas</small>
       </div>
       <button class="btn-secundario" type="button" (click)="cargarPropuestas()">Actualizar</button>
@@ -358,6 +217,152 @@
           Actualizar y reenviar a revisión
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal edición de servicio -->
+  <div class="modal" *ngIf="servicioEnModal">
+    <div class="modal-contenido">
+      <header>
+        <h3>Editar servicio</h3>
+        <button class="cerrar" type="button" (click)="cerrarModalServicio()">×</button>
+      </header>
+      <div class="formulario">
+        <label>
+          Tipo de servicio
+          <select [(ngModel)]="edicionOferta[servicioEnModal.idProveedorServicio].idCatalogo" name="edit-cat">
+            <option *ngFor="let cat of catalogoActivo" [value]="cat.idCatalogo">{{ cat.nombre }}</option>
+          </select>
+        </label>
+        <label>
+          Nombre público
+          <input
+            type="text"
+            [(ngModel)]="edicionOferta[servicioEnModal.idProveedorServicio].nombrePublico"
+            name="edit-nombre"
+          />
+        </label>
+        <label>
+          Descripción general
+          <textarea
+            rows="2"
+            [(ngModel)]="edicionOferta[servicioEnModal.idProveedorServicio].descripcionGeneral"
+            name="edit-descripcion"
+          ></textarea>
+        </label>
+        <div class="acciones-modal">
+          <button class="btn-primario" type="button" (click)="guardarCambiosServicio()">Guardar</button>
+          <button class="btn-secundario" type="button" (click)="abrirModalOpciones(servicioEnModal)">
+            Gestionar variantes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de opciones/variantes -->
+  <div class="modal" *ngIf="opcionesEnModal">
+    <div class="modal-contenido opciones">
+      <header>
+        <h3>Opciones para {{ opcionesEnModal.nombrePublico }}</h3>
+        <button class="cerrar" type="button" (click)="cerrarModalOpciones()">×</button>
+      </header>
+
+      <div class="opcion-formulario ampliado">
+        <input
+          type="text"
+          placeholder="Nombre de la opción"
+          [(ngModel)]="nuevaOpcion[opcionesEnModal.idProveedorServicio].nombreOpcion"
+          name="nombreOpcion-{{ opcionesEnModal.idProveedorServicio }}"
+        />
+        <input
+          type="text"
+          placeholder="Descripción"
+          [(ngModel)]="nuevaOpcion[opcionesEnModal.idProveedorServicio].descripcion"
+          name="descripcion-{{ opcionesEnModal.idProveedorServicio }}"
+        />
+        <input
+          type="number"
+          step="0.01"
+          placeholder="Precio"
+          [(ngModel)]="nuevaOpcion[opcionesEnModal.idProveedorServicio].precio"
+          name="precio-{{ opcionesEnModal.idProveedorServicio }}"
+        />
+        <input
+          type="number"
+          placeholder="Duración (min)"
+          [(ngModel)]="nuevaOpcion[opcionesEnModal.idProveedorServicio].duracionMinutos"
+          name="duracion-{{ opcionesEnModal.idProveedorServicio }}"
+        />
+        <input
+          type="number"
+          placeholder="Stock"
+          [(ngModel)]="nuevaOpcion[opcionesEnModal.idProveedorServicio].stock"
+          name="stock-{{ opcionesEnModal.idProveedorServicio }}"
+        />
+        <input
+          type="file"
+          accept="image/*"
+          (change)="seleccionarArchivo($event, 'opciones', { tipo: 'opcion-nueva', id: opcionesEnModal.idProveedorServicio })"
+        />
+        <div class="opcion-preview" *ngIf="nuevaOpcion[opcionesEnModal.idProveedorServicio]?.urlFoto">
+          <img [src]="obtenerVistaOpcion(nuevaOpcion[opcionesEnModal.idProveedorServicio].urlFoto)" alt="Vista previa" />
+          <small>{{ nuevaOpcion[opcionesEnModal.idProveedorServicio].urlFoto }}</small>
+        </div>
+        <button class="btn-primario" type="button" (click)="agregarOpcion(opcionesEnModal)">Agregar opción</button>
+      </div>
+
+      <div class="lista-opciones" *ngIf="opcionesPorServicio[opcionesEnModal.idProveedorServicio]?.length">
+        <div class="opcion" *ngFor="let op of opcionesPorServicio[opcionesEnModal.idProveedorServicio]">
+          <div class="opcion-media">
+            <img [src]="obtenerVistaOpcion(edicionOpcion[op.idOpcion]?.urlFoto || op.urlFoto)" alt="Imagen de opción" />
+            <small>{{ edicionOpcion[op.idOpcion]?.urlFoto || op.urlFoto || 'Sin imagen subida' }}</small>
+          </div>
+          <div class="opcion-info">
+            <div class="opcion-header">
+              <p class="nombre">{{ op.nombreOpcion }}</p>
+              <span class="badge" [ngClass]="op.estado === 'ACTIVO' ? 'badge-exito' : 'badge-error'">
+                {{ op.estado }}
+              </span>
+            </div>
+            <p class="descripcion" *ngIf="op.descripcion">{{ op.descripcion }}</p>
+            <div class="opcion-datos">
+              <span>Precio: S/ {{ op.precio }}</span>
+              <span *ngIf="op.duracionMinutos">Duración: {{ op.duracionMinutos }} min</span>
+              <span *ngIf="op.stock">Stock: {{ op.stock }}</span>
+            </div>
+            <div class="formulario opcion-edicion">
+              <label>Nombre<input type="text" [(ngModel)]="edicionOpcion[op.idOpcion].nombreOpcion" name="edit-nombre-op-{{ op.idOpcion }}" /></label>
+              <label>Descripción<input type="text" [(ngModel)]="edicionOpcion[op.idOpcion].descripcion" name="edit-descripcion-op-{{ op.idOpcion }}" /></label>
+              <label>Precio<input type="number" step="0.01" [(ngModel)]="edicionOpcion[op.idOpcion].precio" name="edit-precio-op-{{ op.idOpcion }}" /></label>
+              <label>Duración (min)<input type="number" [(ngModel)]="edicionOpcion[op.idOpcion].duracionMinutos" name="edit-duracion-op-{{ op.idOpcion }}" /></label>
+              <label>Stock<input type="number" [(ngModel)]="edicionOpcion[op.idOpcion].stock" name="edit-stock-op-{{ op.idOpcion }}" /></label>
+              <label class="archivo-opcion">
+                Nueva imagen
+                <input
+                  type="file"
+                  accept="image/*"
+                  (change)="seleccionarArchivo($event, 'opciones', { tipo: 'opcion-edicion', id: op.idOpcion })"
+                />
+              </label>
+              <div class="opcion-botones">
+                <button
+                  class="btn-secundario"
+                  type="button"
+                  (click)="cambiarEstadoOpcion(op, op.estado === 'ACTIVO' ? 'NO_DISPONIBLE' : 'ACTIVO')"
+                >
+                  {{ op.estado === 'ACTIVO' ? 'Marcar no disponible' : 'Activar' }}
+                </button>
+                <button class="btn-primario" type="button" (click)="actualizarOpcion(op)">Actualizar</button>
+                <button class="btn-secundario" type="button" (click)="eliminarOpcion(op)">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p *ngIf="!opcionesPorServicio[opcionesEnModal.idProveedorServicio]?.length" class="texto-suave">
+        Aún no agregas opciones para esta oferta.
+      </p>
     </div>
   </div>
 </section>

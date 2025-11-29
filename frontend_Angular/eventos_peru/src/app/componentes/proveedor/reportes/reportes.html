@@ -1,0 +1,85 @@
+<section class="reportes-proveedor">
+  <header class="encabezado">
+    <div>
+      <p class="etiqueta">Reportes</p>
+      <h2>Descarga tus informes</h2>
+      <p class="texto-suave">Servicios, variantes, reservas y montos en PDFs organizados por sección.</p>
+    </div>
+    <button class="btn" type="button" (click)="recargar()" [disabled]="cargando">
+      <i class="bi bi-arrow-repeat"></i>
+      {{ cargando ? 'Actualizando...' : 'Actualizar datos' }}
+    </button>
+  </header>
+
+  <div class="alerta" *ngIf="mensaje">{{ mensaje }}</div>
+
+  <div class="resumenes">
+    <div class="resumen">
+      <p class="titulo">Servicios publicados</p>
+      <h3>{{ servicios.length }}</h3>
+      <p class="detalle">Incluye {{ totalVariantes() }} variantes configuradas.</p>
+    </div>
+    <div class="resumen">
+      <p class="titulo">Reservas</p>
+      <h3>{{ reservas.length }}</h3>
+      <p class="detalle">Total acumulado estimado: S/ {{ totalMonto.toFixed(2) }}</p>
+    </div>
+  </div>
+
+  <div class="acciones">
+    <button class="btn btn-primario" type="button" (click)="descargarTodo()" [disabled]="cargando">
+      <i class="bi bi-file-earmark-pdf"></i>
+      Descargar todo en PDF
+    </button>
+    <button class="btn" type="button" (click)="descargarServicios()" [disabled]="cargando">
+      <i class="bi bi-list-check"></i>
+      Servicios y variantes
+    </button>
+    <button class="btn btn-secundario" type="button" (click)="descargarReservas()" [disabled]="cargando">
+      <i class="bi bi-receipt"></i>
+      Reservas y montos
+    </button>
+  </div>
+
+  <div class="secciones">
+    <div class="seccion">
+      <div class="cabecera">
+        <h4>Servicios y variantes</h4>
+        <span class="badge">Vista previa</span>
+      </div>
+      <ul>
+        <li *ngFor="let s of servicios | slice:0:3">
+          <div>
+            <strong>{{ s.nombrePublico }}</strong>
+            <small>({{ s.catalogoServicio.nombre }})</small>
+            <p class="texto-suave">
+              {{ (opcionesPorServicio[s.idProveedorServicio] || []).length || 0 }} variantes registradas
+            </p>
+          </div>
+          <span class="estado" [class.activo]="s.estado === 'ACTIVO'">{{ s.estado }}</span>
+        </li>
+        <li class="texto-suave" *ngIf="servicios.length > 3">y {{ servicios.length - 3 }} servicios más...</li>
+        <li class="texto-suave" *ngIf="!servicios.length">Sin servicios cargados.</li>
+      </ul>
+    </div>
+
+    <div class="seccion">
+      <div class="cabecera">
+        <h4>Reservas y pagos</h4>
+        <span class="badge">Vista previa</span>
+      </div>
+      <ul>
+        <li *ngFor="let r of reservas | slice:0:3">
+          <div>
+            <strong>Reserva {{ r.idReserva }}</strong>
+            <small>{{ r.fechaEvento | date }}</small>
+            <p class="texto-suave">{{ (detallesPorReserva[r.idReserva] || []).length }} variantes asociadas</p>
+          </div>
+          <span class="estado" [class.activo]="r.estado === 'CONFIRMADA'">{{ r.estado }}</span>
+        </li>
+        <li class="texto-suave" *ngIf="reservas.length > 3">y {{ reservas.length - 3 }} reservas más...</li>
+        <li class="texto-suave" *ngIf="!reservas.length">Sin reservas registradas.</li>
+      </ul>
+    </div>
+  </div>
+</section>

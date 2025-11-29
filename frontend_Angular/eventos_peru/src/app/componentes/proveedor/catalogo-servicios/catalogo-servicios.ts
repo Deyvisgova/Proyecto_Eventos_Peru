@@ -19,7 +19,7 @@ import {
 import { EventoService } from '../../../servicios/evento.service';
 import { Evento } from '../../../modelos/evento';
 
-type CarpetaDestino = 'servicios' | 'opciones';
+type CarpetaDestino = 'opciones';
 
 @Component({
   selector: 'app-catalogo-servicios',
@@ -37,6 +37,11 @@ export class CatalogoServicios implements OnInit {
   edicionOpcion: Record<number, ServicioOpcionRequest> = {};
   propuestasEdicion: Record<number, NuevoCatalogoServicioRequest> = {};
 
+  servicioEnModal: ProveedorServicio | null = null;
+  opcionesEnModal: ProveedorServicio | null = null;
+
+  mostrarReportes = false;
+
   eventos: Evento[] = [];
   eventosSeleccionadosPropuesta = new Set<number>();
 
@@ -46,7 +51,6 @@ export class CatalogoServicios implements OnInit {
     idCatalogo: 0,
     nombrePublico: '',
     descripcionGeneral: '',
-    urlFoto: '',
   };
 
   nuevaOpcion: Record<number, ServicioOpcionRequest> = {};
@@ -171,40 +175,25 @@ export class CatalogoServicios implements OnInit {
   async seleccionarArchivo(
     evento: Event,
     carpeta: CarpetaDestino,
-    contexto:
-      | { tipo: 'oferta-nueva' }
-      | { tipo: 'oferta-edicion'; id: number }
-      | { tipo: 'opcion-nueva'; id: number }
-      | { tipo: 'opcion-edicion'; id: number }
+    contexto: { tipo: 'opcion-nueva'; id: number } | { tipo: 'opcion-edicion'; id: number }
   ): Promise<void> {
     const input = evento.target as HTMLInputElement;
     const archivo = input.files?.[0];
     if (!archivo) return;
 
-    const ruta = await this.guardarEnAssets(archivo, carpeta);
-    const clavePreview = `${carpeta}-${archivo.name}`;
-    if (this.previsualizaciones[clavePreview]) {
-      URL.revokeObjectURL(this.previsualizaciones[clavePreview]);
-    }
-    this.previsualizaciones[clavePreview] = URL.createObjectURL(archivo);
+    const { ruta, dataUrl } = await this.guardarEnAssets(archivo, carpeta);
+    const clavePreview = ruta;
+    this.previsualizaciones[clavePreview] = dataUrl;
 
     switch (contexto.tipo) {
-      case 'oferta-nueva':
-        this.nuevaOferta.urlFoto = ruta;
-        break;
-      case 'oferta-edicion':
-        if (this.edicionOferta[contexto.id]) {
-          this.edicionOferta[contexto.id].urlFoto = ruta;
-        }
-        break;
       case 'opcion-nueva':
         if (this.nuevaOpcion[contexto.id]) {
-          this.nuevaOpcion[contexto.id].urlFoto = ruta;
+          this.nuevaOpcion[contexto.id].urlFoto = dataUrl;
         }
         break;
       case 'opcion-edicion':
         if (this.edicionOpcion[contexto.id]) {
-          this.edicionOpcion[contexto.id].urlFoto = ruta;
+          this.edicionOpcion[contexto.id].urlFoto = dataUrl;
         }
         break;
     }
@@ -213,30 +202,13 @@ export class CatalogoServicios implements OnInit {
     input.value = '';
   }
 
-  private async guardarEnAssets(archivo: File, carpeta: CarpetaDestino): Promise<string> {
+  private async guardarEnAssets(
+    archivo: File,
+    carpeta: CarpetaDestino
+  ): Promise<{ ruta: string; dataUrl: string }> {
     const nombreLimpio = archivo.name.replace(/\s+/g, '_');
     const rutaRelativa = `assets/${carpeta}/${nombreLimpio}`;
-
-    if (typeof (window as any).showDirectoryPicker === 'function') {
-      try {
-        const directorio = await (window as any).showDirectoryPicker();
-        const subcarpeta = await directorio.getDirectoryHandle(carpeta, { create: true });
-        const archivoHandle = await subcarpeta.getFileHandle(nombreLimpio, { create: true });
-        const writable = await archivoHandle.createWritable();
-        await writable.write(archivo);
-        await writable.close();
-        return rutaRelativa;
-      } catch (e) {
-        console.warn('No se pudo escribir en assets con File System Access API', e);
-      }
-    }
-
-    await this.guardarEnLocalStorage(rutaRelativa, archivo);
-    return rutaRelativa;
-  }
-
-  private async guardarEnLocalStorage(clave: string, archivo: File): Promise<void> {
-    const contenidoBase64 = await new Promise<string>((resolve, reject) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => reject(reader.error);
@@ -244,10 +216,31 @@ export class CatalogoServicios implements OnInit {
     });
 
     try {
-      localStorage.setItem(clave, contenidoBase64);
+      localStorage.setItem(rutaRelativa, dataUrl);
     } catch (e) {
       console.warn('No se pudo persistir el archivo en localStorage', e);
     }
+
+    return { ruta: rutaRelativa, dataUrl };
+  }
+
+  abrirModalServicio(oferta: ProveedorServicio): void {
+    this.servicioEnModal = oferta;
+    this.prepararEdicionOferta(oferta);
+  }
+
+  cerrarModalServicio(): void {
+    this.servicioEnModal = null;
+  }
+
+  abrirModalOpciones(oferta: ProveedorServicio): void {
+    this.opcionesEnModal = oferta;
+    this.cargarOpciones(oferta);
+    this.prepararFormularioOpcion(oferta.idProveedorServicio);
+  }
+
+  cerrarModalOpciones(): void {
+    this.opcionesEnModal = null;
   }
 
   cargarOfertas(): void {
@@ -289,7 +282,6 @@ export class CatalogoServicios implements OnInit {
           idCatalogo: this.nuevaOferta.idCatalogo,
           nombrePublico: '',
           descripcionGeneral: '',
-          urlFoto: '',
         };
         this.cargarOfertas();
       },
@@ -312,6 +304,13 @@ export class CatalogoServicios implements OnInit {
       },
       error: () => (this.error = 'No se pudo actualizar el servicio.'),
     });
+  }
+
+  guardarCambiosServicio(): void {
+    if (this.servicioEnModal) {
+      this.actualizarOferta(this.servicioEnModal);
+      this.cerrarModalServicio();
+    }
   }
 
   eliminarOferta(oferta: ProveedorServicio): void {
@@ -424,9 +423,9 @@ export class CatalogoServicios implements OnInit {
     });
   }
 
-  proponerTipo(): void {
+  proponerServicio(): void {
     if (!this.nuevoTipoProveedor.nombre.trim()) {
-      this.error = 'Indica el nombre del nuevo tipo.';
+      this.error = 'Indica el nombre del nuevo servicio.';
       return;
     }
     if (!this.idProveedor) {
@@ -445,15 +444,19 @@ export class CatalogoServicios implements OnInit {
     };
     this.catalogoServicio.crearComoProveedor(payload).subscribe({
       next: () => {
-        this.mensaje = 'Tipo propuesto. El admin verá la solicitud en la cola de revisión.';
+        this.mensaje = 'Servicio propuesto. El admin verá la solicitud en la cola de revisión.';
         this.nuevoTipoProveedor = { nombre: '', descripcion: '' };
         this.eventosSeleccionadosPropuesta.clear();
         this.cargarPropuestas();
       },
       error: () => {
-        this.error = 'No se pudo enviar la propuesta de tipo.';
+        this.error = 'No se pudo enviar la propuesta de servicio.';
       },
     });
+  }
+
+  proponerTipo(): void {
+    this.proponerServicio();
   }
 
   cargarPropuestas(): void {
@@ -512,7 +515,6 @@ export class CatalogoServicios implements OnInit {
       idCatalogo: oferta.catalogoServicio.idCatalogo,
       nombrePublico: oferta.nombrePublico,
       descripcionGeneral: oferta.descripcionGeneral,
-      urlFoto: oferta.urlFoto ?? '',
     };
   }
 
@@ -557,5 +559,61 @@ export class CatalogoServicios implements OnInit {
     return lista
       .filter((ev) => ev.idEvento != null && Number.isFinite(Number(ev.idEvento)))
       .map((ev) => ({ ...ev, idEvento: Number(ev.idEvento) }));
+  }
+
+  generarResumenServicios(): string {
+    const resumenServicios = this.ofertas
+      .map(
+        (s) => `• ${s.nombrePublico} (${s.catalogoServicio.nombre}) - Estado: ${s.estado}`
+      )
+      .join('\n');
+
+    const resumenPropuestas = this.propuestas
+      .map((p) => `• ${p.nombre} (${p.estado})`)
+      .join('\n');
+
+    return `Reporte de servicios del proveedor\n\nServicios publicados (${this.ofertas.length}):\n${
+      resumenServicios || 'sin registros'
+    }\n\nPropuestas enviadas (${this.propuestas.length}):\n${resumenPropuestas || 'sin propuestas'}`;
+  }
+
+  descargarReportePdf(): void {
+    const contenido = this.generarResumenServicios();
+    const blob = new Blob([contenido], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = 'reporte-servicios.pdf';
+    enlace.click();
+    URL.revokeObjectURL(url);
+  }
+
+  enviarReporteCorreo(): void {
+    const contenido = this.generarResumenServicios();
+    window.open(
+      `mailto:?subject=Reporte de servicios&body=${encodeURIComponent(contenido)}`,
+      '_blank'
+    );
+  }
+
+  obtenerVistaOpcion(ruta?: string | null): string {
+    return this.obtenerVistaImagen(ruta);
+  }
+
+  private obtenerVistaImagen(ruta: string | null | undefined): string {
+    if (!ruta) return 'assets/servicios/placeholder-servicio.svg';
+    if (ruta.startsWith('data:image')) {
+      return ruta;
+    }
+    if (this.previsualizaciones[ruta]) {
+      return this.previsualizaciones[ruta];
+    }
+
+    const almacenado = localStorage.getItem(ruta);
+    if (almacenado) {
+      return almacenado;
+    }
+
+    return ruta;
   }
 }
