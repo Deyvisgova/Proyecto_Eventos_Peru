@@ -378,11 +378,16 @@ export class CatalogoServicios implements OnInit {
       this.error = 'Completa el nombre de la opción.';
       return;
     }
-    dto.idProveedorServicio = opcion.proveedorServicio.idProveedorServicio;
+    const servicioId = opcion.proveedorServicio?.idProveedorServicio;
+    if (!servicioId) {
+      this.error = 'No pudimos identificar el servicio de esta opción.';
+      return;
+    }
+    dto.idProveedorServicio = servicioId;
     this.proveedorServicio.actualizarOpcion(opcion.idOpcion, dto).subscribe({
       next: () => {
         this.mensaje = 'Opción actualizada.';
-        this.cargarOpciones({ idProveedorServicio: opcion.proveedorServicio.idProveedorServicio } as ProveedorServicio);
+        this.cargarOpciones({ idProveedorServicio: servicioId } as ProveedorServicio);
       },
       error: () => (this.error = 'No se pudo actualizar la opción.'),
     });
@@ -390,10 +395,14 @@ export class CatalogoServicios implements OnInit {
 
   eliminarOpcion(opcion: ServicioOpcion): void {
     if (!confirm('¿Eliminar esta opción?')) return;
+    const servicioId = opcion.proveedorServicio?.idProveedorServicio;
+    if (!servicioId) {
+      this.error = 'No pudimos identificar el servicio de esta opción.';
+      return;
+    }
     this.proveedorServicio.eliminarOpcion(opcion.idOpcion).subscribe({
       next: () => {
         this.mensaje = 'Opción eliminada.';
-        const servicioId = opcion.proveedorServicio.idProveedorServicio;
         this.cargarOpciones({ idProveedorServicio: servicioId } as ProveedorServicio);
       },
       error: () => (this.error = 'No se pudo eliminar la opción.'),
@@ -401,10 +410,14 @@ export class CatalogoServicios implements OnInit {
   }
 
   cambiarEstadoOpcion(opcion: ServicioOpcion, estado: string): void {
+    const servicioId = opcion.proveedorServicio?.idProveedorServicio;
+    if (!servicioId) {
+      this.error = 'No pudimos identificar el servicio de esta opción.';
+      return;
+    }
     this.proveedorServicio.cambiarEstadoOpcion(opcion.idOpcion, estado as any).subscribe({
       next: () => {
         this.mensaje = 'Estado de la opción actualizado.';
-        const servicioId = opcion.proveedorServicio.idProveedorServicio;
         this.cargarOpciones({ idProveedorServicio: servicioId } as ProveedorServicio);
       },
       error: () => (this.error = 'No se pudo actualizar la opción.'),
@@ -504,6 +517,7 @@ export class CatalogoServicios implements OnInit {
   }
 
   private prepararEdicionOpcion(opcion: ServicioOpcion): void {
+    if (!opcion.proveedorServicio?.idProveedorServicio) return;
     this.edicionOpcion[opcion.idOpcion] = {
       idProveedorServicio: opcion.proveedorServicio.idProveedorServicio,
       nombreOpcion: opcion.nombreOpcion,

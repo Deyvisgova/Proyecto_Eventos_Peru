@@ -26,8 +26,11 @@
         <ul>
           <li *ngFor="let d of detalles[r.idReserva]">
             <div>
-              <strong>{{ d.servicio.nombreServicio }}</strong>
+              <strong>{{ d.opcion?.nombreOpcion || 'Servicio reservado' }}</strong>
               <p class="texto-sutil">Cantidad: {{ d.cantidad }}</p>
+              <p class="texto-sutil" *ngIf="d.opcion?.proveedorServicio?.catalogoServicio?.evento as evento">
+                Evento: {{ evento.nombreEvento }}
+              </p>
             </div>
             <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
           </li>

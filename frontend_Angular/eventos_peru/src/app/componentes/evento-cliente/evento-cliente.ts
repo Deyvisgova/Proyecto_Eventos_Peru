@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
+import Swal from 'sweetalert2';
 import { map } from 'rxjs/operators';
 import {
   ProveedorServicio,
@@ -16,6 +17,7 @@ import { CatalogoEventoServicio } from '../../modelos/catalogo-evento-servicio';
 import { Evento } from '../../modelos/evento';
 import { ReservaService } from '../../servicios/reserva.service';
 import { Reserva } from '../../modelos/reserva';
+import { DetalleReservaService } from '../../servicios/detalle-reserva.service';
 
 @Component({
   selector: 'app-evento-cliente',
@@ -31,6 +33,7 @@ export class EventoCliente implements OnInit {
   private eventoSrv = inject(EventoService);
   private catalogoSrv = inject(CatalogoServicioService);
   private reservaSrv = inject(ReservaService);
+  private detalleSrv = inject(DetalleReservaService);
 
   nombre = '';
   clienteId: number | null = null;
@@ -84,7 +87,13 @@ export class EventoCliente implements OnInit {
       return;
     }
     this.nombre = usuario.nombre ?? '';
-    this.clienteId = usuario.idUsuario ?? usuario.id_usuario ?? null;
+    const candidatoId =
+      usuario.idUsuario ??
+      usuario.id_usuario ??
+      usuario.id_cliente ??
+      usuario.idcliente ??
+      usuario.id;
+    this.clienteId = Number.isFinite(Number(candidatoId)) ? Number(candidatoId) : null;
 
     // 🧠 Recuperar tipo de evento desde la URL
     this.tipoEvento = this.normalizarEvento(this.route.snapshot.paramMap.get('tipo') ?? '');
@@ -368,9 +377,21 @@ export class EventoCliente implements OnInit {
     this.fechaEvento = '';
   }
 
+  private obtenerIdReserva(reserva: Reserva | any): number | null {
+    const candidato =
+      reserva?.idReserva ?? reserva?.id_reserva ?? reserva?.id ?? reserva?.idReserva;
+    return Number.isFinite(Number(candidato)) ? Number(candidato) : null;
+  }
+
   agendarEvento() {
     if (!this.proveedorSeleccionado || !this.fechaEvento || !this.clienteId) {
       this.mensajeAgendar = 'Selecciona una fecha válida y asegúrate de haber iniciado sesión.';
+      return;
+    }
+
+    const idEvento = this.obtenerIdsEventosSeleccionados()[0];
+    if (!idEvento) {
+      this.mensajeAgendar = 'Elige el tipo de evento para poder registrar la reserva.';
       return;
     }
 
@@ -381,26 +402,88 @@ export class EventoCliente implements OnInit {
 
     this.agendando = true;
     this.mensajeAgendar = '';
+    const opcionesElegidas = [...this.opcionesSeleccionadas];
+
+    const idProveedor =
+      this.proveedorSeleccionado.proveedor.idProveedor ??
+      (this.proveedorSeleccionado.proveedor as any).id_proveedor ??
+      (this.proveedorSeleccionado.proveedor as any).id;
+
+    const fechaISO = new Date(this.fechaEvento).toISOString().slice(0, 10);
 
     const payload: Partial<Reserva> = {
       cliente: { idUsuario: this.clienteId } as any,
-      proveedor: { idProveedor: this.proveedorSeleccionado.proveedor.idProveedor } as any,
-      fechaEvento: this.fechaEvento,
+      proveedor: { idProveedor: Number(idProveedor) } as any,
+      evento: { idEvento },
+      fechaEvento: fechaISO,
       estado: 'PENDIENTE' as Reserva['estado'],
     };
 
     this.reservaSrv.crear(payload).subscribe({
       next: (resp) => {
-        this.mensajeAgendar = '¡Listo! Tu solicitud fue registrada y el proveedor la revisará pronto.';
-        this.reservasProveedor = [...this.reservasProveedor, resp];
-        this.generarCalendario();
+        const idReserva = this.obtenerIdReserva(resp);
+        if (!idReserva) {
+          this.mensajeAgendar =
+            'La reserva se registró, pero no pudimos identificarla para guardar el detalle.';
+          this.agendando = false;
+          return;
+        }
+
+        const detalles = this.prepararDetalles(idReserva, opcionesElegidas);
+        if (!detalles.length) {
+          this.finalizarAgendamiento(resp);
+          return;
+        }
+
+        forkJoin(detalles.map((d) => this.detalleSrv.crear(d))).subscribe({
+          next: () => {},
+          error: (err) => {
+            const mensajeDetalle = err?.error?.message || err?.message;
+            this.mensajeAgendar =
+              mensajeDetalle && typeof mensajeDetalle === 'string'
+                ? mensajeDetalle
+                : 'La reserva se creó pero no pudimos guardar el detalle. Inténtalo de nuevo.';
+            this.agendando = false;
+          },
+          complete: () => this.finalizarAgendamiento(resp),
+        });
       },
-      error: () => {
-        this.mensajeAgendar = 'No pudimos agendar el evento. Inténtalo de nuevo más tarde.';
-      },
-      complete: () => {
+      error: (err) => {
+        const mensajeBackend = err?.error?.message || err?.message;
+        this.mensajeAgendar =
+          mensajeBackend && typeof mensajeBackend === 'string'
+            ? mensajeBackend
+            : 'No pudimos agendar el evento. Inténtalo de nuevo más tarde.';
         this.agendando = false;
       },
+    });
+  }
+
+  private prepararDetalles(idReserva: number, seleccionadas: ServicioOpcion[]) {
+    return seleccionadas.map((op) => ({
+      reserva: { idReserva } as any,
+      opcion: { idOpcion: op.idOpcion ?? (op as any).id_opcion } as any,
+      cantidad: 1,
+      precioUnitario: op.precio ?? 0,
+    }));
+  }
+
+  private finalizarAgendamiento(reserva: Reserva) {
+    this.mensajeAgendar = '¡Listo! Tu solicitud fue registrada y el proveedor la revisará pronto.';
+    this.reservasProveedor = [...this.reservasProveedor, reserva];
+    this.generarCalendario();
+    this.agendando = false;
+
+    Swal.fire({
+      icon: 'success',
+      title: '¡Bienvenido a tu evento soñado!',
+      html: `
+        <p>Tu reserva para el <strong>${new Date(this.fechaEvento).toLocaleDateString()}</strong> fue registrada.</p>
+        <p>Pronto el proveedor la confirmará. ¡Gracias por confiar en nosotros!</p>
+      `,
+      confirmButtonText: 'Listo',
+      confirmButtonColor: '#6f42c1',
+      backdrop: true,
     });
   }
 
