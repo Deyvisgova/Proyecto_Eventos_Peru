@@ -58,6 +58,14 @@ public class DetalleReservaControlador {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La opción de servicio no existe"));
         detalle.setOpcion(opcion);
 
+        if (detalle.getServicio() == null) {
+            detalle.setServicio(opcion.getProveedorServicio());
+        }
+
+        if (detalle.getServicio() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe indicar el servicio seleccionado");
+        }
+
         // Normalizar cantidad y precio para evitar errores de integridad
         if (detalle.getCantidad() == null || detalle.getCantidad() <= 0) {
             detalle.setCantidad(1);
@@ -125,7 +133,16 @@ public class DetalleReservaControlador {
 
                     if (datosActualizados.getOpcion() != null && datosActualizados.getOpcion().getIdOpcion() != null) {
                         opcionRepositorio.findById(datosActualizados.getOpcion().getIdOpcion())
-                                .ifPresent(detalle::setOpcion);
+                                .ifPresent(op -> {
+                                    detalle.setOpcion(op);
+                                    if (op.getProveedorServicio() != null) {
+                                        detalle.setServicio(op.getProveedorServicio());
+                                    }
+                                });
+                    }
+
+                    if (datosActualizados.getServicio() != null && datosActualizados.getServicio().getIdProveedorServicio() != null) {
+                        detalle.setServicio(datosActualizados.getServicio());
                     }
                     return detalleReservaRepositorio.save(detalle);
                 })

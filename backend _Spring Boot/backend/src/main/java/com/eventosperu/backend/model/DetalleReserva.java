@@ -3,6 +3,7 @@ package com.eventosperu.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.eventosperu.backend.model.ServicioOpcion;
+import com.eventosperu.backend.model.ProveedorServicio;
 
 import java.math.BigDecimal;
 
@@ -22,6 +23,10 @@ public class DetalleReserva {
     @ManyToOne
     @JoinColumn(name = "id_opcion", nullable = false)
     private ServicioOpcion opcion;
+
+    @ManyToOne
+    @JoinColumn(name = "id_servicio", nullable = false)
+    private ProveedorServicio servicio;
 
     @Column(nullable = false)
     private Integer cantidad = 1;

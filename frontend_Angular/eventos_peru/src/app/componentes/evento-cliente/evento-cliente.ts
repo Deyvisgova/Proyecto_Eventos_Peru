@@ -72,6 +72,7 @@ export class EventoCliente implements OnInit {
   seleccion: Record<number, boolean> = {};
   fechaEvento = '';
   horaEvento = '12:00';
+  carritoCantidad = 0;
   agendando = false;
   mensajeAgendar = '';
 
@@ -380,6 +381,10 @@ export class EventoCliente implements OnInit {
     this.horaEvento = '12:00';
   }
 
+  irACarrito() {
+    this.router.navigate(['/cliente/reservas']);
+  }
+
   private obtenerIdReserva(reserva: Reserva | any): number | null {
     const candidato =
       reserva?.idReserva ?? reserva?.id_reserva ?? reserva?.id ?? reserva?.idReserva;
@@ -411,6 +416,7 @@ export class EventoCliente implements OnInit {
     this.agendando = true;
     this.mensajeAgendar = '';
     const opcionesElegidas = [...this.opcionesSeleccionadas];
+    const cantidadAgregada = opcionesElegidas.length;
 
     const idProveedor =
       this.proveedorSeleccionado.proveedor.idProveedor ??
@@ -440,7 +446,7 @@ export class EventoCliente implements OnInit {
 
         const detalles = this.prepararDetalles(idReserva, opcionesElegidas);
         if (!detalles.length) {
-          this.finalizarAgendamiento(resp);
+          this.finalizarAgendamiento(resp, cantidadAgregada);
           return;
         }
 
@@ -454,7 +460,7 @@ export class EventoCliente implements OnInit {
                 : 'La reserva se creó pero no pudimos guardar el detalle. Inténtalo de nuevo.';
             this.agendando = false;
           },
-          complete: () => this.finalizarAgendamiento(resp),
+          complete: () => this.finalizarAgendamiento(resp, cantidadAgregada),
         });
       },
       error: (err) => {
@@ -477,11 +483,13 @@ export class EventoCliente implements OnInit {
     }));
   }
 
-  private finalizarAgendamiento(reserva: Reserva) {
+  private finalizarAgendamiento(reserva: Reserva, cantidadAgregada = 0) {
     this.mensajeAgendar = '¡Listo! Tu solicitud fue registrada y el proveedor la revisará pronto.';
     this.reservasProveedor = [...this.reservasProveedor, reserva];
     this.generarCalendario();
     this.agendando = false;
+    this.carritoCantidad += cantidadAgregada;
+    this.cerrarModal();
 
     Swal.fire({
       icon: 'success',

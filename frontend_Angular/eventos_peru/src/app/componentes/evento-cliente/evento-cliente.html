@@ -5,13 +5,13 @@
       <h3>Hola, {{ nombre }}</h3>
       <p class="texto-sutil">Elige los servicios ideales para tu {{ tipoEventoLabel || 'evento' }}</p>
     </div>
-    <div class="carrito-info">
+    <div class="carrito-info" role="button" tabindex="0" (click)="irACarrito()">
       <div class="carrito-icono">
         <i class="bi bi-cart3"></i>
       </div>
       <div>
         <p class="texto-sutil">Servicios seleccionados</p>
-        <strong class="carrito-contador">{{ opcionesSeleccionadas.length }}</strong>
+        <strong class="carrito-contador">{{ carritoCantidad }}</strong>
       </div>
     </div>
   </header>
