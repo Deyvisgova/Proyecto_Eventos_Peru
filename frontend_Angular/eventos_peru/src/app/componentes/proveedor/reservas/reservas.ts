@@ -133,10 +133,12 @@ export class ReservasProveedor implements OnInit {
         ?.opcion?.proveedorServicio?.catalogoServicio?.evento?.nombreEvento ||
       'Evento reservado';
 
+    const fechaLegible = this.formatearFechaLegible(reserva.fechaEvento);
+
     return `Hola ${reserva.cliente?.nombre || 'cliente'},
 
 ¡Tu reserva fue confirmada! Estos son los datos principales:
-• Fecha: ${new Date(reserva.fechaEvento).toLocaleDateString()}
+• Fecha: ${fechaLegible}
 • Evento: ${nombreEvento}
 • Estado: ${reserva.estado}
 • Servicios:
@@ -146,6 +148,35 @@ ${servicios}
     } / ${reserva.proveedor?.usuario?.celular || 'sin teléfono'}
 
 Gracias por confiar en nosotros.`;
+  }
+
+  private formatearFechaLegible(fecha: string | Date | undefined | null) {
+    if (!fecha) return 'Fecha no disponible';
+
+    if (fecha instanceof Date) {
+      const fechaLocal = new Date(fecha);
+      fechaLocal.setHours(0, 0, 0, 0);
+      return fechaLocal.toLocaleDateString(undefined, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+
+    const valor = `${fecha}`;
+    const soloFecha = valor.includes('T') ? valor.split('T')[0] : valor;
+    const [anio, mes, dia] = soloFecha.split('-').map(Number);
+
+    const fechaLocal = new Date(anio || 0, (mes || 1) - 1, dia || 1);
+    fechaLocal.setHours(0, 0, 0, 0);
+
+    return fechaLocal.toLocaleDateString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   }
 
   ejecutarAccion() {

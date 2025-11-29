@@ -74,6 +74,7 @@ export class EventoCliente implements OnInit {
   horaEvento = '12:00';
   agendando = false;
   mensajeAgendar = '';
+  numeroReservaActual: number | null = null;
 
   ngOnInit() {
     // 🧠 Recuperar nombre y validar sesión
@@ -114,6 +115,29 @@ export class EventoCliente implements OnInit {
     const inicio = this.obtenerInicioDia(fecha);
     inicio.setDate(1);
     return inicio;
+  }
+
+  private construirFechaLocal(fecha: string, hora: string) {
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    const [horas, minutos] = hora.split(':').map(Number);
+    return new Date(anio || 0, (mes || 1) - 1, dia || 1, horas || 0, minutos || 0);
+  }
+
+  private formatearFechaISO(fecha: string, hora: string) {
+    const fechaLocal = this.construirFechaLocal(fecha, hora);
+    return `${fechaLocal.getFullYear()}-${String(fechaLocal.getMonth() + 1).padStart(2, '0')}-${String(
+      fechaLocal.getDate()
+    ).padStart(2, '0')}`;
+  }
+
+  private formatearFechaLegible(fecha: string) {
+    const fechaLocal = this.construirFechaLocal(fecha, '00:00');
+    return fechaLocal.toLocaleDateString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   }
 
   logoProveedor(p: ProveedorServicio) {
@@ -417,8 +441,7 @@ export class EventoCliente implements OnInit {
       (this.proveedorSeleccionado.proveedor as any).id_proveedor ??
       (this.proveedorSeleccionado.proveedor as any).id;
 
-    const fechaConHora = `${this.fechaEvento}T${this.horaEvento}`;
-    const fechaISO = new Date(fechaConHora).toISOString().slice(0, 10);
+    const fechaISO = this.formatearFechaISO(this.fechaEvento, this.horaEvento);
 
     const payload: Partial<Reserva> = {
       cliente: { idUsuario: this.clienteId } as any,
@@ -437,6 +460,8 @@ export class EventoCliente implements OnInit {
           this.agendando = false;
           return;
         }
+
+        this.numeroReservaActual = idReserva;
 
         const detalles = this.prepararDetalles(idReserva, opcionesElegidas);
         if (!detalles.length) {
@@ -483,11 +508,13 @@ export class EventoCliente implements OnInit {
     this.generarCalendario();
     this.agendando = false;
 
+    const fechaLegible = this.formatearFechaLegible(this.fechaEvento);
+
     Swal.fire({
       icon: 'success',
       title: '¡Bienvenido a tu evento soñado!',
       html: `
-        <p>Tu reserva para el <strong>${new Date(this.fechaEvento).toLocaleDateString()}</strong> fue registrada.</p>
+        <p>Tu reserva para el <strong>${fechaLegible}</strong> fue registrada.</p>
         <p>Pronto el proveedor la confirmará. ¡Gracias por confiar en nosotros!</p>
       `,
       confirmButtonText: 'Listo',
