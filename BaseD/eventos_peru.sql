@@ -21,6 +21,9 @@ SET time_zone = "+00:00";
 -- Base de datos: `eventos_peru`
 --
 
+-- Eliminar tabla obsoleta de servicios si aún existe
+DROP TABLE IF EXISTS `servicios`;
+
 -- --------------------------------------------------------
 
 --
