@@ -1,11 +1,13 @@
 <!-- Navbar solo para el layout público -->
 <app-navbar *ngIf="mostrarLayoutPublico"></app-navbar>
 
-<!-- Mostrar el slider solo en la página principal -->
-<app-slider *ngIf="mostrarLayoutPublico && rutaActual === ''"></app-slider>
+<main class="main-content">
+  <!-- Mostrar el slider solo en la página principal -->
+  <app-slider *ngIf="mostrarLayoutPublico && rutaActual === ''"></app-slider>
 
-<!-- Aquí se mostrarán las vistas dinámicas (login, registro, etc.) -->
-<router-outlet></router-outlet>
+  <!-- Aquí se mostrarán las vistas dinámicas (login, registro, etc.) -->
+  <router-outlet></router-outlet>
+</main>
 
 <!-- Footer solo para el layout público -->
 <app-pie-pagina *ngIf="mostrarLayoutPublico"></app-pie-pagina>

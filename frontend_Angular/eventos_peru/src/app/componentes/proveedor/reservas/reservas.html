@@ -20,41 +20,100 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let r of reservas">
-        <td>{{ r.fechaEvento | date }}</td>
-        <td>{{ r.cliente?.nombre }}</td>
-        <td><span [class]="estadoClase(r.estado)">{{ r.estado }}</span></td>
-        <td class="acciones">
-          <button class="btn-icono" (click)="verDetalle(r)" title="Ver detalle">
-            <i class="bi bi-eye"></i>
-          </button>
-          <button class="btn-accion" (click)="confirmar(r)" [disabled]="r.estado !== 'PENDIENTE'">Confirmar</button>
-          <button class="btn-accion rechazo" (click)="rechazar(r)" [disabled]="r.estado === 'CANCELADA'">Rechazar</button>
-        </td>
-      </tr>
+      <ng-container *ngFor="let r of reservas">
+        <tr>
+          <td>{{ r.fechaEvento | date }}</td>
+          <td>{{ r.cliente?.nombre }}</td>
+          <td><span [class]="estadoClase(r.estado)">{{ r.estado }}</span></td>
+          <td class="acciones">
+            <button class="btn-icono" (click)="verDetalle(r)" title="Ver detalle">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn-accion" (click)="abrirModal(r, 'confirmar')" [disabled]="r.estado !== 'PENDIENTE'">
+              Confirmar
+            </button>
+            <button class="btn-accion rechazo" (click)="abrirModal(r, 'cancelar')" [disabled]="r.estado === 'CANCELADA'">
+              Cancelar
+            </button>
+          </td>
+        </tr>
+        <tr class="detalle-row" *ngIf="detalleAbierto === r.idReserva">
+          <td colspan="4">
+            <div class="acordeon">
+              <div class="info-grid">
+                <div>
+                  <p class="label">Cliente</p>
+                  <p class="valor">{{ r.cliente?.nombre || 'Sin nombre' }}</p>
+                </div>
+                <div>
+                  <p class="label">Celular</p>
+                  <p class="valor">{{ r.cliente?.celular || 'Sin teléfono' }}</p>
+                </div>
+                <div>
+                  <p class="label">Fecha del evento</p>
+                  <p class="valor">{{ r.fechaEvento | date: 'fullDate' }}</p>
+                </div>
+                <div>
+                  <p class="label">Estado</p>
+                  <span [class]="estadoClase(r.estado)">{{ r.estado }}</span>
+                </div>
+              </div>
+
+              <div class="detalles-acordeon" *ngIf="detalles[r.idReserva]?.length; else sinDetalles">
+                <h5>Servicios y opciones solicitadas</h5>
+                <ul>
+                  <li *ngFor="let d of detalles[r.idReserva]">
+                    <div>
+                      <strong>{{ d.opcion?.nombreOpcion || 'Servicio reservado' }}</strong>
+                      <p class="texto-suave" *ngIf="d.opcion?.proveedorServicio?.catalogoServicio?.evento as evento; else eventoPendiente">
+                        Evento: {{ evento.nombreEvento }}
+                      </p>
+                      <ng-template #eventoPendiente>
+                        <p class="texto-suave">Evento: Pendiente</p>
+                      </ng-template>
+                    </div>
+                    <div class="resumen-servicio">
+                      <span>Opción/Servicio</span>
+                      <strong>{{ d.cantidad }} x S/ {{ d.precioUnitario | number: '1.2-2' }}</strong>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <ng-template #sinDetalles>
+                <p class="texto-suave">Aún no hay detalle de servicios registrado para esta reserva.</p>
+              </ng-template>
+            </div>
+          </td>
+        </tr>
+      </ng-container>
     </tbody>
   </table>
 
   <div class="estado" *ngIf="!reservas.length && !cargando">No tienes reservas registradas.</div>
 </div>
 
-<div class="panel-detalle" *ngIf="seleccionada">
-  <div class="panel-header">
+<div class="modal-backdrop" *ngIf="modalVisible" (click)="cerrarModal()"></div>
+<div class="modal accion-modal" *ngIf="modalVisible">
+  <div class="modal-header">
     <div>
-      <p class="texto-suave">Detalle de reserva</p>
-      <h4>{{ seleccionada.cliente?.nombre }}</h4>
-      <p class="texto-suave">Evento: {{ seleccionada.fechaEvento | date }}</p>
+      <p class="texto-suave">{{ modoAccion === 'confirmar' ? 'Confirmar' : 'Cancelar' }} reserva</p>
+      <h4>{{ reservaEnAccion?.cliente?.nombre || 'Reserva seleccionada' }}</h4>
     </div>
-    <span [class]="estadoClase(seleccionada.estado)">{{ seleccionada.estado }}</span>
+    <button class="btn-icono" (click)="cerrarModal()"><i class="bi bi-x"></i></button>
   </div>
 
-  <ul class="detalle-lista" *ngIf="detalles[seleccionada.idReserva]?.length">
-    <li *ngFor="let d of detalles[seleccionada.idReserva]">
-      <div>
-        <strong>{{ d.servicio.nombreServicio }}</strong>
-        <p class="texto-suave">Cantidad: {{ d.cantidad }}</p>
-      </div>
-      <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
-    </li>
-  </ul>
+  <div class="modal-body">
+    <p class="texto-suave">
+      Previsualiza o edita el cuerpo del correo antes de {{ modoAccion === 'confirmar' ? 'confirmar' : 'cancelar' }} la reserva.
+    </p>
+    <label class="label">Cuerpo del correo</label>
+    <textarea [(ngModel)]="cuerpoCorreo" rows="8" placeholder="Escribe aquí el mensaje a enviar..."></textarea>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn-accion rechazo" (click)="cerrarModal()">Cerrar</button>
+    <button class="btn-accion" (click)="ejecutarAccion()">
+      {{ modoAccion === 'confirmar' ? 'Enviar y confirmar' : 'Enviar y cancelar' }}
+    </button>
+  </div>
 </div>
