@@ -53,3 +53,25 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+.btn-secundario {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.bloque-reportes {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.titulo-reportes {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}

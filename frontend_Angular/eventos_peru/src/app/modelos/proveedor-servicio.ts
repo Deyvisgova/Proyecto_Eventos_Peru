@@ -23,7 +23,6 @@ export interface ProveedorServicio {
   catalogoServicio: CatalogoServicio & { evento?: Evento };
   nombrePublico: string;
   descripcionGeneral?: string;
-  urlFoto?: string;
   estado: EstadoProveedorServicio;
 }
 
@@ -49,7 +48,6 @@ export interface ProveedorServicioRequest {
   idCatalogo: number;
   nombrePublico: string;
   descripcionGeneral?: string;
-  urlFoto?: string;
 }
 
 export interface ServicioOpcionRequest {
