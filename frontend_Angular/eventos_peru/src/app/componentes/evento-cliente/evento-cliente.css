@@ -16,6 +16,33 @@
   margin-bottom: 1.5rem;
 }
 
+.carrito-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.carrito-icono {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #c7d2fe, #bfdbfe);
+  color: #1f2937;
+  font-size: 1.25rem;
+}
+
+.carrito-contador {
+  font-size: 1.25rem;
+  display: block;
+}
+
 .texto-sutil {
   color: #6b7280;
   margin: 0;
@@ -413,6 +440,33 @@
   font-size: 0.85rem;
 }
 
+.calendario-con-hora {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.selector-hora {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+.selector-hora input[type='time'] {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-weight: 600;
+  color: #111827;
+}
+
 .calendario {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -489,6 +543,12 @@
   gap: 10px;
   align-items: center;
   margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .calendario-con-hora {
+    grid-template-columns: 1fr;
+  }
 }
 
 .punto {
