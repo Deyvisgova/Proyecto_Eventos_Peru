@@ -57,4 +57,15 @@ export class CatalogoServicioService {
   rechazar(id: number, dto: ModeracionCatalogoRequest): Observable<CatalogoServicio> {
     return this.http.put<CatalogoServicio>(`${this.api}/${id}/rechazar`, dto);
   }
+
+  actualizar(
+    id: number,
+    dto: Partial<Pick<CatalogoServicio, 'nombre' | 'descripcion' | 'estado'>>
+  ): Observable<CatalogoServicio> {
+    return this.http.put<CatalogoServicio>(`${this.api}/${id}`, dto);
+  }
+
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${id}`);
+  }
 }

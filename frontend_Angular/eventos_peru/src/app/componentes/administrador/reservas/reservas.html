@@ -1,10 +1,71 @@
-<div class="card">
-  <div class="titulo-card">
-    <i class="bi bi-info-circle text-primary"></i>
-    Reservas
+<div class="cabecera">
+  <div>
+    <p class="eyebrow">Panel ejecutivo</p>
+    <h2>Reservas de eventos</h2>
+    <p class="texto-suave">
+      Consulta el estado de cada reserva, los actores involucrados y un resumen del detalle.
+    </p>
   </div>
-  <p class="texto-suave">
-    Aquí podrás monitorear el volumen de reservas y su estado general. La gestión detallada se
-    realiza desde los paneles de cliente y proveedor.
-  </p>
+  <button class="btn-refrescar" (click)="cargarReservas()">
+    <i class="bi bi-arrow-repeat"></i>
+    Actualizar
+  </button>
+</div>
+
+<div class="alerta" *ngIf="error">{{ error }}</div>
+<div class="tabla-contenedor" *ngIf="!error">
+  <div class="estado" *ngIf="cargando">Cargando reservas...</div>
+  <table class="tabla-reservas" *ngIf="reservas.length">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Proveedor</th>
+        <th>Fecha evento</th>
+        <th>Estado</th>
+        <th>Servicios</th>
+        <th>Total estimado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let r of reservas">
+        <tr>
+          <td>{{ r.idReserva }}</td>
+          <td>
+            <strong>{{ clienteNombre(r) }}</strong>
+            <div class="texto-suave" *ngIf="r.cliente?.email">{{ r.cliente?.email }}</div>
+          </td>
+          <td>
+            <strong>{{ proveedorNombre(r) }}</strong>
+            <div class="texto-suave" *ngIf="r.proveedor?.usuario?.celular">{{ r.proveedor?.usuario?.celular }}</div>
+          </td>
+          <td>{{ r.fechaEvento | date : 'dd/MM/yyyy' }}</td>
+          <td><span class="pill" [ngClass]="etiquetaEstado(r)">{{ r.estado }}</span></td>
+          <td>{{ totalServicios(r.idReserva) }}</td>
+          <td>S/ {{ totalEstimado(r.idReserva) | number : '1.2-2' }}</td>
+        </tr>
+        <tr class="detalle">
+          <td colspan="7">
+            <div class="detalles" *ngIf="detalles[r.idReserva]?.length; else sinDetalle">
+              <div class="detalle-item" *ngFor="let d of detalles[r.idReserva]">
+                <div>
+                  <p class="titulo-opcion">{{ d.opcion?.nombreOpcion || 'Opción sin nombre' }}</p>
+                  <p class="texto-suave">{{ d.opcion?.descripcion || 'Sin descripción' }}</p>
+                </div>
+                <div class="resumen">
+                  <span>Cant: {{ d.cantidad }}</span>
+                  <span>Precio: S/ {{ d.precioUnitario | number : '1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+            <ng-template #sinDetalle>
+              <p class="texto-suave">No hay detalle registrado para esta reserva.</p>
+            </ng-template>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+
+  <div class="estado" *ngIf="!reservas.length && !cargando">No hay reservas registradas.</div>
 </div>

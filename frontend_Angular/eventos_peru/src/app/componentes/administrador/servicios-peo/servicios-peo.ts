@@ -25,6 +25,12 @@ export class ServiciosPeo implements OnInit {
   nuevoTipo: NuevoCatalogoServicioRequest = { nombre: '', descripcion: '' };
   motivosRechazo: Record<number, string> = {};
   idAdminRevisor = 1; // Placeholder para enlazar con sesión de admin
+  terminoBusqueda = '';
+
+  modalEdicion = false;
+  modalEliminar = false;
+  catalogoEnEdicion: CatalogoServicio | null = null;
+  catalogoAEliminar: CatalogoServicio | null = null;
 
   eventos: Evento[] = [];
   eventosSeleccionados = new Set<number>();
@@ -71,6 +77,16 @@ export class ServiciosPeo implements OnInit {
         this.cargandoCatalogo = false;
       },
     });
+  }
+
+  catalogoFiltrado(): CatalogoServicio[] {
+    if (!this.terminoBusqueda.trim()) return this.catalogo;
+    const termino = this.terminoBusqueda.toLowerCase();
+    return this.catalogo.filter(
+      (cat) =>
+        cat.nombre.toLowerCase().includes(termino) ||
+        (cat.descripcion ?? '').toLowerCase().includes(termino)
+    );
   }
 
   cargarPendientes(): void {
@@ -175,5 +191,63 @@ export class ServiciosPeo implements OnInit {
 
   badgeClase(estado: EstadoCatalogo): string {
     return estado === 'ACTIVO' ? 'badge-exito' : estado === 'RECHAZADO' ? 'badge-error' : 'badge-aviso';
+  }
+
+  etiquetaCreador(cat: CatalogoServicio): string {
+    const nombre = (cat as any).creadorNombre || (cat as any).nombreCreador || '';
+    const rol = cat.creadoPor;
+    return nombre ? `${rol} - ${nombre}` : rol;
+  }
+
+  abrirModalEditar(cat: CatalogoServicio): void {
+    this.catalogoEnEdicion = { ...cat };
+    this.modalEdicion = true;
+  }
+
+  abrirModalEliminar(cat: CatalogoServicio): void {
+    this.catalogoAEliminar = cat;
+    this.modalEliminar = true;
+  }
+
+  cerrarModales(): void {
+    this.modalEdicion = false;
+    this.modalEliminar = false;
+    this.catalogoEnEdicion = null;
+    this.catalogoAEliminar = null;
+  }
+
+  guardarEdicion(): void {
+    if (!this.catalogoEnEdicion) return;
+    const { idCatalogo, nombre, descripcion, estado } = this.catalogoEnEdicion;
+    if (!nombre?.trim()) {
+      this.error = 'El nombre es obligatorio para actualizar el servicio.';
+      return;
+    }
+
+    this.catalogoServicio.actualizar(idCatalogo, { nombre: nombre.trim(), descripcion, estado }).subscribe({
+      next: () => {
+        this.mensaje = 'Tipo de servicio actualizado.';
+        this.cerrarModales();
+        this.cargarCatalogo();
+      },
+      error: () => {
+        this.error = 'No se pudo actualizar el tipo de servicio.';
+      },
+    });
+  }
+
+  eliminarCatalogo(): void {
+    const id = this.catalogoAEliminar?.idCatalogo;
+    if (!id) return;
+    this.catalogoServicio.eliminar(id).subscribe({
+      next: () => {
+        this.mensaje = 'Tipo de servicio eliminado.';
+        this.cerrarModales();
+        this.cargarCatalogo();
+      },
+      error: () => {
+        this.error = 'No se pudo eliminar el registro.';
+      },
+    });
   }
 }
