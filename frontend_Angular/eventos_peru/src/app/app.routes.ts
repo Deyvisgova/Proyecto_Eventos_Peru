@@ -116,6 +116,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./componentes/proveedor/subir-logo/subir-logo').then((m) => m.SubirLogo),
       },
+      {
+        path: 'reportes',
+        loadComponent: () =>
+          import('./componentes/proveedor/reportes/reportes').then((m) => m.ReportesProveedor),
+      },
     ],
   },
 

@@ -40,7 +40,9 @@ export class SubirLogo implements OnInit {
     }
 
     this.proveedorSrv.obtenerPorUsuario(Number(idUsuario)).subscribe({
-      next: (prov) => (this.idProveedor = prov?.idProveedor ?? prov?.id_proveedor ?? null),
+      next: (prov) => {
+        this.idProveedor = prov?.idProveedor ?? prov?.id_proveedor ?? null;
+      },
       error: () => (this.mensaje = 'No pudimos obtener tus datos de proveedor.'),
     });
   }
