@@ -10,40 +10,52 @@
   <div class="estado" *ngIf="cargando">Cargando reservas...</div>
   <div class="estado error" *ngIf="error">{{ error }}</div>
 
-  <section class="grid" *ngIf="!cargando && reservas.length">
-    <article class="card" *ngFor="let r of reservas">
-      <div class="card-header">
-        <div>
-          <p class="texto-sutil">Fecha del evento</p>
-          <h4>{{ r.fechaEvento | date }}</h4>
-          <p class="texto-sutil">Proveedor: {{ r.proveedor?.nombreEmpresa || r.proveedor?.nombre }}</p>
+  <section class="grupo" *ngFor="let grupo of reservasAgrupadas">
+    <div class="grupo-header">
+      <div class="logo-miniatura" [class.con-imagen]="!!grupo.logo">
+        <img *ngIf="grupo.logo" [src]="grupo.logo" alt="Logo de {{ grupo.proveedor }}" />
+        <span *ngIf="!grupo.logo">{{ grupo.proveedor.charAt(0) }}</span>
+      </div>
+      <div>
+        <p class="texto-sutil">Proveedor</p>
+        <h4>{{ grupo.proveedor }}</h4>
+      </div>
+    </div>
+
+    <section class="grid" *ngIf="grupo.reservas.length">
+      <article class="card" *ngFor="let r of grupo.reservas">
+        <div class="card-header">
+          <div>
+            <p class="texto-sutil">Fecha del evento</p>
+            <h4>{{ r.fechaEvento | date }}</h4>
+          </div>
+          <span [class]="estadoClase(r)">{{ r.estado }}</span>
         </div>
-        <span [class]="estadoClase(r)">{{ r.estado }}</span>
-      </div>
 
-      <div class="detalles" *ngIf="detalles[r.idReserva]?.length">
-        <h5>Detalle</h5>
-        <ul>
-          <li *ngFor="let d of detalles[r.idReserva]">
-            <div>
-              <strong>{{ d.opcion?.nombreOpcion || 'Servicio reservado' }}</strong>
-              <p class="texto-sutil">Cantidad: {{ d.cantidad }}</p>
-              <p class="texto-sutil" *ngIf="d.opcion?.proveedorServicio?.catalogoServicio?.evento as evento">
-                Evento: {{ evento.nombreEvento }}
-              </p>
-            </div>
-            <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
-          </li>
-        </ul>
-      </div>
+        <div class="detalles" *ngIf="detalles[r.idReserva]?.length">
+          <h5>Detalle</h5>
+          <ul>
+            <li *ngFor="let d of detalles[r.idReserva]">
+              <div>
+                <strong>{{ d.opcion?.nombreOpcion || 'Servicio reservado' }}</strong>
+                <p class="texto-sutil">Cantidad: {{ d.cantidad }}</p>
+                <p class="texto-sutil" *ngIf="d.opcion?.proveedorServicio?.catalogoServicio?.evento as evento">
+                  Evento: {{ evento.nombreEvento }}
+                </p>
+              </div>
+              <span>S/ {{ d.precioUnitario | number: '1.2-2' }}</span>
+            </li>
+          </ul>
+        </div>
 
-      <div class="acciones">
-        <small *ngIf="r.fechaLimiteRechazo">Puedes rechazar hasta {{ r.fechaLimiteRechazo | date }}</small>
-        <button class="btn-rechazar" [disabled]="!puedeRechazar(r)" (click)="rechazar(r)">
-          Rechazar
-        </button>
-      </div>
-    </article>
+        <div class="acciones">
+          <small *ngIf="obtenerFechaLimite(r)">Puedes rechazar hasta {{ obtenerFechaLimite(r) | date }}</small>
+          <button class="btn-rechazar" [disabled]="!puedeRechazar(r)" (click)="rechazar(r)">
+            Rechazar
+          </button>
+        </div>
+      </article>
+    </section>
   </section>
 
   <div class="estado" *ngIf="!cargando && !reservas.length">Aún no tienes reservas registradas.</div>
