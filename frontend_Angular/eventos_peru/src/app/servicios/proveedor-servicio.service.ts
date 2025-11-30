@@ -59,4 +59,10 @@ export class ProveedorServicioService {
   eliminarOpcion(idOpcion: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/opciones/${idOpcion}`);
   }
+
+  subirImagenOpcion(idProveedorServicio: number, archivo: File): Observable<{ path: string }> {
+    const formData = new FormData();
+    formData.append('file', archivo);
+    return this.http.post<{ path: string }>(`${this.api}/${idProveedorServicio}/opciones/imagen`, formData);
+  }
 }

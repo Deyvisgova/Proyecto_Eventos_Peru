@@ -283,11 +283,16 @@
           [(ngModel)]="nuevaOpcion[opcionesEnModal.idProveedorServicio].stock"
           name="stock-{{ opcionesEnModal.idProveedorServicio }}"
         />
-        <input
-          type="file"
-          accept="image/*"
-          (change)="seleccionarArchivo($event, 'opciones', { tipo: 'opcion-nueva', id: opcionesEnModal.idProveedorServicio })"
-        />
+        <label class="input-file">
+          <input
+            type="file"
+            accept="image/*"
+            (change)="seleccionarArchivo($event, 'opciones', { tipo: 'opcion-nueva', id: opcionesEnModal.idProveedorServicio })"
+          />
+          <span>
+            {{ nombresArchivo['opcion-nueva-' + opcionesEnModal.idProveedorServicio] || 'Seleccionar imagen' }}
+          </span>
+        </label>
         <div class="opcion-preview" *ngIf="nuevaOpcion[opcionesEnModal.idProveedorServicio]?.urlFoto">
           <img [src]="obtenerVistaOpcion(nuevaOpcion[opcionesEnModal.idProveedorServicio].urlFoto)" alt="Vista previa" />
           <small>{{ nuevaOpcion[opcionesEnModal.idProveedorServicio].urlFoto }}</small>
@@ -320,13 +325,15 @@
               <label>Precio<input type="number" step="0.01" [(ngModel)]="edicionOpcion[op.idOpcion].precio" name="edit-precio-op-{{ op.idOpcion }}" /></label>
               <label>Duración (min)<input type="number" [(ngModel)]="edicionOpcion[op.idOpcion].duracionMinutos" name="edit-duracion-op-{{ op.idOpcion }}" /></label>
               <label>Stock<input type="number" [(ngModel)]="edicionOpcion[op.idOpcion].stock" name="edit-stock-op-{{ op.idOpcion }}" /></label>
-              <label class="archivo-opcion">
-                Nueva imagen
+              <label class="archivo-opcion input-file">
                 <input
                   type="file"
                   accept="image/*"
                   (change)="seleccionarArchivo($event, 'opciones', { tipo: 'opcion-edicion', id: op.idOpcion })"
                 />
+                <span>
+                  {{ nombresArchivo['opcion-edicion-' + op.idOpcion] || 'Seleccionar nueva imagen' }}
+                </span>
               </label>
               <div class="opcion-botones">
                 <button
