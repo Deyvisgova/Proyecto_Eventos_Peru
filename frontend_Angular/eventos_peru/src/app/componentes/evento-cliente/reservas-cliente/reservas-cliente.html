@@ -38,7 +38,7 @@
       </div>
 
       <div class="acciones">
-        <small *ngIf="r.fechaLimiteRechazo">Puedes rechazar hasta {{ r.fechaLimiteRechazo | date }}</small>
+        <small *ngIf="obtenerFechaLimite(r)">Puedes rechazar hasta {{ obtenerFechaLimite(r) | date }}</small>
         <button class="btn-rechazar" [disabled]="!puedeRechazar(r)" (click)="rechazar(r)">
           Rechazar
         </button>

@@ -70,11 +70,16 @@ export class EventoCliente implements OnInit {
   proveedorSeleccionado: ProveedorServicio | null = null;
   opciones: ServicioOpcion[] = [];
   seleccion: Record<number, boolean> = {};
+  fechasPorOpcion: Record<number, string> = {};
+  horasPorOpcion: Record<number, string> = {};
   fechaEvento = '';
   horaEvento = '12:00';
   agendando = false;
   mensajeAgendar = '';
   numeroReservaActual: number | null = null;
+  ultimoConteoReserva = 0;
+
+  private apiBaseImagenes = 'http://localhost:8080/';
 
   ngOnInit() {
     // 🧠 Recuperar nombre y validar sesión
@@ -148,12 +153,19 @@ export class EventoCliente implements OnInit {
       proveedorPlano['logoUrl'] ||
       proveedorPlano['logo'];
 
-    return typeof posibleLogo === 'string' ? posibleLogo : '';
+    return typeof posibleLogo === 'string' ? this.resolverRutaImagen(posibleLogo) : '';
   }
 
   inicialProveedor(p: ProveedorServicio) {
     const nombre = p.proveedor.nombreEmpresa || p.proveedor.nombre || '?';
     return nombre.slice(0, 1).toUpperCase();
+  }
+
+  private resolverRutaImagen(ruta?: string | null) {
+    if (!ruta) return '';
+    if (/^https?:\/\//i.test(ruta) || ruta.startsWith('data:')) return ruta;
+    const limpia = ruta.startsWith('/') ? ruta.slice(1) : ruta;
+    return `${this.apiBaseImagenes}${limpia}`;
   }
 
   get opcionesSeleccionadas(): ServicioOpcion[] {
@@ -166,6 +178,62 @@ export class EventoCliente implements OnInit {
 
   get tieneSeleccion(): boolean {
     return this.opcionesSeleccionadas.length > 0;
+  }
+
+  get conteoVisibleCarrito(): number {
+    return this.tieneSeleccion ? this.opcionesSeleccionadas.length : this.ultimoConteoReserva;
+  }
+
+  irAReservas() {
+    this.router.navigate(['/cliente/reservas']);
+  }
+
+  urlImagenOpcion(opcion: ServicioOpcion) {
+    const opcionPlano = opcion as unknown as Record<string, unknown>;
+    const posiblesRutas = [
+      opcion.urlFoto,
+      opcionPlano['foto'],
+      opcionPlano['imagen'],
+      opcionPlano['url_foto'],
+    ].filter((v): v is string => typeof v === 'string' && !!v.trim());
+
+    const rutaElegida = posiblesRutas[0];
+    const rutaResuelta = this.resolverRutaImagen(rutaElegida);
+    return rutaResuelta || 'assets/servicios/placeholder-servicio.svg';
+  }
+
+  alternarOpcion(opcion: ServicioOpcion, activo: boolean) {
+    this.seleccion[opcion.idOpcion] = activo;
+    this.mensajeAgendar = '';
+    if (activo) {
+      if (this.fechaEvento) this.fechasPorOpcion[opcion.idOpcion] = this.fechaEvento;
+      if (this.horaEvento) this.horasPorOpcion[opcion.idOpcion] = this.horaEvento;
+    } else {
+      delete this.fechasPorOpcion[opcion.idOpcion];
+      delete this.horasPorOpcion[opcion.idOpcion];
+    }
+  }
+
+  actualizarFechaOpcion(opcion: ServicioOpcion, fecha: string) {
+    this.fechasPorOpcion[opcion.idOpcion] = fecha;
+    this.fechaEvento = fecha;
+    this.sincronizarHorarioSeleccionado();
+    this.mensajeAgendar = '';
+  }
+
+  actualizarHoraOpcion(opcion: ServicioOpcion, hora: string) {
+    this.horasPorOpcion[opcion.idOpcion] = hora;
+    this.horaEvento = hora;
+    this.sincronizarHorarioSeleccionado();
+    this.mensajeAgendar = '';
+  }
+
+  sincronizarHorarioSeleccionado() {
+    if (!this.tieneSeleccion) return;
+    this.opcionesSeleccionadas.forEach((op) => {
+      if (this.fechaEvento) this.fechasPorOpcion[op.idOpcion] = this.fechaEvento;
+      if (this.horaEvento) this.horasPorOpcion[op.idOpcion] = this.horaEvento;
+    });
   }
 
   cargarServicios() {
@@ -364,6 +432,8 @@ export class EventoCliente implements OnInit {
     this.modalVisible = true;
     this.opciones = [];
     this.seleccion = {};
+    this.fechasPorOpcion = {};
+    this.horasPorOpcion = {};
     this.fechaEvento = '';
     this.horaEvento = '12:00';
     this.reservasProveedor = [];
@@ -411,19 +481,8 @@ export class EventoCliente implements OnInit {
   }
 
   agendarEvento() {
-    if (!this.proveedorSeleccionado || !this.fechaEvento || !this.clienteId) {
+    if (!this.proveedorSeleccionado || !this.clienteId) {
       this.mensajeAgendar = 'Selecciona una fecha válida y asegúrate de haber iniciado sesión.';
-      return;
-    }
-
-    if (!this.horaEvento) {
-      this.mensajeAgendar = 'Selecciona la hora del servicio.';
-      return;
-    }
-
-    const idEvento = this.obtenerIdsEventosSeleccionados()[0];
-    if (!idEvento) {
-      this.mensajeAgendar = 'Elige el tipo de evento para poder registrar la reserva.';
       return;
     }
 
@@ -432,9 +491,37 @@ export class EventoCliente implements OnInit {
       return;
     }
 
+    const opcionesElegidas = [...this.opcionesSeleccionadas];
+
+    const idEvento = this.obtenerIdsEventosSeleccionados()[0];
+    if (!idEvento) {
+      this.mensajeAgendar = 'Elige el tipo de evento para poder registrar la reserva.';
+      return;
+    }
+
+    const faltaFecha = opcionesElegidas.find((op) => !this.fechasPorOpcion[op.idOpcion]);
+    const faltaHora = opcionesElegidas.find((op) => !this.horasPorOpcion[op.idOpcion]);
+    if (faltaFecha || faltaHora) {
+      this.mensajeAgendar = 'Elige fecha y hora para cada opción seleccionada.';
+      return;
+    }
+
+    const fechaBase = this.fechasPorOpcion[opcionesElegidas[0].idOpcion];
+    const horaBase = this.horasPorOpcion[opcionesElegidas[0].idOpcion];
+    const horariosUniformes = opcionesElegidas.every(
+      (op) => this.fechasPorOpcion[op.idOpcion] === fechaBase && this.horasPorOpcion[op.idOpcion] === horaBase
+    );
+
+    if (!horariosUniformes) {
+      this.mensajeAgendar = 'Usa la misma fecha y hora para todas las opciones de este proveedor.';
+      return;
+    }
+
+    this.fechaEvento = fechaBase;
+    this.horaEvento = horaBase;
+
     this.agendando = true;
     this.mensajeAgendar = '';
-    const opcionesElegidas = [...this.opcionesSeleccionadas];
 
     const idProveedor =
       this.proveedorSeleccionado.proveedor.idProveedor ??
@@ -462,6 +549,7 @@ export class EventoCliente implements OnInit {
         }
 
         this.numeroReservaActual = idReserva;
+        this.ultimoConteoReserva = opcionesElegidas.length;
 
         const detalles = this.prepararDetalles(idReserva, opcionesElegidas);
         if (!detalles.length) {
@@ -568,9 +656,16 @@ export class EventoCliente implements OnInit {
     }
     this.fechaEvento = fecha;
     this.mensajeAgendar = '';
+    this.sincronizarHorarioSeleccionado();
   }
 
   private esFechaPasada(fecha: Date) {
     return this.obtenerInicioDia(fecha) < this.hoy;
+  }
+
+  actualizarHoraGeneral(valor: string) {
+    this.horaEvento = valor;
+    this.sincronizarHorarioSeleccionado();
+    this.mensajeAgendar = '';
   }
 }

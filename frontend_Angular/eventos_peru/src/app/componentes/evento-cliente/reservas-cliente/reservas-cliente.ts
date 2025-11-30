@@ -51,7 +51,7 @@ export class ReservasCliente implements OnInit {
           return;
         }
 
-        this.reservas = resp;
+        this.reservas = resp.map((r) => this.completarLimiteRechazo(r));
         resp.forEach((r) => this.cargarDetalle(r.idReserva));
       },
       error: (err) => {
@@ -76,21 +76,45 @@ export class ReservasCliente implements OnInit {
   }
 
   puedeRechazar(reserva: Reserva) {
-    if (reserva.estado === 'PENDIENTE') return true;
-    if (reserva.estado !== 'CONFIRMADA') return false;
-    if (!reserva.fechaLimiteRechazo) return true;
-    const limite = new Date(reserva.fechaLimiteRechazo);
-    const ahora = new Date();
-    return ahora <= limite;
+    if (!reserva.fechaEvento) return false;
+    if (reserva.estado !== 'PENDIENTE' && reserva.estado !== 'CONFIRMADA') return false;
+
+    const limite = this.obtenerFechaLimite(reserva);
+    if (!limite) return false;
+
+    const fechaLimite = new Date(limite);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return hoy.getTime() <= fechaLimite.getTime();
   }
 
   rechazar(reserva: Reserva) {
     if (!this.puedeRechazar(reserva)) return;
     this.reservaSrv.rechazar(reserva.idReserva).subscribe({
       next: (resp) => {
-        this.reservas = this.reservas.map((r) => (r.idReserva === resp.idReserva ? resp : r));
+        const respuesta = this.completarLimiteRechazo(resp);
+        this.reservas = this.reservas.map((r) => (r.idReserva === resp.idReserva ? respuesta : r));
       },
       error: () => alert('No pudimos rechazar la reserva. Verifica el plazo de 3 días.'),
     });
+  }
+
+  private completarLimiteRechazo(reserva: Reserva): Reserva {
+    if (reserva.fechaLimiteRechazo) return reserva;
+    const fechaLimite = this.calcularFechaLimite(reserva.fechaEvento);
+    return fechaLimite ? { ...reserva, fechaLimiteRechazo: fechaLimite } : reserva;
+  }
+
+  private calcularFechaLimite(fechaEvento?: string | Date | null) {
+    if (!fechaEvento) return null;
+    const fecha = new Date(fechaEvento);
+    if (Number.isNaN(fecha.getTime())) return null;
+    fecha.setDate(fecha.getDate() - 3);
+    fecha.setHours(0, 0, 0, 0);
+    return fecha.toISOString();
+  }
+
+  obtenerFechaLimite(reserva: Reserva) {
+    return reserva.fechaLimiteRechazo || this.calcularFechaLimite(reserva.fechaEvento);
   }
 }
