@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import Swal from 'sweetalert2';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import {
   ProveedorServicio,
   ServicioOpcion,
@@ -70,11 +70,16 @@ export class EventoCliente implements OnInit {
   proveedorSeleccionado: ProveedorServicio | null = null;
   opciones: ServicioOpcion[] = [];
   seleccion: Record<number, boolean> = {};
+  fechasPorOpcion: Record<number, string> = {};
+  horasPorOpcion: Record<number, string> = {};
   fechaEvento = '';
   horaEvento = '12:00';
   agendando = false;
   mensajeAgendar = '';
   numeroReservaActual: number | null = null;
+  ultimoConteoReserva = 0;
+
+  private apiBaseImagenes = 'http://localhost:8080/';
 
   ngOnInit() {
     // 🧠 Recuperar nombre y validar sesión
@@ -148,12 +153,19 @@ export class EventoCliente implements OnInit {
       proveedorPlano['logoUrl'] ||
       proveedorPlano['logo'];
 
-    return typeof posibleLogo === 'string' ? posibleLogo : '';
+    return typeof posibleLogo === 'string' ? this.resolverRutaImagen(posibleLogo) : '';
   }
 
   inicialProveedor(p: ProveedorServicio) {
     const nombre = p.proveedor.nombreEmpresa || p.proveedor.nombre || '?';
     return nombre.slice(0, 1).toUpperCase();
+  }
+
+  private resolverRutaImagen(ruta?: string | null) {
+    if (!ruta) return '';
+    if (/^https?:\/\//i.test(ruta) || ruta.startsWith('data:')) return ruta;
+    const limpia = ruta.startsWith('/') ? ruta.slice(1) : ruta;
+    return `${this.apiBaseImagenes}${limpia}`;
   }
 
   get opcionesSeleccionadas(): ServicioOpcion[] {
@@ -166,6 +178,51 @@ export class EventoCliente implements OnInit {
 
   get tieneSeleccion(): boolean {
     return this.opcionesSeleccionadas.length > 0;
+  }
+
+  get conteoVisibleCarrito(): number {
+    return this.tieneSeleccion ? this.opcionesSeleccionadas.length : this.ultimoConteoReserva;
+  }
+
+  irAReservas() {
+    this.router.navigate(['/cliente/reservas']);
+  }
+
+  urlImagenOpcion(opcion: ServicioOpcion) {
+    const opcionPlano = opcion as unknown as Record<string, unknown>;
+    const posiblesRutas = [
+      opcion.urlFoto,
+      opcionPlano['foto'],
+      opcionPlano['imagen'],
+      opcionPlano['url_foto'],
+      opcionPlano['urlImagen'],
+      opcion.proveedorServicio?.catalogoServicio?.['urlFoto'],
+      opcion.proveedorServicio?.catalogoServicio?.['foto'],
+      opcion.proveedorServicio?.['urlFoto'],
+    ].filter((v): v is string => typeof v === 'string' && !!v.trim());
+
+    const rutaElegida = posiblesRutas[0];
+    const rutaResuelta = this.resolverRutaImagen(rutaElegida);
+    return rutaResuelta || 'assets/servicios/placeholder-servicio.svg';
+  }
+
+  alternarOpcion(opcion: ServicioOpcion, activo: boolean) {
+    this.seleccion[opcion.idOpcion] = activo;
+    this.mensajeAgendar = '';
+    if (!activo) {
+      delete this.fechasPorOpcion[opcion.idOpcion];
+      delete this.horasPorOpcion[opcion.idOpcion];
+    }
+  }
+
+  actualizarFechaOpcion(opcion: ServicioOpcion, fecha: string) {
+    this.fechasPorOpcion[opcion.idOpcion] = fecha;
+    this.mensajeAgendar = '';
+  }
+
+  actualizarHoraOpcion(opcion: ServicioOpcion, hora: string) {
+    this.horasPorOpcion[opcion.idOpcion] = hora;
+    this.mensajeAgendar = '';
   }
 
   cargarServicios() {
@@ -364,6 +421,8 @@ export class EventoCliente implements OnInit {
     this.modalVisible = true;
     this.opciones = [];
     this.seleccion = {};
+    this.fechasPorOpcion = {};
+    this.horasPorOpcion = {};
     this.fechaEvento = '';
     this.horaEvento = '12:00';
     this.reservasProveedor = [];
@@ -411,19 +470,8 @@ export class EventoCliente implements OnInit {
   }
 
   agendarEvento() {
-    if (!this.proveedorSeleccionado || !this.fechaEvento || !this.clienteId) {
+    if (!this.proveedorSeleccionado || !this.clienteId) {
       this.mensajeAgendar = 'Selecciona una fecha válida y asegúrate de haber iniciado sesión.';
-      return;
-    }
-
-    if (!this.horaEvento) {
-      this.mensajeAgendar = 'Selecciona la hora del servicio.';
-      return;
-    }
-
-    const idEvento = this.obtenerIdsEventosSeleccionados()[0];
-    if (!idEvento) {
-      this.mensajeAgendar = 'Elige el tipo de evento para poder registrar la reserva.';
       return;
     }
 
@@ -432,55 +480,61 @@ export class EventoCliente implements OnInit {
       return;
     }
 
+    const opcionesElegidas = [...this.opcionesSeleccionadas];
+
+    const idEvento = this.obtenerIdsEventosSeleccionados()[0];
+    if (!idEvento) {
+      this.mensajeAgendar = 'Elige el tipo de evento para poder registrar la reserva.';
+      return;
+    }
+
+    const faltaFecha = opcionesElegidas.find((op) => !this.fechasPorOpcion[op.idOpcion]);
+    const faltaHora = opcionesElegidas.find((op) => !this.horasPorOpcion[op.idOpcion]);
+    if (faltaFecha || faltaHora) {
+      this.mensajeAgendar = 'Elige fecha y hora para cada opción seleccionada.';
+      return;
+    }
+
     this.agendando = true;
     this.mensajeAgendar = '';
-    const opcionesElegidas = [...this.opcionesSeleccionadas];
+    this.modalVisible = false;
 
     const idProveedor =
       this.proveedorSeleccionado.proveedor.idProveedor ??
       (this.proveedorSeleccionado.proveedor as any).id_proveedor ??
       (this.proveedorSeleccionado.proveedor as any).id;
 
-    const fechaISO = this.formatearFechaISO(this.fechaEvento, this.horaEvento);
+    const solicitudes = opcionesElegidas.map((opcion) => {
+      const fecha = this.fechasPorOpcion[opcion.idOpcion];
+      const hora = this.horasPorOpcion[opcion.idOpcion];
+      const fechaISO = this.formatearFechaISO(fecha, hora);
 
-    const payload: Partial<Reserva> = {
-      cliente: { idUsuario: this.clienteId } as any,
-      proveedor: { idProveedor: Number(idProveedor) } as any,
-      evento: { idEvento },
-      fechaEvento: fechaISO,
-      estado: 'PENDIENTE' as Reserva['estado'],
-    };
+      const payload: Partial<Reserva> = {
+        cliente: { idUsuario: this.clienteId } as any,
+        proveedor: { idProveedor: Number(idProveedor) } as any,
+        evento: { idEvento },
+        fechaEvento: fechaISO,
+        estado: 'PENDIENTE' as Reserva['estado'],
+      };
 
-    this.reservaSrv.crear(payload).subscribe({
-      next: (resp) => {
-        const idReserva = this.obtenerIdReserva(resp);
-        if (!idReserva) {
-          this.mensajeAgendar =
-            'La reserva se registró, pero no pudimos identificarla para guardar el detalle.';
-          this.agendando = false;
-          return;
-        }
+      return this.reservaSrv.crear(payload).pipe(
+        switchMap((reserva) => {
+          const idReserva = this.obtenerIdReserva(reserva);
+          if (!idReserva) return of(reserva);
+          const detalle = this.prepararDetalles(idReserva, [opcion])[0];
+          return this.detalleSrv.crear(detalle).pipe(map(() => reserva));
+        })
+      );
+    });
 
-        this.numeroReservaActual = idReserva;
-
-        const detalles = this.prepararDetalles(idReserva, opcionesElegidas);
-        if (!detalles.length) {
-          this.finalizarAgendamiento(resp);
-          return;
-        }
-
-        forkJoin(detalles.map((d) => this.detalleSrv.crear(d))).subscribe({
-          next: () => {},
-          error: (err) => {
-            const mensajeDetalle = err?.error?.message || err?.message;
-            this.mensajeAgendar =
-              mensajeDetalle && typeof mensajeDetalle === 'string'
-                ? mensajeDetalle
-                : 'La reserva se creó pero no pudimos guardar el detalle. Inténtalo de nuevo.';
-            this.agendando = false;
-          },
-          complete: () => this.finalizarAgendamiento(resp),
-        });
+    forkJoin(solicitudes).subscribe({
+      next: (reservasCreadas) => {
+        const ultima = reservasCreadas[reservasCreadas.length - 1];
+        this.numeroReservaActual = this.obtenerIdReserva(ultima);
+        this.ultimoConteoReserva = opcionesElegidas.length;
+        this.finalizarAgendamiento(reservasCreadas[0]);
+        this.reservasProveedor = [...this.reservasProveedor, ...reservasCreadas];
+        this.generarCalendario();
       },
       error: (err) => {
         const mensajeBackend = err?.error?.message || err?.message;
@@ -504,11 +558,17 @@ export class EventoCliente implements OnInit {
 
   private finalizarAgendamiento(reserva: Reserva) {
     this.mensajeAgendar = '¡Listo! Tu solicitud fue registrada y el proveedor la revisará pronto.';
-    this.reservasProveedor = [...this.reservasProveedor, reserva];
-    this.generarCalendario();
     this.agendando = false;
 
-    const fechaLegible = this.formatearFechaLegible(this.fechaEvento);
+    const fechaLegible = this.formatearFechaLegible(String(reserva.fechaEvento));
+
+    this.modalVisible = false;
+    this.proveedorSeleccionado = null;
+    this.opciones = [];
+    this.seleccion = {};
+    this.fechasPorOpcion = {};
+    this.horasPorOpcion = {};
+    this.fechaEvento = '';
 
     Swal.fire({
       icon: 'success',
@@ -568,9 +628,24 @@ export class EventoCliente implements OnInit {
     }
     this.fechaEvento = fecha;
     this.mensajeAgendar = '';
+    if (this.tieneSeleccion) {
+      this.opcionesSeleccionadas.forEach((op) => {
+        if (!this.fechasPorOpcion[op.idOpcion]) this.fechasPorOpcion[op.idOpcion] = fecha;
+      });
+    }
   }
 
   private esFechaPasada(fecha: Date) {
     return this.obtenerInicioDia(fecha) < this.hoy;
+  }
+
+  actualizarHoraGeneral(valor: string) {
+    this.horaEvento = valor;
+    this.mensajeAgendar = '';
+    if (this.tieneSeleccion) {
+      this.opcionesSeleccionadas.forEach((op) => {
+        if (!this.horasPorOpcion[op.idOpcion]) this.horasPorOpcion[op.idOpcion] = valor;
+      });
+    }
   }
 }
