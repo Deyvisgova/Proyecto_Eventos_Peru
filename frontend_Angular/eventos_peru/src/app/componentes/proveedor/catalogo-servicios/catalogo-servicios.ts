@@ -61,6 +61,7 @@ export class CatalogoServicios implements OnInit {
   cargandoPropuestas = false;
   cargandoProveedor = false;
   previsualizaciones: Record<string, string> = {};
+  nombresArchivo: Record<string, string> = {};
 
   constructor(
     private catalogoServicio: CatalogoServicioService,
@@ -179,32 +180,51 @@ export class CatalogoServicios implements OnInit {
     const archivo = input.files?.[0];
     if (!archivo) return;
 
-    const { ruta, dataUrl } = await this.prepararGuardadoLocal(archivo, carpeta);
-    this.previsualizaciones[ruta] = dataUrl;
+    const servicioId =
+      contexto.tipo === 'opcion-nueva'
+        ? contexto.id
+        : this.edicionOpcion[contexto.id]?.idProveedorServicio || this.opcionesEnModal?.idProveedorServicio;
 
-    switch (contexto.tipo) {
-      case 'opcion-nueva':
-        if (this.nuevaOpcion[contexto.id]) {
-          this.nuevaOpcion[contexto.id].urlFoto = ruta;
-        }
-        break;
-      case 'opcion-edicion':
-        if (this.edicionOpcion[contexto.id]) {
-          this.edicionOpcion[contexto.id].urlFoto = ruta;
-        }
-        break;
+    if (!servicioId) {
+      this.error = 'No pudimos identificar el servicio para guardar la imagen.';
+      return;
     }
 
-    this.mensaje = `Imagen preparada en ${ruta}.`;
-    input.value = '';
+    const { dataUrl } = await this.prepararGuardadoLocal(archivo);
+
+    const llave = `${contexto.tipo}-${contexto.id}`;
+    this.nombresArchivo[llave] = archivo.name;
+
+    this.proveedorServicio.subirImagenOpcion(servicioId, archivo).subscribe({
+      next: (resp) => {
+        const ruta = resp.path;
+        this.previsualizaciones[ruta] = dataUrl;
+
+        switch (contexto.tipo) {
+          case 'opcion-nueva':
+            if (this.nuevaOpcion[contexto.id]) {
+              this.nuevaOpcion[contexto.id].urlFoto = ruta;
+            }
+            break;
+          case 'opcion-edicion':
+            if (this.edicionOpcion[contexto.id]) {
+              this.edicionOpcion[contexto.id].urlFoto = ruta;
+            }
+            break;
+        }
+
+        this.mensaje = `Imagen guardada en ${ruta}.`;
+      },
+      error: () => {
+        this.error = 'No se pudo subir la imagen. Intenta nuevamente.';
+      },
+      complete: () => {
+        input.value = '';
+      },
+    });
   }
 
-  private async prepararGuardadoLocal(
-    archivo: File,
-    carpeta: CarpetaDestino
-  ): Promise<{ ruta: string; dataUrl: string }> {
-    const nombreLimpio = archivo.name.replace(/\s+/g, '_');
-    const rutaRelativa = `assets/${carpeta}/${nombreLimpio}`;
+  private async prepararGuardadoLocal(archivo: File): Promise<{ dataUrl: string }> {
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -212,7 +232,7 @@ export class CatalogoServicios implements OnInit {
       reader.readAsDataURL(archivo);
     });
 
-    return { ruta: rutaRelativa, dataUrl };
+    return { dataUrl };
   }
 
   abrirModalServicio(oferta: ProveedorServicio): void {

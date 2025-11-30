@@ -5,8 +5,18 @@ import com.eventosperu.backend.model.dto.ProveedorServicioRequest;
 import com.eventosperu.backend.model.dto.ServicioOpcionRequest;
 import com.eventosperu.backend.repositorio.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -181,6 +191,40 @@ public class ProveedorServicioControlador {
         ServicioOpcion opcion = opcionOpt.get();
         opcion.setEstado(estado);
         return servicioOpcionRepositorio.save(opcion);
+    }
+
+    @PostMapping("/{id}/opciones/imagen")
+    public ResponseEntity<?> subirImagenOpcion(
+            @PathVariable Integer id,
+            @RequestParam("file") MultipartFile archivo
+    ) {
+        Optional<ProveedorServicio> servicioOpt = proveedorServicioRepositorio.findById(id);
+        if (servicioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Servicio no encontrado");
+        }
+
+        if (archivo.isEmpty()) {
+            return ResponseEntity.badRequest().body("Archivo vacío");
+        }
+
+        try {
+            Path destino = Paths.get("..", "frontend_Angular", "eventos_peru", "src", "assets", "opciones")
+                    .toAbsolutePath()
+                    .normalize();
+            Files.createDirectories(destino);
+
+            String nombreOriginal = StringUtils.cleanPath(archivo.getOriginalFilename());
+            String prefijoFecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            String nombreArchivo = prefijoFecha + "_" + nombreOriginal;
+
+            Path archivoDestino = destino.resolve(nombreArchivo);
+            archivo.transferTo(archivoDestino.toFile());
+
+            String rutaRelativa = Paths.get("assets", "opciones", nombreArchivo).toString().replace('\\', '/');
+            return ResponseEntity.ok().body(java.util.Map.of("path", rutaRelativa));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No se pudo guardar la imagen");
+        }
     }
 
     /**
