@@ -5,13 +5,13 @@
       <h3>Hola, {{ nombre }}</h3>
       <p class="texto-sutil">Elige los servicios ideales para tu {{ tipoEventoLabel || 'evento' }}</p>
     </div>
-    <div class="carrito-info">
+    <div class="carrito-info" (click)="irAReservas()">
       <div class="carrito-icono">
         <i class="bi bi-cart3"></i>
       </div>
       <div>
         <p class="texto-sutil">Servicios seleccionados</p>
-        <strong class="carrito-contador">{{ opcionesSeleccionadas.length }}</strong>
+        <strong class="carrito-contador">{{ conteoVisibleCarrito }}</strong>
         <p class="texto-sutil" *ngIf="numeroReservaActual">Reserva N° {{ numeroReservaActual }}</p>
       </div>
     </div>
@@ -100,7 +100,15 @@
             </div>
             <div class="info-principal">
               <p class="texto-sutil etiqueta">Proveedor</p>
-              <h5>{{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}</h5>
+              <h5>
+                <img
+                  *ngIf="logoProveedor(p)"
+                  class="logo-mini"
+                  [src]="logoProveedor(p)"
+                  alt="Logo de {{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}"
+                />
+                {{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}
+              </h5>
               <p class="texto-sutil ubicacion" *ngIf="p.proveedor.direccion">
                 <i class="bi bi-geo-alt"></i>
                 <span>{{ p.proveedor.direccion }}</span>
@@ -156,8 +164,10 @@
     <div class="modal-body" *ngIf="proveedorSeleccionado">
       <div class="opcion" *ngFor="let o of opciones">
         <label class="opcion-contenido">
-          <input type="checkbox" [(ngModel)]="seleccion[o.idOpcion]" (change)="mensajeAgendar = ''" />
-          <div class="opcion-media" [ngStyle]="{ 'background-image': 'url(' + (o.urlFoto || 'assets/servicios/placeholder-servicio.svg') + ')' }"></div>
+          <input type="checkbox" [ngModel]="seleccion[o.idOpcion]" (ngModelChange)="alternarOpcion(o, $event)" />
+          <div class="opcion-media">
+            <img [src]="urlImagenOpcion(o)" alt="Imagen de {{ o.nombreOpcion }}" />
+          </div>
           <div class="opcion-texto">
             <div class="opcion-header">
               <h5>{{ o.nombreOpcion }}</h5>
@@ -167,6 +177,27 @@
             <div class="detalle">
               <span *ngIf="o.stock != null">Stock: {{ o.stock }}</span>
               <span *ngIf="o.duracionMinutos">Duración: {{ o.duracionMinutos }} min</span>
+            </div>
+            <div class="opcion-agenda" *ngIf="seleccion[o.idOpcion]">
+              <div class="campo-fecha">
+                <label>Fecha</label>
+                <input
+                  type="date"
+                  [ngModel]="fechasPorOpcion[o.idOpcion]"
+                  (ngModelChange)="actualizarFechaOpcion(o, $event)"
+                  [min]="hoy | date: 'yyyy-MM-dd'"
+                />
+              </div>
+              <div class="campo-fecha">
+                <label>Hora</label>
+                <input
+                  type="time"
+                  [ngModel]="horasPorOpcion[o.idOpcion]"
+                  (ngModelChange)="actualizarHoraOpcion(o, $event)"
+                  min="00:00"
+                  max="23:59"
+                />
+              </div>
             </div>
           </div>
         </label>
@@ -222,7 +253,7 @@
               id="horaServicio"
               type="time"
               [(ngModel)]="horaEvento"
-              (input)="mensajeAgendar = ''"
+              (ngModelChange)="actualizarHoraGeneral($event)"
               min="00:00"
               max="23:59"
             />
