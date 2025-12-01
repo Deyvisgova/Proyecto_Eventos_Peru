@@ -8,6 +8,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 
+// Atiende las peticiones relacionadas con las personas registradas
+// y coordina leer, crear, actualizar o borrar sus datos.
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
@@ -20,11 +22,13 @@ public class UsuarioControlador {
     }
     // ------------------- LISTAR TODOS -------------------
     @GetMapping("/usuarios")
+    // Devuelve la lista completa de personas registradas.
     public ResponseEntity<List<Usuario>> listar() {
         return ResponseEntity.ok(usuarioRepositorio.findAll());
     }
     // ------------------- OBTENER POR ID -------------------
     @GetMapping("/usuarios/{id}")
+    // Busca y devuelve a una persona por su identificador.
     public ResponseEntity<Usuario> obtener(@PathVariable Integer id) {
         return usuarioRepositorio.findById(id)
                 .map(ResponseEntity::ok)
@@ -32,6 +36,8 @@ public class UsuarioControlador {
     }
     // ------------------- CREAR (ADMIN) -------------------
     @PostMapping("/usuarios")
+    // Revisa los datos de una nueva persona, acomoda su contraseña
+    // y la guarda si todo está correcto.
     public ResponseEntity<?> crear(@RequestBody Usuario usuario) {
         // Validaciones simples
         if (isBlank(usuario.getNombre()) || isBlank(usuario.getEmail()) || isBlank(usuario.getPassword())) {
@@ -64,6 +70,7 @@ public class UsuarioControlador {
     }
     // ------------------- ACTUALIZAR (ADMIN) -------------------
     @PutMapping("/usuarios/{id}")
+    // Actualiza los datos de una persona ya registrada si se encuentra.
     public ResponseEntity<?> actualizar(@PathVariable Integer id, @RequestBody Usuario body) {
         Optional<Usuario> opt = usuarioRepositorio.findById(id);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
@@ -99,6 +106,7 @@ public class UsuarioControlador {
     }
     // ------------------- ELIMINAR (ADMIN) -------------------
     @DeleteMapping("/usuarios/{id}")
+    // Borra por completo a una persona según su identificador.
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         if (!usuarioRepositorio.existsById(id)) return ResponseEntity.notFound().build();
         usuarioRepositorio.deleteById(id);
