@@ -4,14 +4,18 @@ import com.eventosperu.backend.model.*;
 import com.eventosperu.backend.model.dto.ModeracionCatalogoRequest;
 import com.eventosperu.backend.model.dto.ActualizarCatalogoServicioRequest;
 import com.eventosperu.backend.model.dto.NuevoCatalogoServicioRequest;
+import com.eventosperu.backend.repositorio.DetalleReservaRepositorio;
 import com.eventosperu.backend.repositorio.CatalogoEventoServicioRepositorio;
 import com.eventosperu.backend.repositorio.CatalogoServicioRepositorio;
 import com.eventosperu.backend.repositorio.EventoRepositorio;
+import com.eventosperu.backend.repositorio.ServicioOpcionRepositorio;
 import com.eventosperu.backend.repositorio.ProveedorServicioRepositorio;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +37,12 @@ public class CatalogoServicioControlador {
 
     @Autowired
     private ProveedorServicioRepositorio proveedorServicioRepositorio;
+
+    @Autowired
+    private ServicioOpcionRepositorio servicioOpcionRepositorio;
+
+    @Autowired
+    private DetalleReservaRepositorio detalleReservaRepositorio;
 
     /**
      * Lista todo el catálogo (se puede filtrar por estado enviando ?estado=ACTIVO/PENDIENTE/RECHAZADO).
@@ -244,22 +254,33 @@ public class CatalogoServicioControlador {
      * Elimina un tipo de servicio y sus relaciones con eventos.
      */
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Integer id) {
+    @Transactional
+    public ResponseEntity<?> eliminar(@PathVariable Integer id) {
         Optional<CatalogoServicio> catalogoOpt = catalogoServicioRepositorio.findById(id);
         if (catalogoOpt.isEmpty()) {
-            return;
+            return ResponseEntity.notFound().build();
         }
         CatalogoServicio catalogo = catalogoOpt.get();
 
-        if (proveedorServicioRepositorio.existsByCatalogoServicio(catalogo)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "No se puede eliminar el tipo porque hay servicios de proveedores asociados"
-            );
-        }
+        try {
+            proveedorServicioRepositorio.findByCatalogoServicio(catalogo).forEach(servicio -> {
+                List<ServicioOpcion> opciones = servicioOpcionRepositorio.findByProveedorServicio(servicio);
+                if (!opciones.isEmpty()) {
+                    detalleReservaRepositorio.deleteByOpcionIn(opciones);
+                    servicioOpcionRepositorio.deleteAll(opciones);
+                }
+                servicioOpcionRepositorio.deleteByProveedorServicio(servicio);
+            });
 
-        catalogoEventoServicioRepositorio.deleteByCatalogoServicio(catalogo);
-        catalogoServicioRepositorio.delete(catalogo);
+            proveedorServicioRepositorio.deleteByCatalogoServicio(catalogo);
+            catalogoEventoServicioRepositorio.deleteByCatalogoServicio(catalogo);
+            catalogoServicioRepositorio.delete(catalogo);
+
+            return ResponseEntity.ok().build();
+        } catch (DataIntegrityViolationException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("No se pudo eliminar el catálogo porque existen referencias activas.");
+        }
     }
 
     private void sincronizarEventos(CatalogoServicio catalogo, List<Integer> idEventos) {
