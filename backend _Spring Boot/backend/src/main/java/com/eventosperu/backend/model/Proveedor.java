@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+// Guarda los datos del proveedor que ofrece servicios en la plataforma,
+// incluyendo su cuenta de usuario y su logo opcional.
 @Data
 @Entity
 @Table(name = "proveedores")

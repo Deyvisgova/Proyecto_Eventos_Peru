@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+// Representa a cada persona que usa la plataforma y guarda su nombre,
+// contacto, contraseña y tipo de acceso.
 @Data
 @Entity
 @Table(name = "usuarios")
