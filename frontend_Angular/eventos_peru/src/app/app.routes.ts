@@ -79,6 +79,11 @@ export const routes: Routes = [
           import('./componentes/administrador/reservas/reservas').then((m) => m.ReservasAdmin),
       },
       {
+        path: 'reportes',
+        loadComponent: () =>
+          import('./componentes/administrador/reportes/reportes').then((m) => m.ReportesAdmin),
+      },
+      {
         path: 'configuracion',
         loadComponent: () =>
           import('./componentes/administrador/configuracion/configuracion').then(

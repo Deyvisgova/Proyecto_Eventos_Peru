@@ -13,6 +13,18 @@
 
   <div class="alerta" *ngIf="mensaje">{{ mensaje }}</div>
 
+  <section class="filtros">
+    <div class="campo">
+      <label for="inicio">Fecha inicio</label>
+      <input id="inicio" type="date" [(ngModel)]="fechaInicio" (change)="aplicarFiltros()" />
+    </div>
+    <div class="campo">
+      <label for="fin">Fecha fin</label>
+      <input id="fin" type="date" [(ngModel)]="fechaFin" (change)="aplicarFiltros()" />
+    </div>
+    <div class="rango">Rango aplicado: {{ rangoSeleccionado() }}</div>
+  </section>
+
   <div class="resumenes">
     <div class="resumen">
       <p class="titulo">Servicios publicados</p>
@@ -20,9 +32,16 @@
       <p class="detalle">Incluye {{ totalVariantes() }} variantes configuradas.</p>
     </div>
     <div class="resumen">
-      <p class="titulo">Reservas</p>
-      <h3>{{ reservas.length }}</h3>
-      <p class="detalle">Total acumulado estimado: S/ {{ totalMonto.toFixed(2) }}</p>
+      <p class="titulo">Reservas filtradas</p>
+      <h3>{{ reservasFiltradas.length }}/{{ reservas.length }}</h3>
+      <p class="detalle">Total acumulado estimado: S/ {{ totalMontoFiltrado.toFixed(2) }}</p>
+    </div>
+    <div class="resumen">
+      <p class="titulo">Estados</p>
+      <div class="chips" *ngIf="resumenEstados | keyvalue as estados">
+        <span class="chip" *ngFor="let estado of estados">{{ estado.key }}: {{ estado.value }}</span>
+        <span *ngIf="!estados.length" class="texto-suave">Sin reservas</span>
+      </div>
     </div>
   </div>
 
@@ -65,20 +84,20 @@
 
     <div class="seccion">
       <div class="cabecera">
-        <h4>Reservas y pagos</h4>
+        <h4>Reservas filtradas</h4>
         <span class="badge">Vista previa</span>
       </div>
       <ul>
-        <li *ngFor="let r of reservas | slice:0:3">
+        <li *ngFor="let r of reservasFiltradas | slice:0:3">
           <div>
             <strong>Reserva {{ r.idReserva }}</strong>
-            <small>{{ r.fechaEvento | date }}</small>
+            <small>{{ fechaLegible(r.fechaEvento || r.fechaReserva) }}</small>
             <p class="texto-suave">{{ (detallesPorReserva[r.idReserva] || []).length }} variantes asociadas</p>
           </div>
           <span class="estado" [class.activo]="r.estado === 'CONFIRMADA'">{{ r.estado }}</span>
         </li>
-        <li class="texto-suave" *ngIf="reservas.length > 3">y {{ reservas.length - 3 }} reservas más...</li>
-        <li class="texto-suave" *ngIf="!reservas.length">Sin reservas registradas.</li>
+        <li class="texto-suave" *ngIf="reservasFiltradas.length > 3">y {{ reservasFiltradas.length - 3 }} reservas más...</li>
+        <li class="texto-suave" *ngIf="!reservasFiltradas.length">Sin reservas en el rango.</li>
       </ul>
     </div>
   </div>
