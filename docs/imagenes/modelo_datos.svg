@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720" role="img" aria-labelledby="title desc">
+  <title id="title">Modelo de datos - Eventos Perú</title>
+  <desc id="desc">Diagrama entidad-relación simplificado para tickets, eventos y pagos.</desc>
+  <style>
+    text { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
+    .table { fill: #fff; stroke: #0f172a; stroke-width: 2; rx: 8; ry: 8; }
+    .thead { fill: #0ea5e9; }
+    .thead text { fill: #fff; font-weight: 700; }
+    .row { fill: #f8fafc; }
+    .pk { fill: #dbeafe; }
+    .fk { fill: #fef9c3; }
+    .label { font-size: 13px; }
+    .rel { stroke: #334155; stroke-width: 2; }
+    .note { font-size: 13px; fill: #475569; }
+  </style>
+
+  <rect x="0" y="0" width="1100" height="720" fill="#f5f7fb" />
+  <text x="550" y="34" text-anchor="middle" font-size="22" font-weight="700">Modelo relacional</text>
+  <text x="550" y="58" text-anchor="middle" class="note">Llaves primarias/foráneas marcadas y relaciones cardinalidad N:1</text>
+
+  <!-- Tables -->
+  <g transform="translate(70 110)">
+    <rect x="0" y="0" width="210" height="220" class="table" />
+    <rect x="0" y="0" width="210" height="38" class="thead" />
+    <text x="105" y="25" text-anchor="middle">eventos</text>
+    <rect x="0" y="38" width="210" height="36" class="pk" />
+    <text x="12" y="62" class="label">PK id UUID</text>
+    <rect x="0" y="74" width="210" height="30" class="row" />
+    <text x="12" y="94" class="label">titulo varchar(180)</text>
+    <rect x="0" y="104" width="210" height="30" class="row" />
+    <text x="12" y="124" class="label">fecha timestamp</text>
+    <rect x="0" y="134" width="210" height="30" class="row" />
+    <text x="12" y="154" class="label">organizador_id UUID</text>
+    <rect x="0" y="164" width="210" height="30" class="row" />
+    <text x="12" y="184" class="label">estado varchar(20)</text>
+    <rect x="0" y="194" width="210" height="30" class="row" />
+    <text x="12" y="214" class="label">created_at timestamp</text>
+  </g>
+
+  <g transform="translate(330 110)">
+    <rect x="0" y="0" width="210" height="180" class="table" />
+    <rect x="0" y="0" width="210" height="38" class="thead" fill="#22c55e" />
+    <text x="105" y="25" text-anchor="middle" fill="#fff" font-weight="700">locales</text>
+    <rect x="0" y="38" width="210" height="36" class="pk" />
+    <text x="12" y="62" class="label">PK id UUID</text>
+    <rect x="0" y="74" width="210" height="30" class="row" />
+    <text x="12" y="94" class="label">nombre varchar(120)</text>
+    <rect x="0" y="104" width="210" height="30" class="row" />
+    <text x="12" y="124" class="label">capacidad int</text>
+    <rect x="0" y="134" width="210" height="30" class="row fk" />
+    <text x="12" y="154" class="label">FK evento_id UUID</text>
+  </g>
+
+  <g transform="translate(590 110)">
+    <rect x="0" y="0" width="210" height="210" class="table" />
+    <rect x="0" y="0" width="210" height="38" class="thead" fill="#8b5cf6" />
+    <text x="105" y="25" text-anchor="middle" fill="#fff" font-weight="700">tickets</text>
+    <rect x="0" y="38" width="210" height="36" class="pk" />
+    <text x="12" y="62" class="label">PK id UUID</text>
+    <rect x="0" y="74" width="210" height="30" class="fk" />
+    <text x="12" y="94" class="label">FK evento_id UUID</text>
+    <rect x="0" y="104" width="210" height="30" class="fk" />
+    <text x="12" y="124" class="label">FK orden_id UUID</text>
+    <rect x="0" y="134" width="210" height="30" class="row" />
+    <text x="12" y="154" class="label">precio numeric</text>
+    <rect x="0" y="164" width="210" height="30" class="row" />
+    <text x="12" y="184" class="label">estado varchar(20)</text>
+    <rect x="0" y="194" width="210" height="30" class="row" />
+    <text x="12" y="214" class="label">qr_code text</text>
+  </g>
+
+  <g transform="translate(850 110)">
+    <rect x="0" y="0" width="210" height="210" class="table" />
+    <rect x="0" y="0" width="210" height="38" class="thead" fill="#f97316" />
+    <text x="105" y="25" text-anchor="middle" fill="#fff" font-weight="700">ordenes</text>
+    <rect x="0" y="38" width="210" height="36" class="pk" />
+    <text x="12" y="62" class="label">PK id UUID</text>
+    <rect x="0" y="74" width="210" height="30" class="fk" />
+    <text x="12" y="94" class="label">FK usuario_id UUID</text>
+    <rect x="0" y="104" width="210" height="30" class="row" />
+    <text x="12" y="124" class="label">total numeric</text>
+    <rect x="0" y="134" width="210" height="30" class="row" />
+    <text x="12" y="154" class="label">estado varchar(20)</text>
+    <rect x="0" y="164" width="210" height="30" class="row" />
+    <text x="12" y="184" class="label">checkout_url text</text>
+    <rect x="0" y="194" width="210" height="30" class="row" />
+    <text x="12" y="214" class="label">creada_en timestamp</text>
+  </g>
+
+  <g transform="translate(200 380)">
+    <rect x="0" y="0" width="210" height="190" class="table" />
+    <rect x="0" y="0" width="210" height="38" class="thead" fill="#0f172a" />
+    <text x="105" y="25" text-anchor="middle" fill="#fff" font-weight="700">usuarios</text>
+    <rect x="0" y="38" width="210" height="36" class="pk" />
+    <text x="12" y="62" class="label">PK id UUID</text>
+    <rect x="0" y="74" width="210" height="30" class="row" />
+    <text x="12" y="94" class="label">email varchar(160)</text>
+    <rect x="0" y="104" width="210" height="30" class="row" />
+    <text x="12" y="124" class="label">clave_hash text</text>
+    <rect x="0" y="134" width="210" height="30" class="row" />
+    <text x="12" y="154" class="label">rol varchar(20)</text>
+    <rect x="0" y="164" width="210" height="30" class="row" />
+    <text x="12" y="184" class="label">verificado boolean</text>
+  </g>
+
+  <g transform="translate(480 380)">
+    <rect x="0" y="0" width="220" height="190" class="table" />
+    <rect x="0" y="0" width="220" height="38" class="thead" fill="#14b8a6" />
+    <text x="110" y="25" text-anchor="middle" fill="#fff" font-weight="700">pagos</text>
+    <rect x="0" y="38" width="220" height="36" class="pk" />
+    <text x="12" y="62" class="label">PK id UUID</text>
+    <rect x="0" y="74" width="220" height="30" class="fk" />
+    <text x="12" y="94" class="label">FK orden_id UUID</text>
+    <rect x="0" y="104" width="220" height="30" class="row" />
+    <text x="12" y="124" class="label">monto numeric</text>
+    <rect x="0" y="134" width="220" height="30" class="row" />
+    <text x="12" y="154" class="label">proveedor varchar(60)</text>
+    <rect x="0" y="164" width="220" height="30" class="row" />
+    <text x="12" y="184" class="label">referencia varchar(120)</text>
+    <rect x="0" y="194" width="220" height="30" class="row" />
+    <text x="12" y="214" class="label">fecha timestamp</text>
+  </g>
+
+  <!-- Relations -->
+  <line x1="280" y1="220" x2="330" y2="220" class="rel" />
+  <text x="295" y="206" class="note">1..*</text>
+  <text x="315" y="206" class="note">1</text>
+
+  <line x1="540" y1="220" x2="590" y2="220" class="rel" />
+  <text x="555" y="206" class="note">1..*</text>
+  <text x="575" y="206" class="note">1</text>
+
+  <line x1="800" y1="220" x2="850" y2="220" class="rel" />
+  <text x="815" y="206" class="note">1..*</text>
+  <text x="835" y="206" class="note">1</text>
+
+  <line x1="260" y1="380" x2="260" y2="330" class="rel" />
+  <text x="270" y="355" class="note">1</text>
+  <text x="270" y="335" class="note">1..*</text>
+
+  <line x1="590" y1="380" x2="590" y2="320" class="rel" />
+  <text x="600" y="355" class="note">1</text>
+  <text x="600" y="335" class="note">1..*</text>
+
+  <text x="70" y="660" class="note">Colores: azul = PK, amarillo = FK, gris = atributos.</text>
+  <text x="70" y="680" class="note">Optimizado para PostgreSQL con UUID y normalización mínima para auditoría.</text>
+</svg>

@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720" role="img" aria-labelledby="title desc">
+  <title id="title">Diagrama de clases - Eventos Perú</title>
+  <desc id="desc">Clases principales del dominio y sus asociaciones.</desc>
+  <style>
+    text { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
+    .box { fill: #fff; stroke: #0f172a; stroke-width: 2; rx: 10; ry: 10; }
+    .header { fill: #2563eb; }
+    .header text { fill: white; font-weight: 700; }
+    .section { fill: #f8fafc; }
+    .label { font-size: 14px; }
+    .title { font-size: 16px; font-weight: 700; }
+    .assoc { stroke: #334155; stroke-width: 2; }
+    .multiplicity { font-size: 13px; fill: #0f172a; }
+  </style>
+
+  <rect x="0" y="0" width="1100" height="720" fill="#f5f7fb" />
+  <text x="550" y="36" text-anchor="middle" class="title" font-size="24">Diagrama de clases (dominio)</text>
+
+  <!-- Event -->
+  <g transform="translate(70 80)">
+    <rect x="0" y="0" width="230" height="190" class="box" />
+    <rect x="0" y="0" width="230" height="38" class="header" />
+    <text x="115" y="25" text-anchor="middle">Evento</text>
+    <g class="section">
+      <rect x="0" y="38" width="230" height="72" fill="#f8fafc" />
+      <text x="10" y="60" class="label">- id: UUID</text>
+      <text x="10" y="80" class="label">- titulo: String</text>
+      <text x="10" y="100" class="label">- fecha: DateTime</text>
+    </g>
+    <g class="section">
+      <rect x="0" y="110" width="230" height="80" fill="#fef3c7" />
+      <text x="10" y="132" class="label">+ programar()</text>
+      <text x="10" y="152" class="label">+ publicar()</text>
+      <text x="10" y="172" class="label">+ cancelar()</text>
+    </g>
+  </g>
+
+  <!-- Venue -->
+  <g transform="translate(420 80)">
+    <rect x="0" y="0" width="230" height="170" class="box" />
+    <rect x="0" y="0" width="230" height="38" class="header" fill="#22c55e" />
+    <text x="115" y="25" text-anchor="middle">Local</text>
+    <g class="section">
+      <rect x="0" y="38" width="230" height="62" fill="#f8fafc" />
+      <text x="10" y="60" class="label">- id: UUID</text>
+      <text x="10" y="80" class="label">- nombre: String</text>
+      <text x="10" y="100" class="label">- capacidad: int</text>
+    </g>
+    <g class="section">
+      <rect x="0" y="100" width="230" height="70" fill="#dcfce7" />
+      <text x="10" y="122" class="label">+ reservarAsiento()</text>
+      <text x="10" y="142" class="label">+ liberarAsiento()</text>
+    </g>
+  </g>
+
+  <!-- Ticket -->
+  <g transform="translate(770 80)">
+    <rect x="0" y="0" width="230" height="170" class="box" />
+    <rect x="0" y="0" width="230" height="38" class="header" fill="#8b5cf6" />
+    <text x="115" y="25" text-anchor="middle">Ticket</text>
+    <g class="section">
+      <rect x="0" y="38" width="230" height="62" fill="#f8fafc" />
+      <text x="10" y="60" class="label">- id: UUID</text>
+      <text x="10" y="80" class="label">- precio: Money</text>
+      <text x="10" y="100" class="label">- estado: enum</text>
+    </g>
+    <g class="section">
+      <rect x="0" y="100" width="230" height="70" fill="#ede9fe" />
+      <text x="10" y="122" class="label">+ marcarPagado()</text>
+      <text x="10" y="142" class="label">+ emitirQR()</text>
+    </g>
+  </g>
+
+  <!-- Usuario -->
+  <g transform="translate(200 330)">
+    <rect x="0" y="0" width="230" height="170" class="box" />
+    <rect x="0" y="0" width="230" height="38" class="header" fill="#f97316" />
+    <text x="115" y="25" text-anchor="middle">Usuario</text>
+    <g class="section">
+      <rect x="0" y="38" width="230" height="62" fill="#f8fafc" />
+      <text x="10" y="60" class="label">- id: UUID</text>
+      <text x="10" y="80" class="label">- email: String</text>
+      <text x="10" y="100" class="label">- rol: enum</text>
+    </g>
+    <g class="section">
+      <rect x="0" y="100" width="230" height="70" fill="#ffedd5" />
+      <text x="10" y="122" class="label">+ autenticar()</text>
+      <text x="10" y="142" class="label">+ actualizarPerfil()</text>
+    </g>
+  </g>
+
+  <!-- Orden -->
+  <g transform="translate(500 330)">
+    <rect x="0" y="0" width="250" height="190" class="box" />
+    <rect x="0" y="0" width="250" height="38" class="header" fill="#0ea5e9" />
+    <text x="125" y="25" text-anchor="middle">Orden</text>
+    <g class="section">
+      <rect x="0" y="38" width="250" height="80" fill="#f8fafc" />
+      <text x="10" y="60" class="label">- id: UUID</text>
+      <text x="10" y="80" class="label">- total: Money</text>
+      <text x="10" y="100" class="label">- estado: enum</text>
+      <text x="10" y="120" class="label">- checkoutUrl: String</text>
+    </g>
+    <g class="section">
+      <rect x="0" y="118" width="250" height="72" fill="#e0f2fe" />
+      <text x="10" y="140" class="label">+ agregarTicket()</text>
+      <text x="10" y="160" class="label">+ confirmarPago()</text>
+    </g>
+  </g>
+
+  <!-- Relaciones -->
+  <line x1="300" y1="180" x2="420" y2="180" class="assoc" />
+  <text x="360" y="168" class="multiplicity">1</text>
+  <text x="300" y="168" class="multiplicity">1..*</text>
+
+  <line x1="650" y1="180" x2="770" y2="180" class="assoc" />
+  <text x="710" y="168" class="multiplicity">1</text>
+  <text x="650" y="168" class="multiplicity">0..*</text>
+
+  <line x1="185" y1="330" x2="185" y2="270" class="assoc" />
+  <text x="195" y="305" class="multiplicity">1</text>
+  <text x="195" y="285" class="multiplicity">1..*</text>
+
+  <line x1="430" y1="420" x2="500" y2="420" class="assoc" />
+  <text x="448" y="408" class="multiplicity">1</text>
+  <text x="468" y="455" class="multiplicity">1..*</text>
+
+  <line x1="625" y1="330" x2="625" y2="250" class="assoc" />
+  <text x="635" y="295" class="multiplicity">1</text>
+  <text x="635" y="265" class="multiplicity">1..*</text>
+
+  <line x1="750" y1="420" x2="860" y2="250" class="assoc" stroke-dasharray="6 4" />
+  <text x="795" y="338" class="multiplicity">1</text>
+  <text x="840" y="285" class="multiplicity">0..1</text>
+
+  <text x="90" y="655" class="label" fill="#0f172a">Relaciones sólidas: composición/contención</text>
+  <text x="470" y="655" class="label" fill="#0f172a">Relación punteada: referencia a comprobante de pago externo</text>
+</svg>

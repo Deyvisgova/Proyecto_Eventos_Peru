@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="750" viewBox="0 0 1100 750" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitectura por capas - Eventos Perú</title>
+  <desc id="desc">Diagrama colorido que muestra las capas Presentación, Aplicación, Dominio e Infraestructura con sus componentes principales.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8f5ff" />
+      <stop offset="100%" stop-color="#f8f4ff" />
+    </linearGradient>
+    <style>
+      text { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
+      .layer { rx: 18; ry: 18; fill: white; stroke-width: 3; }
+      .title { font-size: 26px; font-weight: 700; fill: #1f2937; }
+      .subtitle { font-size: 18px; font-weight: 700; fill: #0f172a; }
+      .item { font-size: 16px; fill: #1f2937; }
+      .note { font-size: 14px; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1100" height="750" fill="url(#bg)" />
+  <text x="550" y="60" text-anchor="middle" class="title">Arquitectura por capas del sistema de eventos</text>
+  <text x="550" y="90" text-anchor="middle" class="note">Responsabilidades claras, componentes desacoplados y flujos bien definidos</text>
+
+  <!-- Layer backgrounds -->
+  <rect x="60" y="120" width="980" height="110" class="layer" stroke="#3b82f6" fill="#eff6ff" />
+  <rect x="60" y="250" width="980" height="110" class="layer" stroke="#22c55e" fill="#ecfdf3" />
+  <rect x="60" y="380" width="980" height="110" class="layer" stroke="#eab308" fill="#fffbeb" />
+  <rect x="60" y="510" width="980" height="170" class="layer" stroke="#8b5cf6" fill="#f5f3ff" />
+
+  <!-- Presentación -->
+  <text x="85" y="155" class="subtitle">Presentación</text>
+  <text x="85" y="182" class="item">• Angular SPA (páginas públicas y panel de organizador)</text>
+  <text x="85" y="208" class="item">• Formularios reactivos, validaciones y componentes reusables</text>
+  <text x="85" y="234" class="item">• Comunicación vía REST/JSON + interceptores de seguridad</text>
+  <g transform="translate(860 150)">
+    <rect x="0" y="0" width="160" height="60" rx="12" ry="12" fill="#3b82f6" opacity="0.15" />
+    <text x="80" y="28" text-anchor="middle" class="item" font-weight="700">UI/UX</text>
+    <text x="80" y="48" text-anchor="middle" class="note">Tailwind / Material</text>
+  </g>
+
+  <!-- Aplicación -->
+  <text x="85" y="285" class="subtitle">Aplicación / Servicios</text>
+  <text x="85" y="312" class="item">• Controladores REST (Spring Boot)</text>
+  <text x="85" y="338" class="item">• Casos de uso coordinan reglas y orquestan integraciones</text>
+  <text x="85" y="364" class="item">• Patrones: Strategy para pagos, Observer para notificaciones</text>
+  <g transform="translate(820 278)">
+    <rect x="0" y="0" width="220" height="70" rx="14" ry="14" fill="#22c55e" opacity="0.18" />
+    <text x="110" y="30" text-anchor="middle" class="item" font-weight="700">Seguridad &amp; API</text>
+    <text x="110" y="54" text-anchor="middle" class="note">JWT · Rate limiting · DTOs</text>
+  </g>
+
+  <!-- Dominio -->
+  <text x="85" y="415" class="subtitle">Dominio</text>
+  <text x="85" y="442" class="item">• Entidades: Evento, Local, Ticket, Usuario, Orden</text>
+  <text x="85" y="468" class="item">• Servicios de dominio con invariantes y reglas de negocio</text>
+  <text x="85" y="494" class="item">• Interfaces de repositorio para persistencia desacoplada</text>
+  <g transform="translate(820 408)">
+    <rect x="0" y="0" width="220" height="70" rx="14" ry="14" fill="#eab308" opacity="0.18" />
+    <text x="110" y="30" text-anchor="middle" class="item" font-weight="700">Reglas clave</text>
+    <text x="110" y="54" text-anchor="middle" class="note">Aforo · Precios · Estados</text>
+  </g>
+
+  <!-- Infraestructura -->
+  <text x="85" y="545" class="subtitle">Infraestructura</text>
+  <text x="85" y="572" class="item">• Repositorios JPA, migraciones Flyway</text>
+  <text x="85" y="598" class="item">• Integraciones: pasarela de pago, correo, colas de eventos</text>
+  <text x="85" y="624" class="item">• Observabilidad: logs estructurados, métricas, tracing</text>
+  <g transform="translate(820 535)">
+    <rect x="0" y="0" width="220" height="120" rx="14" ry="14" fill="#8b5cf6" opacity="0.16" />
+    <text x="110" y="32" text-anchor="middle" class="item" font-weight="700">Infra &amp; DevOps</text>
+    <text x="110" y="60" text-anchor="middle" class="note">Docker · Kubernetes</text>
+    <text x="110" y="84" text-anchor="middle" class="note">PostgreSQL · Redis · S3</text>
+  </g>
+
+  <!-- Flow arrows -->
+  <path d="M540 230 L540 250" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M540 360 L540 380" stroke="#16a34a" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M540 490 L540 510" stroke="#ca8a04" stroke-width="3" marker-end="url(#arrow)" />
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 z" fill="#1f2937" />
+    </marker>
+  </defs>
+
+  <!-- Side callouts -->
+  <g transform="translate(70 650)">
+    <rect x="0" y="0" width="420" height="60" rx="12" ry="12" fill="#0ea5e9" opacity="0.15" />
+    <text x="20" y="32" class="item">API pública: OpenAPI + versionado, protección con JWT y roles</text>
+  </g>
+  <g transform="translate(520 650)">
+    <rect x="0" y="0" width="520" height="60" rx="12" ry="12" fill="#f97316" opacity="0.15" />
+    <text x="20" y="32" class="item">Calidad: pruebas unitarias/contract, CI/CD y feature flags</text>
+  </g>
+</svg>
