@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface ServicioOpcionRepositorio extends JpaRepository<ServicioOpcion, Integer> {
     List<ServicioOpcion> findByProveedorServicio(ProveedorServicio proveedorServicio);
+
+    void deleteByProveedorServicio(ProveedorServicio proveedorServicio);
 }

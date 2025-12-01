@@ -16,4 +16,6 @@ public interface DetalleReservaRepositorio extends JpaRepository<DetalleReserva,
 
     // Buscar todos los detalles por opción de servicio
     List<DetalleReserva> findByOpcion(ServicioOpcion opcion);
+
+    void deleteByOpcionIn(List<ServicioOpcion> opciones);
 }

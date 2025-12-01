@@ -1,0 +1,181 @@
+<div class="reportes-admin">
+  <header class="encabezado">
+    <div>
+      <p class="eyebrow">Centro de reportes</p>
+      <h1>Reportes y descargas</h1>
+      <p class="subtitulo">Consulta métricas detalladas de usuarios, proveedores, eventos, servicios y reservas.</p>
+    </div>
+    <div class="acciones">
+      <button class="btn-primario" (click)="generarPdf()" [disabled]="cargando">
+        <i class="bi bi-file-earmark-pdf"></i>
+        PDF general
+      </button>
+      <button class="btn-secundario" (click)="generarPdfUsuarios()" [disabled]="cargando">Usuarios</button>
+      <button class="btn-secundario" (click)="generarPdfProveedores()" [disabled]="cargando">Proveedores</button>
+      <button class="btn-secundario" (click)="generarPdfEventos()" [disabled]="cargando">Eventos</button>
+      <button class="btn-secundario" (click)="generarPdfCatalogo()" [disabled]="cargando">Servicios</button>
+      <button class="btn-secundario" (click)="generarPdfReservas()" [disabled]="cargando">Reservas</button>
+    </div>
+  </header>
+
+  <section class="filtros">
+    <div class="campo">
+      <label for="inicio">Fecha inicio</label>
+      <input id="inicio" type="date" [(ngModel)]="fechaInicio" (change)="aplicarFiltros()" />
+    </div>
+    <div class="campo">
+      <label for="fin">Fecha fin</label>
+      <input id="fin" type="date" [(ngModel)]="fechaFin" (change)="aplicarFiltros()" />
+    </div>
+    <div class="rango">Rango aplicado: {{ rangoSeleccionado() }}</div>
+  </section>
+
+  <section class="resumen" *ngIf="!cargando">
+    <div class="card" title="Usuarios registrados">
+      <p class="etiqueta">Usuarios</p>
+      <p class="valor">{{ resumen.usuarios }}</p>
+      <small>{{ usuariosPorRol['ADMIN'] || 0 }} admins · {{ usuariosPorRol['PROVEEDOR'] || 0 }} proveedores · {{ usuariosPorRol['CLIENTE'] || 0 }} clientes</small>
+    </div>
+    <div class="card" title="Proveedores">
+      <p class="etiqueta">Proveedores</p>
+      <p class="valor">{{ resumen.proveedores }}</p>
+      <small>{{ textoEstados(proveedoresPorEstado, 'Sin estados') }}</small>
+    </div>
+    <div class="card" title="Eventos configurados">
+      <p class="etiqueta">Eventos</p>
+      <p class="valor">{{ resumen.eventos }}</p>
+      <small>{{ eventos.length ? 'Último ID: ' + eventos[0].idEvento : 'Sin eventos' }}</small>
+    </div>
+    <div class="card" title="Tipos de servicio">
+      <p class="etiqueta">Catálogo servicios</p>
+      <p class="valor">{{ resumen.catalogo }}</p>
+      <small>{{ textoEstados(catalogoPorEstado, 'Sin tipos') }}</small>
+    </div>
+    <div class="card" title="Reservas filtradas">
+      <p class="etiqueta">Reservas</p>
+      <p class="valor">{{ reservasFiltradas.length }}/{{ resumen.reservas }}</p>
+      <small>{{ textoEstados(reservasPorEstado, 'Sin reservas') }}</small>
+    </div>
+  </section>
+
+  <section class="bloque" *ngIf="cargando">
+    <p class="cargando">Cargando datos...</p>
+  </section>
+
+  <section class="bloque" *ngIf="error">
+    <p class="error">{{ error }}</p>
+  </section>
+
+  <section class="bloques" *ngIf="!cargando && !error">
+    <article class="bloque">
+      <header class="bloque-header">
+        <div>
+          <p class="eyebrow">Usuarios</p>
+          <h2>Distribución por rol</h2>
+        </div>
+        <button class="btn-link" (click)="generarPdfUsuarios()">PDF</button>
+      </header>
+      <ul class="lista">
+        <li>Administradores: {{ usuariosPorRol['ADMIN'] || 0 }}</li>
+        <li>Proveedores: {{ usuariosPorRol['PROVEEDOR'] || 0 }}</li>
+        <li>Clientes: {{ usuariosPorRol['CLIENTE'] || 0 }}</li>
+        <li *ngFor="let u of usuarios | slice:0:5">
+          <span class="pill pill-claro">{{ u.rol }}</span>
+          <div>
+            <strong>{{ u.nombre }}</strong>
+            <small>{{ u.email }}</small>
+          </div>
+        </li>
+      </ul>
+    </article>
+
+    <article class="bloque">
+      <header class="bloque-header">
+        <div>
+          <p class="eyebrow">Proveedores</p>
+          <h2>Estados y últimos registros</h2>
+        </div>
+        <button class="btn-link" (click)="generarPdfProveedores()">PDF</button>
+      </header>
+      <ul class="lista">
+        <li *ngFor="let estado of (proveedoresPorEstado | keyvalue)">
+          <strong>{{ estado.key }}</strong>
+          <span class="pill">{{ estado.value }}</span>
+        </li>
+        <li *ngFor="let p of proveedores | slice:0:5">
+          <div>
+            <strong>{{ p.nombre || p.nombreEmpresa || p.razonSocial || 'Proveedor' }}</strong>
+            <small>Estado: {{ p.estado || 'Sin estado' }}</small>
+          </div>
+        </li>
+      </ul>
+    </article>
+
+    <article class="bloque">
+      <header class="bloque-header">
+        <div>
+          <p class="eyebrow">Eventos</p>
+          <h2>Listado</h2>
+        </div>
+        <button class="btn-link" (click)="generarPdfEventos()">PDF</button>
+      </header>
+      <ul class="lista">
+        <li *ngFor="let e of eventos | slice:0:8">{{ e.nombreEvento || 'Evento' }} (ID: {{ e.idEvento }})</li>
+        <li *ngIf="!eventos.length" class="texto-suave">No hay eventos registrados.</li>
+      </ul>
+    </article>
+
+    <article class="bloque">
+      <header class="bloque-header">
+        <div>
+          <p class="eyebrow">Servicios</p>
+          <h2>Catálogo de tipos</h2>
+        </div>
+        <button class="btn-link" (click)="generarPdfCatalogo()">PDF</button>
+      </header>
+      <ul class="lista">
+        <li *ngFor="let c of catalogo | slice:0:6">
+          <div>
+            <strong>{{ c.nombre }}</strong>
+            <small>{{ c.descripcion || 'Sin descripción' }}</small>
+          </div>
+          <span class="pill" [ngClass]="estadoEtiqueta(c.estado)">{{ c.estado }}</span>
+        </li>
+        <li *ngIf="!catalogo.length" class="texto-suave">Sin tipos de servicio cargados.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="bloque" *ngIf="!cargando && !error">
+    <header class="bloque-header">
+      <div>
+        <p class="eyebrow">Detalle de reservas</p>
+        <h2>Reservas filtradas ({{ reservasFiltradas.length }})</h2>
+      </div>
+      <span class="pill pill-claro">{{ rangoSeleccionado() }}</span>
+      <button class="btn-link" (click)="generarPdfReservas()">PDF</button>
+    </header>
+
+    <div class="tabla">
+      <div class="fila cabecera">
+        <span>#</span>
+        <span>Cliente</span>
+        <span>Proveedor</span>
+        <span>Evento</span>
+        <span>Fecha</span>
+        <span>Estado</span>
+      </div>
+      <div class="fila" *ngFor="let reserva of reservasFiltradas; let i = index">
+        <span>{{ i + 1 }}</span>
+        <span>{{ clienteNombre(reserva) }}</span>
+        <span>{{ proveedorNombre(reserva) }}</span>
+        <span>{{ eventoTitulo(reserva) }}</span>
+        <span>{{ fechaLegible(reserva.fechaEvento || reserva.fechaReserva) }}</span>
+        <span class="pill" [ngClass]="estadoEtiqueta(reserva.estado)">{{ reserva.estado }}</span>
+      </div>
+      <div class="fila vacio" *ngIf="reservasFiltradas.length === 0">
+        <span class="colspan">No hay reservas en el rango seleccionado.</span>
+      </div>
+    </div>
+  </section>
+</div>
