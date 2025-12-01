@@ -65,6 +65,7 @@
                   <li *ngFor="let d of detalles[r.idReserva]">
                     <div>
                       <strong>{{ d.opcion?.nombreOpcion || 'Servicio reservado' }}</strong>
+                      <p class="texto-suave" *ngIf="nombreServicioDetalle(d) as servicio">Servicio: {{ servicio }}</p>
                       <p class="texto-suave" *ngIf="d.opcion?.proveedorServicio?.catalogoServicio?.evento as evento; else eventoPendiente">
                         Evento: {{ evento.nombreEvento }}
                       </p>

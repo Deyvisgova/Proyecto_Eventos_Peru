@@ -1,4 +1,7 @@
-<section class="dashboard">
+<div *ngIf="cargando" class="estado">Cargando métricas en vivo...</div>
+<div *ngIf="!cargando && error" class="estado error">{{ error }}</div>
+
+<section class="dashboard" *ngIf="!cargando && !error">
   <div class="cabecera">
     <div>
       <p class="eyebrow">Resumen operativo</p>
@@ -8,13 +11,12 @@
       </p>
     </div>
     <div class="acciones">
-      <button class="btn btn-light shadow-sm">
-        <i class="bi bi-cloud-arrow-down"></i>
-        Exportar
-      </button>
-      <button class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-circle"></i>
-        Nueva alerta
+      <span class="badge bg-soft" *ngIf="ultimaActualizacion">
+        Actualizado {{ ultimaActualizacion | date: 'shortTime' }}
+      </span>
+      <button class="btn btn-light shadow-sm" (click)="cargarDatos()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Recargar
       </button>
     </div>
   </div>

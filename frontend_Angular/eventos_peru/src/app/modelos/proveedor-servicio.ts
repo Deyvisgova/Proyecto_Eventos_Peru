@@ -11,6 +11,8 @@ export interface ProveedorBasico {
   direccion?: string;
   logo?: string;
   urlLogo?: string;
+  logoUrl?: string;
+  logo_url?: string;
   usuario?: {
     celular?: string;
     email?: string;
@@ -29,6 +31,7 @@ export interface ProveedorServicio {
 type ProveedorServicioLigero = {
   idProveedorServicio: number;
   catalogoServicio?: CatalogoServicio & { evento?: Evento };
+  nombrePublico?: string;
 };
 
 export interface ServicioOpcion {
