@@ -2,6 +2,7 @@ package com.eventosperu.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -29,6 +30,18 @@ public class Proveedor {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoProveedor estado = EstadoProveedor.PENDIENTE;
+
+    @Column(name = "logo_url")
+    private String logoUrl;
+
+    @Column(name = "fecha_revision")
+    private LocalDateTime fechaRevision;
+
+    @Column(name = "id_admin_revisor")
+    private Integer idAdminRevisor;
+
+    @Column(name = "motivo_rechazo")
+    private String motivoRechazo;
 
     public enum EstadoProveedor {
         PENDIENTE, APROBADO, RECHAZADO

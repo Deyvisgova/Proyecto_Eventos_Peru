@@ -123,6 +123,17 @@ export class ReservasCliente implements OnInit {
     return reserva.fechaLimiteRechazo || this.calcularFechaLimite(reserva.fechaEvento);
   }
 
+  nombreServicioDetalle(det: DetalleReserva) {
+    const catalogo = det.opcion?.proveedorServicio?.catalogoServicio as any;
+    const servicio = catalogo?.nombre || catalogo?.nombreServicio || det.opcion?.proveedorServicio?.nombrePublico;
+    return servicio || '';
+  }
+
+  nombreServicioReserva(reserva: Reserva) {
+    const detallePrincipal = this.detalles[reserva.idReserva]?.[0];
+    return detallePrincipal ? this.nombreServicioDetalle(detallePrincipal) : '';
+  }
+
   private agruparPorProveedor() {
     const mapa = new Map<number | null, { nombre: string; logo: string; reservas: Reserva[] }>();
 
@@ -156,6 +167,8 @@ export class ReservasCliente implements OnInit {
   resolverRutaImagen(ruta?: string | null) {
     if (!ruta) return '';
     if (/^https?:\/\//i.test(ruta) || ruta.startsWith('data:')) return ruta;
+    if (ruta.startsWith('/assets/')) return ruta;
+    if (ruta.startsWith('assets/')) return `/${ruta}`;
     const limpia = ruta.startsWith('/') ? ruta.slice(1) : ruta;
     return `${this.apiBaseImagenes}${limpia}`;
   }
