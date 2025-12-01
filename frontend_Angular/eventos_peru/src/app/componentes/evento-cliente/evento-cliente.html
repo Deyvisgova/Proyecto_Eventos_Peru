@@ -125,8 +125,9 @@
             </div>
           </div>
 
-          <div class="card-img sin-foto">
-            <span class="inicial-servicio">{{ p.nombrePublico.charAt(0) || 'S' }}</span>
+          <div class="card-img" [class.sin-foto]="!logoProveedor(p)">
+            <img *ngIf="logoProveedor(p)" [src]="logoProveedor(p)" alt="Logo de {{ p.nombrePublico }}" />
+            <span class="inicial-servicio" *ngIf="!logoProveedor(p)">{{ p.nombrePublico.charAt(0) || 'S' }}</span>
           </div>
 
           <div class="card-body">
@@ -180,6 +181,16 @@
             </div>
             <div class="opcion-agenda" *ngIf="seleccion[o.idOpcion]">
               <div class="campo-fecha">
+                <label>Cantidad</label>
+                <input
+                  type="number"
+                  min="1"
+                  [max]="o.stock || null"
+                  [ngModel]="cantidadesPorOpcion[o.idOpcion] || 1"
+                  (ngModelChange)="actualizarCantidad(o, $event)"
+                />
+              </div>
+              <div class="campo-fecha">
                 <label>Fecha</label>
                 <input
                   type="date"
@@ -211,12 +222,14 @@
           <h4>S/ {{ totalSeleccionado | number: '1.2-2' }}</h4>
         </div>
         <div class="chips compactas" *ngIf="tieneSeleccion">
-          <span class="chip" *ngFor="let op of opcionesSeleccionadas">{{ op.nombreOpcion }}</span>
+          <span class="chip" *ngFor="let op of opcionesSeleccionadas">
+            {{ op.nombreOpcion }} (x{{ cantidadesPorOpcion[op.idOpcion] || 1 }})
+          </span>
         </div>
       </div>
 
       <div class="agendar" *ngIf="opciones.length">
-        <label>¿Para qué fecha lo deseas?</label>
+        <label>Mira las fechas ocupadas</label>
         <div class="calendario-con-hora">
           <div class="calendario">
             <div class="calendario-header">
@@ -232,10 +245,8 @@
                   confirmada: d.estado === 'confirmada',
                   pendiente: d.estado === 'pendiente',
                   rechazada: d.estado === 'rechazada',
-                  activo: fechaEvento === d.fecha,
                   deshabilitado: d.pasado
                 }"
-                (click)="!d.pasado && seleccionarDia(d.fecha)"
               >
                 {{ d.numero }}
               </div>
@@ -246,27 +257,12 @@
               <span class="punto rechazada"></span> Rechazada
             </div>
           </div>
-
-          <div class="selector-hora">
-            <label for="horaServicio">Hora y minutos</label>
-            <input
-              id="horaServicio"
-              type="time"
-              [(ngModel)]="horaEvento"
-              (ngModelChange)="actualizarHoraGeneral($event)"
-              min="00:00"
-              max="23:59"
-            />
-            <p class="texto-sutil" *ngIf="fechaEvento">
-              Elegiste {{ fechaEvento | date: 'fullDate' }} a las {{ horaEvento }}.
-            </p>
-          </div>
         </div>
         <div class="acciones">
           <p class="texto-sutil info-agendar" *ngIf="mensajeAgendar">{{ mensajeAgendar }}</p>
           <div class="botones">
             <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
-            <button class="btn-primario" [disabled]="!fechaEvento || !tieneSeleccion || agendando" (click)="agendarEvento()">
+            <button class="btn-primario" [disabled]="!tieneSeleccion || agendando" (click)="agendarEvento()">
               {{ agendando ? 'Agregando...' : 'Agregar servicio' }}
             </button>
           </div>

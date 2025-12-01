@@ -97,6 +97,12 @@ export class ReservasProveedor implements OnInit {
     return 'estado cancelada';
   }
 
+  nombreServicioDetalle(det: DetalleReserva) {
+    const catalogo = det.opcion?.proveedorServicio?.catalogoServicio as any;
+    const servicio = catalogo?.nombre || catalogo?.nombreServicio || det.opcion?.proveedorServicio?.nombrePublico;
+    return servicio || '';
+  }
+
   abrirModal(reserva: Reserva, modo: 'confirmar' | 'cancelar') {
     this.reservaEnAccion = reserva;
     this.modoAccion = modo;

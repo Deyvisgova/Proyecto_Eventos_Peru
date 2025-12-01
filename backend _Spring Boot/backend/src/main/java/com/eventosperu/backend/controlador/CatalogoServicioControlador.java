@@ -7,8 +7,11 @@ import com.eventosperu.backend.model.dto.NuevoCatalogoServicioRequest;
 import com.eventosperu.backend.repositorio.CatalogoEventoServicioRepositorio;
 import com.eventosperu.backend.repositorio.CatalogoServicioRepositorio;
 import com.eventosperu.backend.repositorio.EventoRepositorio;
+import com.eventosperu.backend.repositorio.ProveedorServicioRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +30,9 @@ public class CatalogoServicioControlador {
 
     @Autowired
     private EventoRepositorio eventoRepositorio;
+
+    @Autowired
+    private ProveedorServicioRepositorio proveedorServicioRepositorio;
 
     /**
      * Lista todo el catálogo (se puede filtrar por estado enviando ?estado=ACTIVO/PENDIENTE/RECHAZADO).
@@ -244,6 +250,14 @@ public class CatalogoServicioControlador {
             return;
         }
         CatalogoServicio catalogo = catalogoOpt.get();
+
+        if (proveedorServicioRepositorio.existsByCatalogoServicio(catalogo)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede eliminar el tipo porque hay servicios de proveedores asociados"
+            );
+        }
+
         catalogoEventoServicioRepositorio.deleteByCatalogoServicio(catalogo);
         catalogoServicioRepositorio.delete(catalogo);
     }
