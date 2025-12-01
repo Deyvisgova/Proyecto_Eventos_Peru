@@ -89,7 +89,14 @@ public class ProveedorControlador {
             archivo.transferTo(archivoDestino.toFile());
 
             String rutaRelativa = Paths.get("assets", "logos_proveedores", nombreArchivo).toString().replace('\\', '/');
-            return ResponseEntity.ok().body(java.util.Map.of("path", rutaRelativa));
+            Proveedor proveedor = proveedorOpt.get();
+            proveedor.setLogoUrl(rutaRelativa);
+            proveedorRepositorio.save(proveedor);
+
+            return ResponseEntity.ok().body(java.util.Map.of(
+                    "path", rutaRelativa,
+                    "logoUrl", rutaRelativa
+            ));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("No se pudo guardar el logo");
         }

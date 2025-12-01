@@ -245,8 +245,9 @@ export class ServiciosPeo implements OnInit {
         this.cerrarModales();
         this.cargarCatalogo();
       },
-      error: () => {
-        this.error = 'No se pudo eliminar el registro.';
+      error: (err) => {
+        const detalle = err?.error?.message || err?.error || '';
+        this.error = detalle || 'No se pudo eliminar el registro.';
       },
     });
   }

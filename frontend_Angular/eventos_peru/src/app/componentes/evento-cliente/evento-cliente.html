@@ -95,6 +95,7 @@
                 *ngIf="logoProveedor(p)"
                 [src]="logoProveedor(p)"
                 alt="Logo de {{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}"
+                (error)="ocultarLogo(p, $event)"
               />
               <span *ngIf="!logoProveedor(p)">{{ inicialProveedor(p) }}</span>
             </div>
@@ -106,6 +107,7 @@
                   class="logo-mini"
                   [src]="logoProveedor(p)"
                   alt="Logo de {{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}"
+                  (error)="ocultarLogo(p, $event)"
                 />
                 {{ p.proveedor.nombreEmpresa || p.proveedor.nombre }}
               </h5>
@@ -121,12 +123,24 @@
               </div>
             </div>
             <div class="sello-servicio">
-              <span>{{ p.nombrePublico }}</span>
+              <span>{{ nombreServicio(p) }}</span>
             </div>
           </div>
 
-          <div class="card-img sin-foto">
-            <span class="inicial-servicio">{{ p.nombrePublico.charAt(0) || 'S' }}</span>
+          <div class="card-img" [class.sin-foto]="!logoProveedor(p)">
+            <ng-container *ngIf="logoProveedor(p); else placeholderServicio">
+              <img
+                [src]="logoProveedor(p)"
+                [alt]="'Logo de ' + nombreServicio(p)"
+                (error)="ocultarLogo(p, $event)"
+              />
+            </ng-container>
+            <ng-template #placeholderServicio>
+              <div class="placeholder-servicio">
+                <div class="placeholder-titulo">{{ nombreServicio(p) }}</div>
+                <p class="placeholder-desc">Sube un logo para que los clientes identifiquen tu marca.</p>
+              </div>
+            </ng-template>
           </div>
 
           <div class="card-body">
@@ -143,7 +157,16 @@
               </div>
             </div>
 
-            <button class="btn-primario" (click)="verServicios(p)">Ver servicios</button>
+            <div class="cta-servicio">
+              <div>
+                <p class="texto-sutil">Configura cantidades, fecha y hora</p>
+                <strong>{{ opcionesPorProveedor[p.idProveedorServicio]?.length || 0 }} opciones disponibles</strong>
+              </div>
+              <button class="btn-primario" (click)="verServicios(p)">
+                <i class="bi bi-list-check"></i>
+                Elegir opciones de servicio
+              </button>
+            </div>
           </div>
         </article>
       </div>
@@ -166,7 +189,7 @@
         <label class="opcion-contenido">
           <input type="checkbox" [ngModel]="seleccion[o.idOpcion]" (ngModelChange)="alternarOpcion(o, $event)" />
           <div class="opcion-media">
-            <img [src]="urlImagenOpcion(o)" alt="Imagen de {{ o.nombreOpcion }}" />
+            <img [src]="urlImagenOpcion(o)" alt="Imagen de {{ o.nombreOpcion }}" (error)="fotoGenerica($event)" />
           </div>
           <div class="opcion-texto">
             <div class="opcion-header">
@@ -179,6 +202,16 @@
               <span *ngIf="o.duracionMinutos">Duración: {{ o.duracionMinutos }} min</span>
             </div>
             <div class="opcion-agenda" *ngIf="seleccion[o.idOpcion]">
+              <div class="campo-fecha">
+                <label>Cantidad</label>
+                <input
+                  type="number"
+                  min="1"
+                  [max]="o.stock || null"
+                  [ngModel]="cantidadesPorOpcion[o.idOpcion] || 1"
+                  (ngModelChange)="actualizarCantidad(o, $event)"
+                />
+              </div>
               <div class="campo-fecha">
                 <label>Fecha</label>
                 <input
@@ -211,12 +244,14 @@
           <h4>S/ {{ totalSeleccionado | number: '1.2-2' }}</h4>
         </div>
         <div class="chips compactas" *ngIf="tieneSeleccion">
-          <span class="chip" *ngFor="let op of opcionesSeleccionadas">{{ op.nombreOpcion }}</span>
+          <span class="chip" *ngFor="let op of opcionesSeleccionadas">
+            {{ op.nombreOpcion }} (x{{ cantidadesPorOpcion[op.idOpcion] || 1 }})
+          </span>
         </div>
       </div>
 
       <div class="agendar" *ngIf="opciones.length">
-        <label>¿Para qué fecha lo deseas?</label>
+        <label>Mira las fechas ocupadas</label>
         <div class="calendario-con-hora">
           <div class="calendario">
             <div class="calendario-header">
@@ -232,10 +267,8 @@
                   confirmada: d.estado === 'confirmada',
                   pendiente: d.estado === 'pendiente',
                   rechazada: d.estado === 'rechazada',
-                  activo: fechaEvento === d.fecha,
                   deshabilitado: d.pasado
                 }"
-                (click)="!d.pasado && seleccionarDia(d.fecha)"
               >
                 {{ d.numero }}
               </div>
@@ -246,27 +279,12 @@
               <span class="punto rechazada"></span> Rechazada
             </div>
           </div>
-
-          <div class="selector-hora">
-            <label for="horaServicio">Hora y minutos</label>
-            <input
-              id="horaServicio"
-              type="time"
-              [(ngModel)]="horaEvento"
-              (ngModelChange)="actualizarHoraGeneral($event)"
-              min="00:00"
-              max="23:59"
-            />
-            <p class="texto-sutil" *ngIf="fechaEvento">
-              Elegiste {{ fechaEvento | date: 'fullDate' }} a las {{ horaEvento }}.
-            </p>
-          </div>
         </div>
         <div class="acciones">
           <p class="texto-sutil info-agendar" *ngIf="mensajeAgendar">{{ mensajeAgendar }}</p>
           <div class="botones">
             <button class="btn-secundario" (click)="cerrarModal()">Cerrar</button>
-            <button class="btn-primario" [disabled]="!fechaEvento || !tieneSeleccion || agendando" (click)="agendarEvento()">
+            <button class="btn-primario" [disabled]="!tieneSeleccion || agendando" (click)="agendarEvento()">
               {{ agendando ? 'Agregando...' : 'Agregar servicio' }}
             </button>
           </div>

@@ -13,4 +13,5 @@ public interface ProveedorServicioRepositorio extends JpaRepository<ProveedorSer
     List<ProveedorServicio> findByProveedor(Proveedor proveedor);
     List<ProveedorServicio> findByCatalogoServicio_Estado(CatalogoServicio.EstadoCatalogo estado);
     List<ProveedorServicio> findByEstado(ProveedorServicio.EstadoProveedorServicio estado);
+    boolean existsByCatalogoServicio(CatalogoServicio catalogoServicio);
 }

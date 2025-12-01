@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 140" role="img" aria-labelledby="title desc">
+  <title id="title">Servicio genérico</title>
+  <desc id="desc">Ilustración neutra usada cuando no hay imagen disponible</desc>
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dbeafe" />
+      <stop offset="100%" stop-color="#c7d2fe" />
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="168" height="128" rx="14" fill="url(#g1)" stroke="#e5e7eb" />
+  <circle cx="60" cy="70" r="26" fill="#2563eb" opacity="0.18" />
+  <circle cx="120" cy="64" r="22" fill="#4f46e5" opacity="0.16" />
+  <path d="M50 92c8-10 18-15 28-15s20 5 30 15" fill="none" stroke="#1f2937" stroke-width="4" stroke-linecap="round" stroke-opacity="0.35" />
+  <path d="M74 46a12 12 0 1 1-24 0a12 12 0 0 1 24 0Z" fill="#1d4ed8" opacity="0.35" />
+  <path d="M122 44c7 0 12 5 12 12s-5 12-12 12s-12-5-12-12s5-12 12-12Z" fill="#3730a3" opacity="0.28" />
+  <rect x="68" y="22" width="44" height="12" rx="6" fill="#0f172a" opacity="0.15" />
+</svg>

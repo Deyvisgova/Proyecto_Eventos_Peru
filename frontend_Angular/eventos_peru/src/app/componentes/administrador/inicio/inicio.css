@@ -41,6 +41,22 @@
   flex-shrink: 0;
 }
 
+.estado {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.estado.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
 .btn.btn-light {
   background: #f8fafc;
   color: #0f172a;
