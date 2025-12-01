@@ -59,9 +59,10 @@ public class DetalleReservaControlador {
         detalle.setOpcion(opcion);
 
         // Normalizar cantidad y precio para evitar errores de integridad
-        if (detalle.getCantidad() == null || detalle.getCantidad() <= 0) {
-            detalle.setCantidad(1);
-        }
+        int cantidadNormalizada = (detalle.getCantidad() == null || detalle.getCantidad() <= 0)
+                ? 1
+                : detalle.getCantidad();
+        detalle.setCantidad(cantidadNormalizada);
 
         BigDecimal precio = detalle.getPrecioUnitario();
         if (precio == null) {
@@ -74,6 +75,14 @@ public class DetalleReservaControlador {
         }
 
         detalle.setPrecioUnitario(precio.setScale(2, RoundingMode.HALF_UP));
+
+        if (opcion.getStock() != null) {
+            if (opcion.getStock() < cantidadNormalizada) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay stock suficiente para la cantidad solicitada");
+            }
+            opcion.setStock(opcion.getStock() - cantidadNormalizada);
+            opcionRepositorio.save(opcion);
+        }
 
         return detalleReservaRepositorio.save(detalle);
     }

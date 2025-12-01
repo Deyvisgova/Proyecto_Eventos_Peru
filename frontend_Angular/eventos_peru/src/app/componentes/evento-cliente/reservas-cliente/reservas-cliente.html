@@ -32,12 +32,17 @@
           <span [class]="estadoClase(r)">{{ r.estado }}</span>
         </div>
 
+        <div class="servicio" *ngIf="nombreServicioReserva(r) as servicio">
+          <span class="chip-servicio">{{ servicio }}</span>
+        </div>
+
         <div class="detalles" *ngIf="detalles[r.idReserva]?.length">
           <h5>Detalle</h5>
           <ul>
             <li *ngFor="let d of detalles[r.idReserva]">
               <div>
                 <strong>{{ d.opcion?.nombreOpcion || 'Servicio reservado' }}</strong>
+                <p class="texto-sutil" *ngIf="nombreServicioDetalle(d) as servicio">Servicio: {{ servicio }}</p>
                 <p class="texto-sutil">Cantidad: {{ d.cantidad }}</p>
                 <p class="texto-sutil" *ngIf="d.opcion?.proveedorServicio?.catalogoServicio?.evento as evento">
                   Evento: {{ evento.nombreEvento }}

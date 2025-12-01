@@ -72,14 +72,14 @@ export class EventoCliente implements OnInit {
   seleccion: Record<number, boolean> = {};
   fechasPorOpcion: Record<number, string> = {};
   horasPorOpcion: Record<number, string> = {};
-  fechaEvento = '';
-  horaEvento = '12:00';
+  cantidadesPorOpcion: Record<number, number> = {};
   agendando = false;
   mensajeAgendar = '';
   numeroReservaActual: number | null = null;
   ultimoConteoReserva = 0;
 
   private apiBaseImagenes = 'http://localhost:8080/';
+  private logoFallback = 'assets/servicios/placeholder-servicio.svg';
 
   ngOnInit() {
     // 🧠 Recuperar nombre y validar sesión
@@ -150,6 +150,8 @@ export class EventoCliente implements OnInit {
     const posibleLogo =
       p.proveedor.logo ||
       p.proveedor.urlLogo ||
+      p.proveedor.logoUrl ||
+      proveedorPlano['logo_url'] ||
       proveedorPlano['logoUrl'] ||
       proveedorPlano['logo'];
 
@@ -161,11 +163,25 @@ export class EventoCliente implements OnInit {
     return nombre.slice(0, 1).toUpperCase();
   }
 
+  nombreServicio(p: ProveedorServicio) {
+    return p.nombrePublico || p.catalogoServicio?.nombre || 'Servicio';
+  }
+
+  ponerLogoFallback(event: Event) {
+    const target = event.target as HTMLImageElement | null;
+    if (target) {
+      target.src = this.logoFallback;
+    }
+  }
+
   private resolverRutaImagen(ruta?: string | null) {
     if (!ruta) return '';
-    if (/^https?:\/\//i.test(ruta) || ruta.startsWith('data:')) return ruta;
-    const limpia = ruta.startsWith('/') ? ruta.slice(1) : ruta;
-    return `${this.apiBaseImagenes}${limpia}`;
+    const limpia = ruta.trim();
+    if (/^https?:\/\//i.test(limpia) || limpia.startsWith('data:')) return limpia;
+    if (limpia.startsWith('/assets/')) return limpia;
+    if (limpia.startsWith('assets/')) return `/${limpia}`;
+    const sinBarra = limpia.startsWith('/') ? limpia.slice(1) : limpia;
+    return `${this.apiBaseImagenes}${sinBarra}`;
   }
 
   get opcionesSeleccionadas(): ServicioOpcion[] {
@@ -173,7 +189,10 @@ export class EventoCliente implements OnInit {
   }
 
   get totalSeleccionado(): number {
-    return this.opcionesSeleccionadas.reduce((acc, op) => acc + (op.precio || 0), 0);
+    return this.opcionesSeleccionadas.reduce((acc, op) => {
+      const cantidad = this.cantidadesPorOpcion[op.idOpcion] || 1;
+      return acc + (op.precio || 0) * cantidad;
+    }, 0);
   }
 
   get tieneSeleccion(): boolean {
@@ -181,7 +200,9 @@ export class EventoCliente implements OnInit {
   }
 
   get conteoVisibleCarrito(): number {
-    return this.tieneSeleccion ? this.opcionesSeleccionadas.length : this.ultimoConteoReserva;
+    return this.tieneSeleccion
+      ? this.opcionesSeleccionadas.reduce((acc, op) => acc + (this.cantidadesPorOpcion[op.idOpcion] || 1), 0)
+      : this.ultimoConteoReserva;
   }
 
   irAReservas() {
@@ -216,7 +237,19 @@ export class EventoCliente implements OnInit {
     if (!activo) {
       delete this.fechasPorOpcion[opcion.idOpcion];
       delete this.horasPorOpcion[opcion.idOpcion];
+      delete this.cantidadesPorOpcion[opcion.idOpcion];
+    } else {
+      this.cantidadesPorOpcion[opcion.idOpcion] = this.cantidadesPorOpcion[opcion.idOpcion] || 1;
     }
+  }
+
+  actualizarCantidad(opcion: ServicioOpcion, valor: number) {
+    const cantidad = Math.max(1, Math.floor(Number(valor) || 0));
+    if (opcion.stock != null && cantidad > opcion.stock) {
+      this.cantidadesPorOpcion[opcion.idOpcion] = opcion.stock;
+      return;
+    }
+    this.cantidadesPorOpcion[opcion.idOpcion] = cantidad;
   }
 
   actualizarFechaOpcion(opcion: ServicioOpcion, fecha: string) {
@@ -408,12 +441,13 @@ export class EventoCliente implements OnInit {
     this.proveedoresFiltrados = proveedoresSegunSeleccion.filter((p) => {
       const nombreProveedor = (p.proveedor.nombreEmpresa || p.proveedor.nombre || '').toLowerCase();
       const nombreServicio = (p.catalogoServicio?.nombre || p.nombrePublico || '').toLowerCase();
+      const nombrePublico = (p.nombrePublico || '').toLowerCase();
 
       const coincideTexto =
         !filtroTexto ||
         nombreProveedor.includes(filtroTexto) ||
         nombreServicio.includes(filtroTexto) ||
-        p.nombrePublico.toLowerCase().includes(filtroTexto) ||
+        nombrePublico.includes(filtroTexto) ||
         p.descripcionGeneral?.toLowerCase().includes(filtroTexto);
 
       return coincideTexto;
@@ -427,8 +461,7 @@ export class EventoCliente implements OnInit {
     this.seleccion = {};
     this.fechasPorOpcion = {};
     this.horasPorOpcion = {};
-    this.fechaEvento = '';
-    this.horaEvento = '12:00';
+    this.cantidadesPorOpcion = {};
     this.reservasProveedor = [];
     this.diasCalendario = [];
     this.mesActual = this.obtenerInicioMes(new Date());
@@ -439,7 +472,10 @@ export class EventoCliente implements OnInit {
     this.proveedorServicioSrv.listarOpciones(p.idProveedorServicio).subscribe({
       next: (ops) => {
         this.opciones = ops.filter((o) => o.estado === 'ACTIVO');
-        this.opciones.forEach((o) => (this.seleccion[o.idOpcion] = false));
+        this.opciones.forEach((o) => {
+          this.seleccion[o.idOpcion] = false;
+          this.cantidadesPorOpcion[o.idOpcion] = 1;
+        });
         this.opcionesPorProveedor[p.idProveedorServicio] = this.opciones;
       },
       error: (err) => {
@@ -463,8 +499,9 @@ export class EventoCliente implements OnInit {
     this.proveedorSeleccionado = null;
     this.opciones = [];
     this.seleccion = {};
-    this.fechaEvento = '';
-    this.horaEvento = '12:00';
+    this.fechasPorOpcion = {};
+    this.horasPorOpcion = {};
+    this.cantidadesPorOpcion = {};
   }
 
   private obtenerIdReserva(reserva: Reserva | any): number | null {
@@ -475,7 +512,7 @@ export class EventoCliente implements OnInit {
 
   agendarEvento() {
     if (!this.proveedorSeleccionado || !this.clienteId) {
-      this.mensajeAgendar = 'Selecciona una fecha válida y asegúrate de haber iniciado sesión.';
+      this.mensajeAgendar = 'Asegúrate de haber iniciado sesión para continuar.';
       return;
     }
 
@@ -555,7 +592,7 @@ export class EventoCliente implements OnInit {
     return seleccionadas.map((op) => ({
       reserva: { idReserva } as any,
       opcion: { idOpcion: op.idOpcion ?? (op as any).id_opcion } as any,
-      cantidad: 1,
+      cantidad: this.cantidadesPorOpcion[op.idOpcion] || 1,
       precioUnitario: op.precio ?? 0,
     }));
   }
@@ -572,7 +609,7 @@ export class EventoCliente implements OnInit {
     this.seleccion = {};
     this.fechasPorOpcion = {};
     this.horasPorOpcion = {};
-    this.fechaEvento = '';
+    this.cantidadesPorOpcion = {};
 
     Swal.fire({
       icon: 'success',
@@ -625,31 +662,7 @@ export class EventoCliente implements OnInit {
     this.generarCalendario();
   }
 
-  seleccionarDia(fecha: string) {
-    const fechaSeleccionada = new Date(fecha);
-    if (this.esFechaPasada(fechaSeleccionada)) {
-      return;
-    }
-    this.fechaEvento = fecha;
-    this.mensajeAgendar = '';
-    if (this.tieneSeleccion) {
-      this.opcionesSeleccionadas.forEach((op) => {
-        if (!this.fechasPorOpcion[op.idOpcion]) this.fechasPorOpcion[op.idOpcion] = fecha;
-      });
-    }
-  }
-
   private esFechaPasada(fecha: Date) {
     return this.obtenerInicioDia(fecha) < this.hoy;
-  }
-
-  actualizarHoraGeneral(valor: string) {
-    this.horaEvento = valor;
-    this.mensajeAgendar = '';
-    if (this.tieneSeleccion) {
-      this.opcionesSeleccionadas.forEach((op) => {
-        if (!this.horasPorOpcion[op.idOpcion]) this.horasPorOpcion[op.idOpcion] = valor;
-      });
-    }
   }
 }
