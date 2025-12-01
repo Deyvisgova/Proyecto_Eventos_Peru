@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import jsPDF from 'jspdf';
 import { ProveedorService } from '../../../servicios/proveedor.service';
 import { ProveedorServicioService } from '../../../servicios/proveedor-servicio.service';
 import { ReservaService } from '../../../servicios/reserva.service';
@@ -9,6 +10,12 @@ import { DetalleReservaService } from '../../../servicios/detalle-reserva.servic
 import { ProveedorServicio, ServicioOpcion } from '../../../modelos/proveedor-servicio';
 import { DetalleReserva, Reserva } from '../../../modelos/reserva';
 import { forkJoin, of } from 'rxjs';
+
+interface SeccionPdf {
+  titulo: string;
+  lineas: string[];
+  tipo?: 'tabla' | 'texto';
+}
 
 @Component({
   selector: 'app-reportes-proveedor',
@@ -18,12 +25,14 @@ import { forkJoin, of } from 'rxjs';
   styleUrls: ['./reportes.css'],
 })
 export class ReportesProveedor implements OnInit {
+  // Servicios para navegar y traer la información que alimenta el reporte.
   private router = inject(Router);
   private proveedorSrv = inject(ProveedorService);
   private proveedorServicioSrv = inject(ProveedorServicioService);
   private reservaSrv = inject(ReservaService);
   private detalleReservaSrv = inject(DetalleReservaService);
 
+  // Datos básicos de la persona proveedora y sus registros.
   idProveedor: number | null = null;
   servicios: ProveedorServicio[] = [];
   opcionesPorServicio: Record<number, ServicioOpcion[]> = {};
@@ -34,11 +43,13 @@ export class ReportesProveedor implements OnInit {
   totalMontoFiltrado = 0;
   resumenEstados: Record<string, number> = {};
 
+  // Fechas de filtro y mensajes mostrados en pantalla.
   fechaInicio = '';
   fechaFin = '';
   cargando = false;
   mensaje = '';
 
+  // Verifica que quien entra sea proveedor y dispara la carga inicial de datos.
   ngOnInit(): void {
     const raw = localStorage.getItem('usuario');
     if (!raw) {
@@ -72,16 +83,19 @@ export class ReportesProveedor implements OnInit {
     });
   }
 
+  // Permite refrescar el reporte sin volver a iniciar sesión.
   recargar(): void {
     if (this.idProveedor) {
       this.cargarDatos(this.idProveedor);
     }
   }
 
+  // Cuenta cuántas variantes tiene cada servicio en total.
   totalVariantes(): number {
     return Object.values(this.opcionesPorServicio).reduce((acc, lista) => acc + lista.length, 0);
   }
 
+  // Busca los servicios, reservas y detalles que alimentan el reporte.
   private cargarDatos(idProveedor: number): void {
     this.cargando = true;
     this.mensaje = '';
@@ -131,6 +145,7 @@ export class ReportesProveedor implements OnInit {
     });
   }
 
+  // Filtra las reservas por fecha y recalcula montos y totales.
   aplicarFiltros(): void {
     const inicio = this.fechaInicio ? new Date(this.fechaInicio) : null;
     const fin = this.fechaFin ? new Date(this.fechaFin) : null;
@@ -160,47 +175,55 @@ export class ReportesProveedor implements OnInit {
     });
   }
 
+  // Descarga el PDF con todas las secciones.
   descargarTodo(): void {
     this.descargarComoPdf('reportes-completos.pdf', [this.portada(), this.seccionServicios(), this.seccionReservas()]);
   }
 
+  // Descarga solo la parte de servicios y variantes.
   descargarServicios(): void {
     this.descargarComoPdf('reportes-servicios.pdf', [this.portada(), this.seccionServicios()]);
   }
 
+  // Descarga únicamente la sección de reservas.
   descargarReservas(): void {
     this.descargarComoPdf('reportes-reservas.pdf', [this.portada(), this.seccionReservas()]);
   }
 
-  private portada(): string[] {
-    return [
-      'Reporte de proveedor',
-      `Generado: ${new Date().toLocaleString()}`,
-      `Rango aplicado: ${this.rangoSeleccionado()}`,
-      `Servicios publicados: ${this.servicios.length} | Variantes: ${this.totalVariantes()}`,
-      `Reservas: ${this.reservasFiltradas.length}/${this.reservas.length} | Monto estimado: S/ ${this.totalMontoFiltrado.toFixed(2)}`,
-      '',
-    ];
+  private portada(): SeccionPdf {
+    return {
+      titulo: 'Reporte de proveedor',
+      lineas: [
+        `Generado: ${new Date().toLocaleString()}`,
+        `Rango aplicado: ${this.rangoSeleccionado()}`,
+        `Servicios publicados: ${this.servicios.length} | Variantes: ${this.totalVariantes()}`,
+        `Reservas: ${this.reservasFiltradas.length}/${this.reservas.length} | Monto estimado: S/ ${this.totalMontoFiltrado.toFixed(2)}`,
+        '',
+      ],
+    };
   }
 
-  private seccionServicios(): string[] {
-    const lineas: string[] = ['Servicios y variantes'];
+  private seccionServicios(): SeccionPdf {
     const filas = this.servicios.map((s) => [
       s.nombrePublico,
       s.catalogoServicio?.nombre || 'Catálogo',
       this.opcionesPorServicio[s.idProveedorServicio]?.length || 0,
       s.estado,
     ]);
-    lineas.push(...this.tabla(['Servicio', 'Tipo', 'Variantes', 'Estado'], filas));
-    lineas.push('');
-    return lineas;
+
+    return {
+      titulo: 'Servicios y variantes',
+      lineas: this.tabla(['Servicio', 'Tipo', 'Variantes', 'Estado'], filas),
+      tipo: 'tabla',
+    };
   }
 
-  private seccionReservas(): string[] {
-    const lineas: string[] = ['Reservas y pagos'];
+  private seccionReservas(): SeccionPdf {
+    const lineas: string[] = [];
     Object.entries(this.resumenEstados).forEach(([estado, cantidad]) => {
-      lineas.push(`- ${estado}: ${cantidad}`);
+      lineas.push(`${estado}: ${cantidad}`);
     });
+    lineas.push('');
 
     const filas = this.reservasFiltradas.map((r) => [
       r.idReserva,
@@ -215,83 +238,66 @@ export class ReportesProveedor implements OnInit {
 
     lineas.push(...this.tabla(['ID', 'Fecha', 'Estado', '# ítems', 'Monto'], filas));
     lineas.push(`Monto total estimado: S/ ${this.totalMontoFiltrado.toFixed(2)}`);
-    lineas.push('');
-    return lineas;
+
+    return { titulo: 'Reservas y pagos', lineas, tipo: 'tabla' };
   }
 
-  private descargarComoPdf(nombre: string, secciones: string[][]): void {
+  private descargarComoPdf(nombre: string, secciones: SeccionPdf[]): void {
     if (this.cargando) {
       this.mensaje = 'Espera a que se terminen de cargar los datos.';
       return;
     }
-    const lineas = secciones.flat();
-    const header = '%PDF-1.4\n';
-    const stream = this.construirStream(lineas);
 
-    const objetos: string[] = [];
-    objetos.push('1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n');
-    objetos.push('2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n');
-    objetos.push(
-      '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n'
-    );
-    objetos.push(`4 0 obj << /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`);
-    objetos.push('5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n');
+    const doc = new jsPDF();
+    let y = 22;
 
-    let cuerpo = header;
-    const offsets: number[] = [];
-    objetos.forEach((obj) => {
-      offsets.push(cuerpo.length);
-      cuerpo += obj;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Reporte de proveedor', 105, y, { align: 'center' });
+    y += 10;
+
+    secciones.forEach((seccion) => {
+      y = this.agregarSeccion(doc, seccion, y);
     });
 
-    const inicioXref = cuerpo.length;
-    cuerpo += `xref\n0 ${objetos.length + 1}\n`;
-    cuerpo += '0000000000 65535 f \n';
-    offsets.forEach((off) => {
-      cuerpo += `${off.toString().padStart(10, '0')} 00000 n \n`;
-    });
-    cuerpo += `trailer << /Size ${objetos.length + 1} /Root 1 0 R >>\n`;
-    cuerpo += `startxref\n${inicioXref}\n%%EOF`;
-
-    const blob = new Blob([cuerpo], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = nombre;
-    enlace.click();
-    URL.revokeObjectURL(url);
+    doc.save(nombre);
   }
 
-  private construirStream(lineas: string[]): string {
-    let y = 800;
-    const comandos = lineas.flatMap((texto) => {
-      const partes = this.ajustarLinea(texto, 90);
-      return partes.map((parte) => {
-        const seguro = this.escaparPdf(parte);
-        const comando = `BT /F1 11 Tf 50 ${y} Td (${seguro}) Tj ET`;
-        y -= 16;
-        return comando;
+  private agregarSeccion(doc: jsPDF, seccion: SeccionPdf, y: number): number {
+    const margenX = 18;
+    const salto = 8;
+
+    if (y > 270) {
+      doc.addPage();
+      y = 22;
+    }
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text(seccion.titulo, margenX, y);
+    y += 6;
+
+    const fuente = seccion.tipo === 'tabla' ? 'Courier' : 'Helvetica';
+    const tamano = seccion.tipo === 'tabla' ? 10 : 11;
+    doc.setFont(fuente, 'normal');
+    doc.setFontSize(tamano);
+
+    seccion.lineas.forEach((linea) => {
+      const partes = doc.splitTextToSize(linea, 170);
+      partes.forEach((parte) => {
+        if (y > 285) {
+          doc.addPage();
+          y = 22;
+          doc.setFont(fuente, 'normal');
+          doc.setFontSize(tamano);
+        }
+        doc.text(parte, margenX, y);
+        y += salto;
       });
     });
-    return comandos.join('\n');
-  }
 
-  private ajustarLinea(texto: string, max: number): string[] {
-    if (texto.length <= max) return [texto];
-    const partes: string[] = [];
-    let restante = texto;
-    while (restante.length > max) {
-      let corte = restante.lastIndexOf(' ', max);
-      if (corte <= 0) corte = max;
-      partes.push(restante.slice(0, corte));
-      restante = restante.slice(corte).trimStart();
-    }
-    if (restante) partes.push(restante);
-    return partes;
-  }
-
-  private escaparPdf(texto: string): string {
-    return texto.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+    y += 4;
+    return y;
   }
 
   private tabla(encabezados: (string | number)[], filas: (string | number)[][]): string[] {
@@ -323,6 +329,7 @@ export class ReportesProveedor implements OnInit {
     return texto.length > max ? `${texto.slice(0, max - 1)}…` : texto;
   }
 
+  // Texto que explica el rango de fechas aplicado al reporte.
   rangoSeleccionado(): string {
     if (!this.fechaInicio && !this.fechaFin) {
       return 'Todos los registros';
@@ -332,12 +339,14 @@ export class ReportesProveedor implements OnInit {
     return `${inicio} a ${fin}`;
   }
 
+  // Formatea la fecha para que sea fácil de leer en la tabla.
   fechaLegible(valor?: string | Date | null): string {
     if (!valor) return 'Sin fecha';
     const fecha = new Date(valor);
     return isNaN(fecha.getTime()) ? 'Fecha inválida' : fecha.toLocaleDateString();
   }
 
+  // Protege el nombre de cada opción por si viene vacío del backend.
   private nombreOpcion(detalle: DetalleReserva): string {
     if (!detalle.opcion) return 'Opción sin nombre';
     return detalle.opcion.nombreOpcion || 'Opción sin nombre';

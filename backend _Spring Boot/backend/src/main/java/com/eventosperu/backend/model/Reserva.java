@@ -5,6 +5,8 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// Representa la solicitud que hace un cliente a un proveedor para un evento,
+// incluyendo fechas, estados y quiénes participan.
 @Data
 @Entity
 @Table(name = "reservas")
