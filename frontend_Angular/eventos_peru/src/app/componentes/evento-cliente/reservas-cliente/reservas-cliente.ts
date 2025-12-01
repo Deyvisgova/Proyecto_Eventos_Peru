@@ -156,6 +156,8 @@ export class ReservasCliente implements OnInit {
   resolverRutaImagen(ruta?: string | null) {
     if (!ruta) return '';
     if (/^https?:\/\//i.test(ruta) || ruta.startsWith('data:')) return ruta;
+    if (ruta.startsWith('/assets/')) return ruta;
+    if (ruta.startsWith('assets/')) return `/${ruta}`;
     const limpia = ruta.startsWith('/') ? ruta.slice(1) : ruta;
     return `${this.apiBaseImagenes}${limpia}`;
   }

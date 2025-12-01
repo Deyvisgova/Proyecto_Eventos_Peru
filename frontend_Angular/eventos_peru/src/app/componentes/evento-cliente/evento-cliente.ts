@@ -72,6 +72,7 @@ export class EventoCliente implements OnInit {
   seleccion: Record<number, boolean> = {};
   fechasPorOpcion: Record<number, string> = {};
   horasPorOpcion: Record<number, string> = {};
+  cantidadesPorOpcion: Record<number, number> = {};
   fechaEvento = '';
   horaEvento = '12:00';
   agendando = false;
@@ -150,6 +151,8 @@ export class EventoCliente implements OnInit {
     const posibleLogo =
       p.proveedor.logo ||
       p.proveedor.urlLogo ||
+      p.proveedor.logoUrl ||
+      proveedorPlano['logo_url'] ||
       proveedorPlano['logoUrl'] ||
       proveedorPlano['logo'];
 
@@ -163,9 +166,12 @@ export class EventoCliente implements OnInit {
 
   private resolverRutaImagen(ruta?: string | null) {
     if (!ruta) return '';
-    if (/^https?:\/\//i.test(ruta) || ruta.startsWith('data:')) return ruta;
-    const limpia = ruta.startsWith('/') ? ruta.slice(1) : ruta;
-    return `${this.apiBaseImagenes}${limpia}`;
+    const limpia = ruta.trim();
+    if (/^https?:\/\//i.test(limpia) || limpia.startsWith('data:')) return limpia;
+    if (limpia.startsWith('/assets/')) return limpia;
+    if (limpia.startsWith('assets/')) return `/${limpia}`;
+    const sinBarra = limpia.startsWith('/') ? limpia.slice(1) : limpia;
+    return `${this.apiBaseImagenes}${sinBarra}`;
   }
 
   get opcionesSeleccionadas(): ServicioOpcion[] {
@@ -173,7 +179,10 @@ export class EventoCliente implements OnInit {
   }
 
   get totalSeleccionado(): number {
-    return this.opcionesSeleccionadas.reduce((acc, op) => acc + (op.precio || 0), 0);
+    return this.opcionesSeleccionadas.reduce((acc, op) => {
+      const cantidad = this.cantidadesPorOpcion[op.idOpcion] || 1;
+      return acc + (op.precio || 0) * cantidad;
+    }, 0);
   }
 
   get tieneSeleccion(): boolean {
@@ -181,7 +190,9 @@ export class EventoCliente implements OnInit {
   }
 
   get conteoVisibleCarrito(): number {
-    return this.tieneSeleccion ? this.opcionesSeleccionadas.length : this.ultimoConteoReserva;
+    return this.tieneSeleccion
+      ? this.opcionesSeleccionadas.reduce((acc, op) => acc + (this.cantidadesPorOpcion[op.idOpcion] || 1), 0)
+      : this.ultimoConteoReserva;
   }
 
   irAReservas() {
@@ -216,7 +227,19 @@ export class EventoCliente implements OnInit {
     if (!activo) {
       delete this.fechasPorOpcion[opcion.idOpcion];
       delete this.horasPorOpcion[opcion.idOpcion];
+      delete this.cantidadesPorOpcion[opcion.idOpcion];
+    } else {
+      this.cantidadesPorOpcion[opcion.idOpcion] = this.cantidadesPorOpcion[opcion.idOpcion] || 1;
     }
+  }
+
+  actualizarCantidad(opcion: ServicioOpcion, valor: number) {
+    const cantidad = Math.max(1, Math.floor(Number(valor) || 0));
+    if (opcion.stock != null && cantidad > opcion.stock) {
+      this.cantidadesPorOpcion[opcion.idOpcion] = opcion.stock;
+      return;
+    }
+    this.cantidadesPorOpcion[opcion.idOpcion] = cantidad;
   }
 
   actualizarFechaOpcion(opcion: ServicioOpcion, fecha: string) {
@@ -427,6 +450,7 @@ export class EventoCliente implements OnInit {
     this.seleccion = {};
     this.fechasPorOpcion = {};
     this.horasPorOpcion = {};
+    this.cantidadesPorOpcion = {};
     this.fechaEvento = '';
     this.horaEvento = '12:00';
     this.reservasProveedor = [];
@@ -439,7 +463,10 @@ export class EventoCliente implements OnInit {
     this.proveedorServicioSrv.listarOpciones(p.idProveedorServicio).subscribe({
       next: (ops) => {
         this.opciones = ops.filter((o) => o.estado === 'ACTIVO');
-        this.opciones.forEach((o) => (this.seleccion[o.idOpcion] = false));
+        this.opciones.forEach((o) => {
+          this.seleccion[o.idOpcion] = false;
+          this.cantidadesPorOpcion[o.idOpcion] = 1;
+        });
         this.opcionesPorProveedor[p.idProveedorServicio] = this.opciones;
       },
       error: (err) => {
@@ -463,6 +490,9 @@ export class EventoCliente implements OnInit {
     this.proveedorSeleccionado = null;
     this.opciones = [];
     this.seleccion = {};
+    this.fechasPorOpcion = {};
+    this.horasPorOpcion = {};
+    this.cantidadesPorOpcion = {};
     this.fechaEvento = '';
     this.horaEvento = '12:00';
   }
@@ -555,7 +585,7 @@ export class EventoCliente implements OnInit {
     return seleccionadas.map((op) => ({
       reserva: { idReserva } as any,
       opcion: { idOpcion: op.idOpcion ?? (op as any).id_opcion } as any,
-      cantidad: 1,
+      cantidad: this.cantidadesPorOpcion[op.idOpcion] || 1,
       precioUnitario: op.precio ?? 0,
     }));
   }
@@ -572,6 +602,7 @@ export class EventoCliente implements OnInit {
     this.seleccion = {};
     this.fechasPorOpcion = {};
     this.horasPorOpcion = {};
+    this.cantidadesPorOpcion = {};
     this.fechaEvento = '';
 
     Swal.fire({

@@ -11,6 +11,8 @@ export interface ProveedorBasico {
   direccion?: string;
   logo?: string;
   urlLogo?: string;
+  logoUrl?: string;
+  logo_url?: string;
   usuario?: {
     celular?: string;
     email?: string;
